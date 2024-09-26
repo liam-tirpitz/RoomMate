@@ -1,0 +1,10 @@
+{
+  "devices": [
+    {
+      "id": 1,
+      "device_id": "94:B5:55:1C:9B:14",
+      "location": "Küche",
+      "calendar_id": 1000
+    }
+  ]
+}
