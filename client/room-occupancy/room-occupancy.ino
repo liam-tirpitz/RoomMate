@@ -6,9 +6,8 @@
 #include <WiFi.h>
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
-#include <uICAL.h>
 #include <EasyNTPClient.h>
-
+#include <ArduinoJson.h>
 
 const char* NTP_HOST = "pool.ntp.org";
 const int NTP_OFFSET = 1;  // UTC+1
@@ -21,7 +20,7 @@ EasyNTPClient g_ntpClient(g_ntpUDP, NTP_HOST, NTP_OFFSET);
 
 WiFiMulti WiFiMulti;
 
-String endpoint = "https://calendar.example.com/owa/calendar/REDACTED_ROOM_A/calendar.ics";
+String endpoint = "your-server.example.com:3001/example";
 
 void setup() {
   Serial.begin(115200);
@@ -65,33 +64,15 @@ void loop() {
     
     if (httpResponseCode>0) {
 
-      //String length = http.getStream().readStringUntil('\n');
-      uICAL::Calendar_ptr cal = nullptr;
-      try {
-          uICAL::istream_Stream istm(http.getStream());
-          cal = uICAL::Calendar::load(istm);
-      }
-      catch (uICAL::Error ex) {
-          Serial.print("%s: %s");
-          Serial.print(ex.message.c_str());
-          Serial.println("! Failed loading calendar");
-          stop();
-      }
+      String payload = http.getString();
+      Serial.println(payload);
 
+      JsonDocument doc;
+      deserializeJson(doc, payload);
+
+      
       unsigned now = g_ntpClient.getUnixTime();
 
-      uICAL::DateTime calBegin(now);
-      uICAL::DateTime calEnd(now + 86400);
-
-      uICAL::CalendarIter_ptr calIt = uICAL::new_ptr<uICAL::CalendarIter>(cal, calBegin, calEnd);
-
-      while (calIt->next()) {
-          uICAL::CalendarEntry_ptr entry = calIt->current();
-          Serial.print(entry->start().as_str().c_str());
-          Serial.print(entry->end().as_str().c_str());
-          Serial.println(entry->summary().c_str());
-
-      }
     }
     else {
       Serial.print("Error code: ");
