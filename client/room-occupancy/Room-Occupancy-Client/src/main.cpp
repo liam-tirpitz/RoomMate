@@ -8,6 +8,8 @@
 #include <HTTPClient.h>
 #include <EasyNTPClient.h>
 #include <ArduinoJson.h>
+#include <Screen.h>
+
 
 const char* NTP_HOST = "pool.ntp.org";
 const int NTP_OFFSET = 1;  // UTC+1
@@ -17,15 +19,21 @@ const char* pass = "N9alrk2ULDSWpidF";
 
 WiFiUDP g_ntpUDP;
 EasyNTPClient g_ntpClient(g_ntpUDP, NTP_HOST, NTP_OFFSET);
+Screen screen;
 
 WiFiMulti WiFiMulti;
 
 const String endpoint = "http://your-server.example.com:3001/example";
 //const String endpoint = "http://google.com/";
+void printToScreen() {
+  screen.printThings();
+}
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
+  screen.setup();
+  printToScreen();
   //Serial.print("\nDefault ESP32 MAC Address: ");
   //Serial.println(Network.macAddress());
   // We start by connecting to a WiFi network
@@ -54,6 +62,7 @@ void stop() {
         delay(1000);
     }
 }
+
 
 void loop() {
   if(WiFi.status()== WL_CONNECTED){
