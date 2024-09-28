@@ -33,6 +33,7 @@
 #define _IMAGEDATA_H_
 
 extern const unsigned char gImage_7in5_V2[];
+extern const unsigned char example[];
 
 #endif
 /* FILE END */

@@ -26,12 +26,15 @@ void Screen::setup() {
 
 
 void Screen::printThings() {
-  Paint_DrawString_EN(10, 0, "Test", &Font24, WHITE, BLACK);
-//   Paint_DrawString_EN(10, 30, ",", &Font24, WHITE, BLACK);
+    Paint_DrawBitMap(example);
+
+
+//   Paint_DrawString_EN(10, 0, "Test", &Font24, WHITE, BLACK);
+// //   Paint_DrawString_EN(10, 30, ",", &Font24, WHITE, BLACK);
 
 
   printf("EPD_Display\r\n");
   EPD_7IN5_V2_Display(BlackImage);
-//   DEV_Delay_ms(2000);
+  DEV_Delay_ms(2000);
 //   EPD_7IN5_V2_Sleep();
 }
