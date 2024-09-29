@@ -1,4 +1,4 @@
-import {SimpleEvent} from "../../datamodels/eventmodels"
+import {SimpleEvent} from "../../datamodels/SimpleEvent"
 
 'use strict'
 
