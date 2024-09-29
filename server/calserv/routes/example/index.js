@@ -1,18 +1,16 @@
+import {SimpleEvent} from "../../datamodels/eventmodels"
+
 'use strict'
 
 const ical = require("node-ical");
 const moment = require('moment-timezone');
 
-function SimpleEvent(start, end, summary) {
-  this.start = start;
-  this.end = end;
-  this.summary = summary;
-}
+
 
 function getSimpleEvent(complexEvent) {
   return new SimpleEvent(
-      complexEvent.start.toLocaleTimeString('de-DE'),
-      complexEvent.end.toLocaleTimeString('de-DE'),
+      complexEvent.start,
+      complexEvent.end,
       complexEvent.summary);
 }
 
@@ -70,7 +68,7 @@ function parseRecurrences(event, start_time, end_time) {
       newDate = new Date(date.setHours(date.getHours() - ((event.start.getTimezoneOffset() - date.getTimezoneOffset()) / 60)))
     }
     const start = moment(newDate)
-    const simple_event = new SimpleEvent(newDate.toLocaleTimeString('de-DE'), newDate.toLocaleTimeString('de-DE'), event.summary); // TODO EndTime?
+    const simple_event = new SimpleEvent(newDate, newDate, event.summary); // TODO EndTime?
     console.log('SimpleEvent:', simple_event)
   })
 

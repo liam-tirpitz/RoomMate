@@ -1,5 +1,7 @@
-const {registerFont, createCanvas, loadImage } = require('canvas')
-const fs = require('fs')
+import SimpleEvent from "../datamodels/eventmodels.js"
+
+import {registerFont, createCanvas, loadImage } from 'canvas'
+import fs from 'fs'
 
 
 async function drawCurrentEventTime(ctx, timestring, black_font = false) {
@@ -72,19 +74,47 @@ async function drawHeader(ctx, room_name, room_number) {
     ctx.fillText(room_number, 248, 83)
 }
 
-
-async function doImageThings() {
+async function setupCanvas() {
     registerFont('fonts/HelveticaNeueLTCom-Bd.ttf', { family: 'HNB' })
     registerFont('fonts/HelveticaNeueLTCom-Lt.ttf', { family: 'HNL' })
+    return createCanvas(480, 800)
+}
 
-    const canvas = createCanvas(480, 800)
+
+function getTimeStringFromDate(date) {
+    return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+}
+
+async function drawCurrentEvent(ctx, event) {
+    const now = new Date();
+    console.log(now, event.start)
+    if (event.start <= now && now <= event.end) {
+        if (event.summary) {
+            await drawOccupied(ctx, event.summary, event.organizer, getTimeStringFromDate(event.start) + " - " + getTimeStringFromDate(event.end))
+        } else {
+            await drawOccupiedUnknown(ctx, getTimeStringFromDate(event.end))
+        }
+    } else if (now < event.start && (event.start - now) < 15 * 60 * 1000) {
+        await drawOpccupiedSoon(ctx, getTimeStringFromDate(event.start))
+    } else if (now < event.start) {
+        await drawFreeUntil(ctx, getTimeStringFromDate(event.start))
+    } else {
+        console.log("No current event to draw?")
+    }
+
+}
+
+async function doImageThings() {
+    const canvas = await setupCanvas()
     const ctx = canvas.getContext('2d')
 
     await drawHeader(ctx, 'Meeting Room', '1000.0')
-    // await drawOccupied(ctx, '[IDB] Status Meeting with HiWis', 'Liam Tirpitz', '9:00 - 10:00')
-    // await drawOccupiedUnknown(ctx, "10:00")
-    // await drawFreeUntil(ctx, "10:00")
-    await drawOpccupiedSoon(ctx, '10:00')
+
+    const start = new Date(Date.parse("2024-09-29T13:12:00"));
+    const end = new Date(Date.parse('2024-09-29T15:00:00'));
+
+    const event = new SimpleEvent(start, end, "[IDB] Status Meeting with HiWis", "Liam Tirpitz")
+    await drawCurrentEvent(ctx, event)
 
     const out = fs.createWriteStream( 'out.png')
     const stream = canvas.createPNGStream()

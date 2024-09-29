@@ -2,11 +2,13 @@
   "calendars": [
     {
       "id": 1000,
+      "id_string": "1000.0",
       "name": "Meeting-Raum (Küche)",
       "endpoint": "https://calendar.example.com/owa/calendar/REDACTED_ROOM_A/calendar.ics"
     },
     {
       "id": 1001,
+      "id_string": "1001",
       "name": "Seminarraum",
       "endpoint": "https://calendar.example.com/owa/calendar/REDACTED_ROOM_B/calendar.ics"
     }
