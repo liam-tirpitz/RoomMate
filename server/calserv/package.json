@@ -10,7 +10,7 @@
     "test": "node --test test/**/*.test.js",
     "start": "node index.js",
     "build": "tsc -p tsconfig.json",
-    "dev": "tsx index.ts"
+    "dev": "tsx watch index.ts"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +28,8 @@
     "request": "^2.88.2"
   },
   "devDependencies": {
+    "nodemon": "^3.1.7",
+    "ts-node": "^10.9.2",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2"
   }

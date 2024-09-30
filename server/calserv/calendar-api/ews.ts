@@ -11,6 +11,7 @@ import * as ews from 'ews-javascript-api'
 import {CalendarView} from "ews-javascript-api/js/Search/CalendarView";
 import {FindItemsResults} from "ews-javascript-api/js/Search/FindItemsResults";
 import {Appointment} from "ews-javascript-api/js/Core/ServiceObjects/Items/Appointment";
+import {SimpleEvent} from "../datamodels/SimpleEvent";
 dotenv.config()
 
 
@@ -31,25 +32,26 @@ export class CalendarClient {
     }
 
     async readUpcomingEventsToday(room_mail: string) {
-        const attendee: AttendeeInfo = new ews.AttendeeInfo(room_mail);
         let now = ews.DateTime.Now
         const now_moment = now.MomentDate
         const eod_moment = now_moment.clone().endOf('day')
         let eod = new ews.DateTime(eod_moment)
 
-
-
         const view = new CalendarView(now, eod)
         const folderIdFromCalendar = new FolderId(WellKnownFolderName.Calendar, new Mailbox(room_mail));
         const appointments = this.exch.FindAppointments(folderIdFromCalendar, view)
+        let events: SimpleEvent[] = [];
         for (let appointment of (await appointments).Items) {
             // console.log(appointment)
             console.log(appointment.Organizer.Name)
             console.log(appointment.Subject)
-            console.log(appointment.Start.toString())
-            console.log(appointment.End.toString())
+            console.log(appointment.Start)
+            console.log(appointment.End)
+            console.log(appointment.IsCancelled)
+
+            events.push(new SimpleEvent(appointment.Start.MomentDate, appointment.End.MomentDate, appointment.Subject, appointment.Organizer.Name, appointment.IsCancelled))
         }
-        return appointments
+        return events
     }
 
 }

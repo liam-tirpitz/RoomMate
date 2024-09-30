@@ -2,9 +2,15 @@
   "devices": [
     {
       "id": 1,
-      "device_id": "94:B5:55:1C:9B:14",
+      "device_id": "94B5551C9B14",
       "location": "Küche",
       "calendar_id": 1000
+    },
+    {
+      "id": 2,
+      "device_id": "94B5551C9B13",
+      "location": "Seminarraum",
+      "calendar_id": 1001
     }
   ]
 }

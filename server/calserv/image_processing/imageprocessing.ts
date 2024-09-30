@@ -1,9 +1,12 @@
 import {SimpleEvent} from "../datamodels/SimpleEvent"
+import * as moment from "moment-timezone";
 
 import {registerFont, createCanvas, loadImage, CanvasRenderingContext2D, Canvas, Image} from 'canvas'
 import * as fs from 'fs';
+import {DateTime} from "ews-javascript-api";
 
-class ImageProcessor {
+
+export class ImageProcessor {
     ctx: CanvasRenderingContext2D;
     canvas: Canvas;
     img: Promise<Image> = loadImage('image_processing/template.png')
@@ -88,12 +91,12 @@ class ImageProcessor {
         this.ctx.fillText(room_number, 248, 83)
     }
 
-    getTimeStringFromDate(date: Date) {
-        return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    getTimeStringFromDate(date: moment) {
+        return date.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     }
 
     drawCurrentEvent(event: SimpleEvent) {
-        const now: Date = new Date();
+        const now: DateTime = DateTime.Now;
         console.log(now, event.start)
         if (event.start <= now && now <= event.end) {
             if (event.summary) {
@@ -108,6 +111,19 @@ class ImageProcessor {
         } else {
             console.log("No current event to draw?")
         }
+    }
+
+    async buildImage(room_name: string, room_number: string, data: SimpleEvent[]) {
+        const header = await this.drawHeader(room_name, room_number)
+        if (data.length) {
+            this.drawCurrentEvent(data[0])
+        } else {
+            this.drawFreeUntil("End of Day")
+        }
+        const out = fs.createWriteStream( 'out.png')
+        const stream = this.canvas.createPNGStream()
+        stream.pipe(out)
+        out.on('finish', () =>  console.log('The PNG file was created.'))
     }
 }
 
@@ -128,4 +144,5 @@ async function doImageThings() {
     out.on('finish', () =>  console.log('The PNG file was created.'))
 }
 
-doImageThings().then()
+
+//doImageThings().then()
