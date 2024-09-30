@@ -1,4 +1,7 @@
 {
+  "exchange": {
+    "endpoint": "https://mail.rwth-aachen.de/EWS/Exchange.asmx"
+  },
   "calendars": [
     {
       "id": 1000,
@@ -11,7 +14,7 @@
       "id": 1001,
       "id_string": "1001",
       "name": "Seminarraum",
-      "endpoint": "https://calendar.example.com/owa/calendar/REDACTED_ROOM_B/calendar.ics"
+      "endpoint": "https://calendar.example.com/owa/calendar/REDACTED_ROOM_B/calendar.ics",
       "email": "room-b@example.com"
     }
   ]
