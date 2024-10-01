@@ -19,6 +19,7 @@
     "@fastify/autoload": "^6.0.0",
     "@fastify/sensible": "^6.0.0",
     "@types/node": "^22.7.4",
+    "bitset": "^5.1.1",
     "canvas": "^3.0.0-rc2",
     "dotenv": "^16.4.5",
     "ews-javascript-api": "^0.15.3",

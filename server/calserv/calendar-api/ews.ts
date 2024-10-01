@@ -1,16 +1,11 @@
 import {
-    AttendeeAvailability,
-    AttendeeInfo,
-    CalendarEvent,
     ExchangeService, FolderId,
-    GetUserAvailabilityResults, Mailbox,
-    TimeWindow, WellKnownFolderName
+    Mailbox,
+    WellKnownFolderName
 } from "ews-javascript-api";
 import * as dotenv from 'dotenv'
 import * as ews from 'ews-javascript-api'
 import {CalendarView} from "ews-javascript-api/js/Search/CalendarView";
-import {FindItemsResults} from "ews-javascript-api/js/Search/FindItemsResults";
-import {Appointment} from "ews-javascript-api/js/Core/ServiceObjects/Items/Appointment";
 import {SimpleEvent} from "../datamodels/SimpleEvent";
 dotenv.config()
 
@@ -42,7 +37,6 @@ export class CalendarClient {
         const appointments = this.exch.FindAppointments(folderIdFromCalendar, view)
         let events: SimpleEvent[] = [];
         for (let appointment of (await appointments).Items) {
-            // console.log(appointment)
             console.log(appointment.Organizer.Name)
             console.log(appointment.Subject)
             console.log(appointment.Start)
@@ -55,6 +49,3 @@ export class CalendarClient {
     }
 
 }
-
-// const client = new CalendarClient()
-// client.readUpcomingEventsToday("room-a@example.com").then()

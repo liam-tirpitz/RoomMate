@@ -35,7 +35,7 @@ server.get('/occupancy', async (request, reply) => {
     const appointments = await client.readUpcomingEventsToday(email)
 
     const image_processor = new ImageProcessor()
-    await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, appointments)
+    await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calid, appointments)
     return JSON.stringify(appointments, null, 4)
 })
 

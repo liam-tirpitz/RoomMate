@@ -1,9 +1,18 @@
 import {SimpleEvent} from "../datamodels/SimpleEvent"
 import * as moment from "moment-timezone";
 
-import {registerFont, createCanvas, loadImage, CanvasRenderingContext2D, Canvas, Image} from 'canvas'
+import {
+    registerFont,
+    createCanvas,
+    loadImage,
+    CanvasRenderingContext2D,
+    Canvas,
+    Image,
+    NodeCanvasRenderingContext2DSettings, createImageData
+} from 'canvas'
 import * as fs from 'fs';
 import {DateTime} from "ews-javascript-api";
+import BitSet from "bitset";
 
 
 export class ImageProcessor {
@@ -13,7 +22,8 @@ export class ImageProcessor {
 
     constructor() {
         this.canvas = this.setupCanvas();
-        this.ctx = this.canvas.getContext('2d')
+        const settings: NodeCanvasRenderingContext2DSettings = {}
+        this.ctx = this.canvas.getContext( '2d',  settings)
     }
 
     setupCanvas(): Canvas {
@@ -100,7 +110,11 @@ export class ImageProcessor {
         console.log(now, event.start)
         if (event.start <= now && now <= event.end) {
             if (event.summary) {
-                this.drawOccupied(event.summary, event.organizer, this.getTimeStringFromDate(event.start) + " - " + this.getTimeStringFromDate(event.end))
+                let trunc_summary = event.summary
+                if (trunc_summary.length > 30) {
+                    trunc_summary = trunc_summary.substring(0,30)  + "...";
+                }
+                this.drawOccupied(trunc_summary, event.organizer, this.getTimeStringFromDate(event.start) + " - " + this.getTimeStringFromDate(event.end))
             } else {
                 this.drawOccupiedUnknown(this.getTimeStringFromDate(event.end))
             }
@@ -113,14 +127,63 @@ export class ImageProcessor {
         }
     }
 
-    async buildImage(room_name: string, room_number: string, data: SimpleEvent[]) {
+    prepImage(data: Uint8ClampedArray) {
+        var bs = new BitSet;
+        data.map((x, i) => {
+            if ((i+1)%4 == 0) return 255
+            if (x <128) return 0
+            else return 255
+        })
+        data.forEach((x,i )=> {
+            if (i%4 == 0) {
+                bs.set(Math.floor(i/4), x === 255 ? 1 : 0); // Set bit at position 128
+            }
+            // console.log(i/4)
+        })
+        return bs
+    }
+
+    hexToBytes(hex) {
+        let bytes = [];
+        for (let c = 0; c < hex.length; c += 2)
+            bytes.push(parseInt(hex.substr(c, 2), 16));
+        return bytes;
+    }
+
+    bytesToHex(bytes) {
+        let hex = [];
+        for (let i = 0; i < bytes.length; i++) {
+            let current = bytes[i] < 0 ? bytes[i] + 256 : bytes[i];
+            hex.push((current >>> 4).toString(16));
+            hex.push((current & 0xF).toString(16));
+        }
+        return hex;
+    }
+
+    // bitsetToByteArray(data: BitSet) {
+    //     let bytes = []
+    //     for (let i = 0; i < Math.floor(data.cardinality()/8); i++) {
+    //         const byte_str = "0x" + data.slice(i*8,i*8+7).toString(16)
+    //     }
+    //
+    // }
+
+    async buildImage(room_name: string, room_number: string, room_id: string, data: SimpleEvent[]) {
         const header = await this.drawHeader(room_name, room_number)
         if (data.length) {
             this.drawCurrentEvent(data[0])
         } else {
             this.drawFreeUntil("End of Day")
         }
-        const out = fs.createWriteStream( 'out.png')
+
+        let myImageData = this.ctx.getImageData(0, 0, 480, 800);
+        const array: BitSet  = this.prepImage(myImageData.data)
+        console.log(array.cardinality())
+        // let modimageData = createImageData(array,480)
+        // this.ctx.putImageData(modimageData, 0, 0)
+        const bytearray = this.hexToBytes(array.toString(16))
+        console.log(bytearray.toString())
+        const out = fs.createWriteStream( room_id + '.png')
         const stream = this.canvas.createPNGStream()
         stream.pipe(out)
         out.on('finish', () =>  console.log('The PNG file was created.'))
