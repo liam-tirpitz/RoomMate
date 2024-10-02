@@ -1,4 +1,5 @@
 import * as moment from "moment-timezone";
+import {DateTime} from "ews-javascript-api";
 
 export class SimpleEvent {
     start: moment;
@@ -14,4 +15,15 @@ export class SimpleEvent {
         this.organizer = organizer;
         this.is_cancelled = is_cancelled;
     }
+
+    happeningNow(now: DateTime): boolean {
+        return this.start <= now && now <= this.end
+    }
+
+    happeningSoon(now: DateTime): boolean {
+        return now < this.start && (this.start.valueOf() - now.valueOf()) < 15 * 60 * 1000
+
+    }
+
+
 }

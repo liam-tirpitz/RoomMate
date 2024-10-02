@@ -97,6 +97,25 @@ export class ImageProcessor {
         this.drawCurrentEventTime("Starts soon - " + start, true)
     }
 
+    drawComingUp() {
+        this.ctx.font = '24pt "HNB"'
+        this.ctx.fillStyle = "rgba(255, 255, 255, 1)";
+        this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        this.ctx.fillText("Coming Up", 32, 322)
+    }
+
+    drawBlock(yoffset: number, event: SimpleEvent) {
+        this.ctx.fillStyle = "rgba(255, 255, 255, 1)";
+        this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        this.ctx.font = '24pt "HNB"'
+        const line_spacing = 29
+        this.ctx.fillText(event.summary, 46, 375 + yoffset*105)
+        this.ctx.font = '21pt "HNL"'
+        this.ctx.fillText(event.organizer, 46, 375 + 1 * line_spacing + yoffset*105)
+        this.ctx.fillText(this.getTimeStringFromDate(event.start) + " - " + this.getTimeStringFromDate(event.end), 46, 375 + 2 * line_spacing + yoffset*105)
+    }
+
+
     async drawHeader(room_name: string, room_number: string) {
         this.ctx.drawImage(await this.img, 0, 0)
 
@@ -113,8 +132,7 @@ export class ImageProcessor {
 
     drawCurrentEvent(event: SimpleEvent) {
         const now: DateTime = DateTime.Now;
-        console.log(now, event.start)
-        if (event.start <= now && now <= event.end) {
+        if (event.happeningNow(now)) {
             if (event.summary) {
                 let trunc_summary = event.summary
                 if (trunc_summary.length > 30) {
@@ -124,46 +142,13 @@ export class ImageProcessor {
             } else {
                 this.drawOccupiedUnknown(this.getTimeStringFromDate(event.end))
             }
-        } else if (now < event.start && (event.start.valueOf() - now.valueOf()) < 15 * 60 * 1000) {
+        } else if (event.happeningSoon(now)) {
             this.drawOpccupiedSoon(this.getTimeStringFromDate(event.start))
         } else if (now < event.start) {
             this.drawFreeUntil(this.getTimeStringFromDate(event.start))
         } else {
             console.log("No current event to draw?")
         }
-    }
-
-    prepImage(data: Uint8ClampedArray) {
-        var bs = new BitSet;
-        data.map((x, i) => {
-            if ((i+1)%4 == 0) return 255
-            if (x <128) return 0
-            else return 255
-        })
-        data.forEach((x,i )=> {
-            if (i%4 == 0) {
-                bs.set(Math.floor(i/4), x === 255 ? 1 : 0); // Set bit at position 128
-            }
-            // console.log(i/4)
-        })
-        return bs
-    }
-
-    hexToBytes(hex) {
-        let bytes = [];
-        for (let c = 0; c < hex.length; c += 2)
-            bytes.push(parseInt(hex.substr(c, 2), 16));
-        return bytes;
-    }
-
-    bytesToHex(bytes) {
-        let hex = [];
-        for (let i = 0; i < bytes.length; i++) {
-            let current = bytes[i] < 0 ? bytes[i] + 256 : bytes[i];
-            hex.push((current >>> 4).toString(16));
-            hex.push((current & 0xF).toString(16));
-        }
-        return hex;
     }
 
     bitswap(b) {
@@ -295,10 +280,20 @@ horizontal1bit(data, canvasWidth) {
         const header = await this.drawHeader(room_name, room_number)
         if (data.length) {
             this.drawCurrentEvent(data[0])
+            this.drawComingUp()
+            const now = DateTime.Now
+            if (data[0].happeningNow(now)) {
+                data.shift()
+            }
+            const upcoming_elements = data.slice(0, 4)
+            for (const [i, element] of upcoming_elements.entries()) {
+                this.drawBlock(i, element)
+            }
         } else {
             this.drawFreeUntil("End of Day")
         }
-        this.rotate(90)
+
+        //this.rotate(90)
         dithering(this.ctx, 480, 800, this.dithering_threshold, 0);
         let myImageData = this.ctx.getImageData(0, 0, 800, 480);
         const data_arr = this.horizontal1bit(Array.from(myImageData.data), 800)
@@ -311,23 +306,3 @@ horizontal1bit(data, canvasWidth) {
         return base64String
     }
 }
-
-
-async function doImageThings() {
-    const imgProc = new ImageProcessor();
-    const header = imgProc.drawHeader('Meeting Room', '1000.0')
-
-    const start = new Date(Date.parse("2024-09-29T13:12:00"));
-    const end = new Date(Date.parse('2024-09-29T15:00:00'));
-
-    const event = new SimpleEvent(start, end, "[IDB] Status Meeting with HiWis", "Liam Tirpitz")
-    imgProc.drawCurrentEvent(event)
-    await header
-    const out = fs.createWriteStream( 'out.png')
-    const stream = imgProc.canvas.createPNGStream()
-    stream.pipe(out)
-    out.on('finish', () =>  console.log('The PNG file was created.'))
-}
-
-
-//doImageThings().then()

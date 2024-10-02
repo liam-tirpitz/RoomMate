@@ -18,8 +18,8 @@ export class CalendarClient {
     constructor() {
         this.config = require('../config/calendars.json');
         this.exch = new ews.ExchangeService(ews.ExchangeVersion.Exchange2010);
-        if (process.env.PASS && process.env.USER) {
-            this.exch.Credentials = new ews.WebCredentials(process.env.USER, process.env.PASS);
+        if (process.env.EXC_USER && process.env.EXC_PASS) {
+            this.exch.Credentials = new ews.WebCredentials(process.env.EXC_USER, process.env.EXC_PASS);
             this.exch.Url = new ews.Uri(this.config.exchange.endpoint);
         } else {
             throw new Error('Missing Exchange Credentials!');
