@@ -35,8 +35,8 @@ server.get('/occupancy', async (request, reply) => {
     const appointments = await client.readUpcomingEventsToday(email)
 
     const image_processor = new ImageProcessor()
-    await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calid, appointments)
-    return JSON.stringify(appointments, null, 4)
+    const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calid, appointments)
+    return img
 })
 
 server.listen({ port: 3001, host:'0.0.0.0' }, (err, address) => {
