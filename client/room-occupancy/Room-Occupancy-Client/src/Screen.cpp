@@ -14,11 +14,26 @@ void Screen::setup() {
         printf("Failed to apply for black memory...\r\n");
         while (1);
     }
-    Paint_NewImage(BlackImage, SCREEN_WIDTH, SCREEN_HEIGHT, ROTATE_270, WHITE);
+    Paint_NewImage(BlackImage, SCREEN_WIDTH, SCREEN_HEIGHT, 0, WHITE);
     Paint_SelectImage(BlackImage);
-    Paint_SetRotate(270);
+    Paint_SetRotate(90);
+    Paint_Clear(WHITE);
+}
+
+void Screen::drawImage(unsigned char *output) {
+    Paint_DrawBitMap(output);
+    EPD_7IN5_V2_Display(BlackImage);
+      DEV_Delay_ms(2000);
+}
+
+void Screen::printThings() {
+  //Paint_DrawBitMap(example);
+  printf("EPD_Display\r\n");
+  EPD_7IN5_V2_Display(BlackImage);
+  DEV_Delay_ms(2000);
 
 }
+
 
 void Screen::draw() {
     Paint_Clear(WHITE);
