@@ -95,8 +95,6 @@ void getDataFromEndpoint() {
                 mbedtls_base64_decode(byte_buff+buffer_offset, size_left, &outlen, b64_buff, c);
                 Serial.println(outlen);
                 buffer_offset = buffer_offset + outlen;
-
-
               }
               delay(1);
             }
