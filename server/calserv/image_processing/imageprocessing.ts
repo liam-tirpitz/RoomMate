@@ -293,7 +293,7 @@ horizontal1bit(data, canvasWidth) {
             this.drawFreeUntil("End of Day")
         }
 
-        //this.rotate(90)
+        this.rotate(90)
         dithering(this.ctx, 480, 800, this.dithering_threshold, 0);
         let myImageData = this.ctx.getImageData(0, 0, 800, 480);
         const data_arr = this.horizontal1bit(Array.from(myImageData.data), 800)
