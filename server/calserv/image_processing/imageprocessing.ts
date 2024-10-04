@@ -12,7 +12,6 @@ import {
 } from 'canvas'
 import * as fs from 'fs';
 import {DateTime} from "ews-javascript-api";
-import BitSet from "bitset";
 import {dithering} from "./image2cpp/dithering";
 
 
@@ -126,7 +125,7 @@ export class ImageProcessor {
         this.ctx.fillText(room_number, 248, 83)
     }
 
-    getTimeStringFromDate(date: moment) {
+    getTimeStringFromDate(date: moment.Moment) {
         return date.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     }
 
@@ -144,7 +143,7 @@ export class ImageProcessor {
             }
         } else if (event.happeningSoon(now)) {
             this.drawOpccupiedSoon(this.getTimeStringFromDate(event.start))
-        } else if (now < event.start) {
+        } else if (now.MomentDate < event.start) {
             this.drawFreeUntil(this.getTimeStringFromDate(event.start))
         } else {
             console.log("No current event to draw?")

@@ -1,5 +1,5 @@
 import fastify from 'fastify'
-import {CalendarClient} from "./calendar-api/ews";
+import {CalendarClient} from './calendar-api/ews';
 import {ImageProcessor} from "./image_processing/imageprocessing"
 
 const server = fastify()
@@ -26,7 +26,7 @@ function getCalendarFromCalendarID(calendarID: string) {
 }
 
 server.get('/occupancy', async (request, reply) => {
-    const devid = request.query.devid
+    const devid = request.query['devid']
     const calid = getCalendarIDFromDeviceID(devid)
     if (!calid) return 'Nein.'
     const calendarDetails = getCalendarFromCalendarID(calid)
