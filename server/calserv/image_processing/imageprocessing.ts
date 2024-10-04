@@ -103,6 +103,14 @@ export class ImageProcessor {
         this.ctx.fillText("Coming Up", 32, 322)
     }
 
+    drawNothingComingUp() {
+        this.ctx.font = '18pt "HNB"'
+        this.ctx.fillStyle = "rgba(255, 255, 255, 1)";
+        this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        this.ctx.fillText("No further appointments today.", 32, 322)
+    }
+
+
     drawBlock(yoffset: number, event: SimpleEvent) {
         this.ctx.fillStyle = "rgba(255, 255, 255, 1)";
         this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
@@ -279,14 +287,18 @@ horizontal1bit(data, canvasWidth) {
         const header = await this.drawHeader(room_name, room_number)
         if (data.length) {
             this.drawCurrentEvent(data[0])
-            this.drawComingUp()
             const now = DateTime.Now
             if (data[0].happeningNow(now)) {
                 data.shift()
             }
-            const upcoming_elements = data.slice(0, 4)
-            for (const [i, element] of upcoming_elements.entries()) {
-                this.drawBlock(i, element)
+            if (data.length) {
+                this.drawComingUp()
+                const upcoming_elements = data.slice(0, 4)
+                for (const [i, element] of upcoming_elements.entries()) {
+                    this.drawBlock(i, element)
+                }
+            } else {
+                this.drawNothingComingUp()
             }
         } else {
             this.drawFreeUntil("End of Day")
