@@ -25,19 +25,35 @@ function getCalendarFromCalendarID(calendarID: string) {
     return undefined
 }
 
-server.get('/occupancy', async (request, reply) => {
+
+['/occupancy', '/image'].forEach(path => {
+    server.get(path, async (request, reply) => {
+        const devid = request.query['devid']
+        const calid = getCalendarIDFromDeviceID(devid)
+        if (!calid) return 'Nein.'
+        const calendarDetails = getCalendarFromCalendarID(calid)
+        const email = calendarDetails.email
+        const client = new CalendarClient()
+        const appointments = await client.readUpcomingEventsToday(email)
+
+        const image_processor = new ImageProcessor()
+        const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calid, appointments)
+        return img
+    })
+})
+
+server.get("/data", async (request, reply) => {
     const devid = request.query['devid']
     const calid = getCalendarIDFromDeviceID(devid)
     if (!calid) return 'Nein.'
     const calendarDetails = getCalendarFromCalendarID(calid)
-    const email =  calendarDetails.email
+    const email = calendarDetails.email
     const client = new CalendarClient()
     const appointments = await client.readUpcomingEventsToday(email)
 
-    const image_processor = new ImageProcessor()
-    const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calid, appointments)
-    return img
+    return JSON.stringify(appointments)
 })
+
 
 server.listen({ port: 3001, host:'0.0.0.0' }, (err, address) => {
     if (err) {

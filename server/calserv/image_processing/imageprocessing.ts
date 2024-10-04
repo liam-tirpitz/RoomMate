@@ -126,7 +126,7 @@ export class ImageProcessor {
     }
 
     getTimeStringFromDate(date: moment.Moment) {
-        return date.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        return date.toDate().toLocaleTimeString(['de'], {hour: '2-digit', minute:'2-digit'})
     }
 
     drawCurrentEvent(event: SimpleEvent) {
