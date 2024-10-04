@@ -7,6 +7,8 @@ const server = fastify()
 const devices = require('./config/devices.json');
 const calendars = require('./config/calendars.json');
 
+process.env.TZ = 'Europe/Berlin'
+
 function getCalendarIDFromDeviceID(devid: string) {
     for (const device of devices.devices) {
         if (device.device_id == devid) {
