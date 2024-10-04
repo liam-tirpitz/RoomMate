@@ -1,6 +1,9 @@
 import fastify from 'fastify'
 import {CalendarClient} from './calendar-api/ews';
 import {ImageProcessor} from "./image_processing/imageprocessing"
+import * as ews from "ews-javascript-api";
+import {SimpleEvent} from "./datamodels/SimpleEvent";
+import * as hasher from "node-object-hash"
 
 const server = fastify()
 
@@ -44,7 +47,18 @@ function getCalendarFromCalendarID(calendarID: string) {
     })
 })
 
+class CalendarData {
+    current_time: string;
+    next_update: string;
+    room_name: string;
+    room_number: string;
+    hash: string;
+    next_appointments: SimpleEvent[];
+}
+
 server.get("/data", async (request, reply) => {
+    let calendarData: CalendarData = new CalendarData();
+
     const devid = request.query['devid']
     const calid = getCalendarIDFromDeviceID(devid)
     if (!calid) return 'Nein.'
@@ -52,8 +66,29 @@ server.get("/data", async (request, reply) => {
     const email = calendarDetails.email
     const client = new CalendarClient()
     const appointments = await client.readUpcomingEventsToday(email)
+    const now = ews.DateTime.Now
+    calendarData.next_appointments = appointments
+    calendarData.room_number = calendarDetails.id_string
+    calendarData.room_name = calendarDetails.name
 
-    return JSON.stringify(appointments)
+    let next_update: moment.Moment = undefined
+    if (appointments.length > 0) {
+        if (appointments[0].happeningNow(now)) {
+            next_update = appointments[0].end
+        } else {
+            next_update = appointments[0].start
+        }
+    }
+    if(next_update) {
+        calendarData.next_update = next_update.toISOString()
+    } else {
+        calendarData.next_update = ""
+    }
+
+    calendarData.hash = hasher.hasher({ sort: true, coerce: true, alg: 'md5' }).hash(calendarData.hash)
+    calendarData.current_time = now.MomentDate.toISOString()
+
+    return JSON.stringify(calendarData)
 })
 
 

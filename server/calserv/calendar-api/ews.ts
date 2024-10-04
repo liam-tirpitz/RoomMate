@@ -37,11 +37,11 @@ export class CalendarClient {
         const appointments = this.exch.FindAppointments(folderIdFromCalendar, view)
         let events: SimpleEvent[] = [];
         for (let appointment of (await appointments).Items) {
-            console.log(appointment.Organizer.Name)
-            console.log(appointment.Subject)
-            console.log(appointment.Start)
-            console.log(appointment.End)
-            console.log(appointment.IsCancelled)
+            // console.log(appointment.Organizer.Name)
+            // console.log(appointment.Subject)
+            // console.log(appointment.Start)
+            // console.log(appointment.End)
+            // console.log(appointment.IsCancelled)
 
             events.push(new SimpleEvent(appointment.Start.MomentDate, appointment.End.MomentDate, appointment.Subject, appointment.Organizer.Name, appointment.IsCancelled))
         }
