@@ -5,5 +5,6 @@ build:
     - docker:20.10.16-dind
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - cd server/calserv
     - docker build -t $CI_REGISTRY/i5/infrastructure/room-occupancy/calserv:latest .
     - docker push $CI_REGISTRY/i5/infrastructure/room-occupancy/calserv:latest
