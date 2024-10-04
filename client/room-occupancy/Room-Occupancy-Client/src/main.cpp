@@ -122,5 +122,5 @@ void getDataFromEndpoint() {
 
 void loop() {
   getDataFromEndpoint();
-  delay(10000);
+  delay(900000);
 }
