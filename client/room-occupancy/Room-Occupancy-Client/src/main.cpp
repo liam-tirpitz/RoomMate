@@ -28,6 +28,7 @@ WiFiMulti wifiMulti;
 
 const String endpoint = "http://your-server.example.com:3001/";
 
+
 void setup_wifi_connection() {
   wifiMulti.addAP(ssid, pass);
 
@@ -46,7 +47,7 @@ void setup_wifi_connection() {
   Serial.println(WiFi.localIP());
 }
 
-void getDataFromEndpoint() {
+void getImageDataFromEndpoint() {
     String devid = WiFi.macAddress();
     devid.replace(":","");
     Serial.println(devid);
@@ -81,9 +82,6 @@ void getDataFromEndpoint() {
         Serial.println();
         Serial.print("[HTTP] connection closed or file end.\n");
         }
-        screen.drawImage(byte_buff);
-
-        
       }
       else {
         Serial.print("Error code: ");
@@ -94,7 +92,14 @@ void getDataFromEndpoint() {
     }
     else {
       Serial.println("WiFi Disconnected");
+      setup_wifi_connection();
     }
+}
+
+
+void updateState() {
+    getImageDataFromEndpoint();
+    screen.drawImage(byte_buff);
 
 }
 
@@ -102,13 +107,13 @@ void setup() {
   Serial.begin(115200);
   setup_wifi_connection();
   screen.setup();
-  getDataFromEndpoint();
+  updateState();
 }
 
 
 void loop() {
   if (millis() - previous_millis > 600000) { 
     previous_millis = millis();
-    getDataFromEndpoint();
+    updateState();
   }
 }
