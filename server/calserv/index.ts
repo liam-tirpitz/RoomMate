@@ -3,7 +3,7 @@ import {CalendarClient} from './calendar-api/ews';
 import {ImageProcessor} from "./image_processing/imageprocessing"
 import * as ews from "ews-javascript-api";
 import {SimpleEvent} from "./datamodels/SimpleEvent";
-import * as hasher from "node-object-hash"
+import * as crypto from "crypto";
 
 const server = fastify()
 
@@ -85,7 +85,9 @@ server.get("/data", async (request, reply) => {
         calendarData.next_update = ""
     }
 
-    calendarData.hash = hasher.hasher({ sort: true, coerce: true, alg: 'md5' }).hash(calendarData.hash)
+    const hash_string = JSON.stringify(calendarData)
+
+    calendarData.hash = crypto.createHash('md5').update(hash_string).digest('hex');
     calendarData.current_time = now.MomentDate.toISOString()
 
     return JSON.stringify(calendarData)

@@ -309,11 +309,11 @@ horizontal1bit(data, canvasWidth) {
         let myImageData = this.ctx.getImageData(0, 0, 800, 480);
         const data_arr = this.horizontal1bit(Array.from(myImageData.data), 800)
         const base64String = btoa(String.fromCharCode.apply(null, data_arr));
-        console.log(JSON.stringify(base64String))
+        // console.log(JSON.stringify(base64String))
         const out = fs.createWriteStream( room_id + '.png')
         const stream = this.canvas.createPNGStream()
         stream.pipe(out)
-        out.on('finish', () =>  console.log('The PNG file was created.'))
+        out.on('finish', () =>  console.log('The PNG file was created.', (new Date()).toISOString()))
         return base64String
     }
 }
