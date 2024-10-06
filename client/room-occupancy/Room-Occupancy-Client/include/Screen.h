@@ -2,7 +2,6 @@
 #include "EPD.h"
 #include "GUI_Paint.h"
 #include <stdlib.h>
-//#include "ImageData.h"
 
 #define SCREEN_HEIGHT EPD_7IN5_V2_HEIGHT
 #define SCREEN_WIDTH EPD_7IN5_V2_WIDTH
@@ -27,7 +26,7 @@ class Screen
 
 	void draw();
 	void drawImage(unsigned char *output);	
-	void printThings();
+	void sleep();
 	
 	private:
 	void draw_footer();

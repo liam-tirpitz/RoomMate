@@ -10,6 +10,9 @@
 #include <Screen.h>
 #include "mbedtls/base64.h"
 
+#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP  60        /* Time ESP32 will go to sleep (in seconds) */
+
 
 const char* ssid = "RWTH-devices";
 const char* pass = "N9alrk2ULDSWpidF";
@@ -19,6 +22,9 @@ unsigned char byte_buff[48000] = {0};
 
 unsigned long previous_millis = 0;
 
+String devid = "";
+JsonDocument doc;
+RTC_DATA_ATTR char last_hash[16];
 
 
 FooterState footerState;
@@ -27,6 +33,7 @@ Screen screen {&footerState};
 WiFiMulti wifiMulti;
 
 const String endpoint = "http://your-server.example.com:3001/";
+
 
 
 void setup_wifi_connection() {
@@ -47,11 +54,8 @@ void setup_wifi_connection() {
   Serial.println(WiFi.localIP());
 }
 
-void getImageDataFromEndpoint() {
-    String devid = WiFi.macAddress();
-    devid.replace(":","");
-    Serial.println(devid);
-    if(WiFi.status()== WL_CONNECTED){
+uint8_t getImageDataFromEndpoint() {
+    if(WiFi.status() == WL_CONNECTED){
       HTTPClient http;
       
       http.begin(endpoint + "image?devid=" + devid);
@@ -79,41 +83,98 @@ void getImageDataFromEndpoint() {
               delay(1);
             }
 
-        Serial.println();
-        Serial.print("[HTTP] connection closed or file end.\n");
+          Serial.println();
+          Serial.print("[HTTP] connection closed or file end.\n");
+          http.end();
+          return 0;
         }
       }
       else {
         Serial.print("Error code: ");
         Serial.println(httpResponseCode);
+        http.end();
+        return 1;
       }
       // Free resources
-      http.end();
     }
     else {
       Serial.println("WiFi Disconnected");
-      setup_wifi_connection();
+      return 2;
     }
+    return 3;
+}
+
+void getMetaDataFromEndpoint() {
+  if(WiFi.status() == WL_CONNECTED){
+    HTTPClient http;
+
+    http.begin(endpoint + "data?devid=" + devid);
+    int httpResponseCode = http.GET();
+
+    if (httpResponseCode>0) {
+      if (httpResponseCode == HTTP_CODE_OK) {
+        String payload = http.getString();
+        DeserializationError error = deserializeJson(doc, payload);
+        if (error) {
+          Serial.print(F("deserializeJson() failed: "));
+          Serial.println(error.f_str());
+       } else {
+          Serial.println("Updated Metadata");
+       }
+      }
+    }
+    http.end();
+  }
+}
+
+void handleMetadata() {
+  const char* next_update = doc["next_update"]; // "2024-10-06T12:00:00.000Z"
+  const char* hash = doc["hash"]; // "d41d8cd98f00b204e9800998ecf8427e"
+  const char* current_time = doc["current_time"]; // "2024-10-06T11:46:50.205Z"
+  
+  // Redraw screen if metadata changed
+  bool needs_update = false;
+  for (uint8_t i = 0; i < 5; i++) {
+    if(last_hash[i] != hash[i]) {
+      needs_update = true;
+      break;
+    }
+  }
+  if (needs_update) {
+    Serial.println("Update required.");
+    if(!getImageDataFromEndpoint()) {
+        screen.drawImage(byte_buff);
+      }
+    for (uint8_t i = 0; i < 5; i++) {
+      last_hash[i] = hash[i];
+    }
+  } else {
+      Serial.println("Im Westen nichts neues.");
+  }
 }
 
 
 void updateState() {
-    getImageDataFromEndpoint();
-    screen.drawImage(byte_buff);
+    getMetaDataFromEndpoint();
+    handleMetadata();
+}
 
+void sleep() {
+  screen.sleep();
+  esp_deep_sleep_start();
 }
 
 void setup() {
   Serial.begin(115200);
   setup_wifi_connection();
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   screen.setup();
-  updateState();
+  devid = WiFi.macAddress();
+  devid.replace(":","");
 }
 
 
 void loop() {
-  if (millis() - previous_millis > 600000) { 
-    previous_millis = millis();
-    updateState();
-  }
+  updateState();
+  sleep();
 }

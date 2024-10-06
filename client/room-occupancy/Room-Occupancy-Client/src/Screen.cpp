@@ -26,13 +26,6 @@ void Screen::drawImage(unsigned char *output) {
       DEV_Delay_ms(2000);
 }
 
-void Screen::printThings() {
-  //Paint_DrawBitMap(example);
-  printf("EPD_Display\r\n");
-  EPD_7IN5_V2_Display(BlackImage);
-  DEV_Delay_ms(2000);
-
-}
 
 
 void Screen::draw() {
@@ -44,4 +37,8 @@ void Screen::draw() {
 void Screen::draw_footer() {
     Paint_DrawRectangle(FOOTER_X_START, FOOTER_Y_START, SCREEN_WIDTH-2, SCREEN_HEIGHT-2, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
     Paint_DrawString_EN(FOOTER_X(70), FOOTER_Y(20), "Hallo Welt!", &Font16, WHITE, BLACK);
+}
+
+void Screen::sleep() {
+    EPD_7IN5_V2_Sleep();
 }
