@@ -6,31 +6,27 @@
 #include <WiFi.h>
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
-#include <EasyNTPClient.h>
 #include <ArduinoJson.h>
 #include <Screen.h>
 #include "mbedtls/base64.h"
 
 
-const char* NTP_HOST = "ntp1.rwth-aachen.de";
-const int NTP_OFFSET = 1;  // UTC+1
-const int NTP_PORT = 123;
 const char* ssid = "RWTH-devices";
 const char* pass = "N9alrk2ULDSWpidF";
 
 unsigned char b64_buff[1000] = {0};
 unsigned char byte_buff[48000] = {0};
 
+unsigned long previous_millis = 0;
 
-WiFiUDP g_ntpUDP;
-EasyNTPClient g_ntpClient(g_ntpUDP, NTP_HOST, NTP_OFFSET);
+
 
 FooterState footerState;
 Screen screen {&footerState};
 
 WiFiMulti wifiMulti;
 
-const String endpoint = "http://your-server.example.com:3001/occupancy";
+const String endpoint = "http://your-server.example.com:3001/";
 
 void setup_wifi_connection() {
   wifiMulti.addAP(ssid, pass);
@@ -50,21 +46,6 @@ void setup_wifi_connection() {
   Serial.println(WiFi.localIP());
 }
 
-void setup() {
-  Serial.begin(115200);
-  setup_wifi_connection();
-  screen.setup();
-  //screen.draw();
-}
-
-void stop() {
-    Serial.println("END" + endpoint);
-    while(true) {
-        delay(1000);
-    }
-}
-
-
 void getDataFromEndpoint() {
     String devid = WiFi.macAddress();
     devid.replace(":","");
@@ -72,7 +53,7 @@ void getDataFromEndpoint() {
     if(WiFi.status()== WL_CONNECTED){
       HTTPClient http;
       
-      http.begin(endpoint + "?devid=" + devid);
+      http.begin(endpoint + "image?devid=" + devid);
 
       int httpResponseCode = http.GET();
       int buffer_offset = 0;
@@ -80,7 +61,6 @@ void getDataFromEndpoint() {
         if (httpResponseCode == HTTP_CODE_OK) {
             int len = http.getSize();
             WiFiClient *stream = http.getStreamPtr();
-            Serial.println(len);
             
             while (http.connected() && (len > 0 || len == -1)) {
               size_t size = stream->available();
@@ -93,7 +73,6 @@ void getDataFromEndpoint() {
                 int size_left = 48000-buffer_offset;
                 if (size_left < 0) size_left = 0;
                 mbedtls_base64_decode(byte_buff+buffer_offset, size_left, &outlen, b64_buff, c);
-                Serial.println(outlen);
                 buffer_offset = buffer_offset + outlen;
               }
               delay(1);
@@ -119,8 +98,17 @@ void getDataFromEndpoint() {
 
 }
 
+void setup() {
+  Serial.begin(115200);
+  setup_wifi_connection();
+  screen.setup();
+  getDataFromEndpoint();
+}
+
 
 void loop() {
-  getDataFromEndpoint();
-  delay(900000);
+  if (millis() - previous_millis > 600000) { 
+    previous_millis = millis();
+    getDataFromEndpoint();
+  }
 }
