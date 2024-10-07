@@ -55,7 +55,7 @@ export class CalendarClient {
         this.exch.GetUserAvailability(attendee, timeWindow, ews.AvailabilityData.FreeBusyAndSuggestions)
             .then(function (availabilityResponse: GetUserAvailabilityResults) {
                 const responses:AttendeeAvailability = availabilityResponse.AttendeesAvailability.Responses.at(0)
-                for (let cEvent: CalendarEvent of responses.CalendarEvents) {
+                for (let cEvent of responses.CalendarEvents) {
                     console.log(cEvent)
                 }
             }, function (errors:any) {
