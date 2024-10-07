@@ -11,7 +11,7 @@
 #include "mbedtls/base64.h"
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP  60        /* Time ESP32 will go to sleep (in seconds) */
+#define regular_wakeup_interval_in_s  600        /* Time ESP32 will go to sleep (in seconds) */
 
 
 const char* ssid = "RWTH-devices";
@@ -128,10 +128,12 @@ void getMetaDataFromEndpoint() {
 }
 
 void handleMetadata() {
-  const char* next_update = doc["next_update"]; // "2024-10-06T12:00:00.000Z"
+  long next_update_unix = doc["next_update_unix"]; // 1728220858
   const char* hash = doc["hash"]; // "d41d8cd98f00b204e9800998ecf8427e"
-  const char* current_time = doc["current_time"]; // "2024-10-06T11:46:50.205Z"
-  
+  long current_time_unix = doc["current_time_unix"]; // 1728220858  
+  bool is_night = doc["is_night"]; // false
+  bool is_weekend = doc["is_weekend"]; // false
+
   // Redraw screen if metadata changed
   bool needs_update = false;
   for (uint8_t i = 0; i < 5; i++) {
@@ -144,13 +146,30 @@ void handleMetadata() {
     Serial.println("Update required.");
     if(!getImageDataFromEndpoint()) {
         screen.drawImage(byte_buff);
-      }
+    }
     for (uint8_t i = 0; i < 5; i++) {
       last_hash[i] = hash[i];
     }
   } else {
       Serial.println("Im Westen nichts neues.");
   }
+
+  Serial.println("Configure sleep.");
+  long diff = next_update_unix - current_time_unix;
+  long sleep_time_in_s = 0;
+  if (next_update_unix > 0 && diff > 0 && diff < regular_wakeup_interval_in_s) {
+    sleep_time_in_s = diff + 30;
+  } else if (is_night || is_weekend) {
+    sleep_time_in_s = diff + 30;
+  } else {
+    sleep_time_in_s = regular_wakeup_interval_in_s;
+  }
+  esp_sleep_enable_timer_wakeup(sleep_time_in_s * uS_TO_S_FACTOR);
+  Serial.println("Sleep configured.");
+  Serial.print("Wait for ");
+  Serial.print(sleep_time_in_s);
+  Serial.println();
+
 }
 
 
@@ -167,7 +186,7 @@ void sleep() {
 void setup() {
   Serial.begin(115200);
   setup_wifi_connection();
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  esp_sleep_enable_timer_wakeup(regular_wakeup_interval_in_s * uS_TO_S_FACTOR);
   screen.setup();
   devid = WiFi.macAddress();
   devid.replace(":","");
