@@ -114,10 +114,15 @@ export class ImageProcessor {
     drawBlock(yoffset: number, event: SimpleEvent) {
         this.ctx.fillStyle = "rgba(255, 255, 255, 1)";
         this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
-        this.ctx.font = '24pt "HNB"'
+        this.ctx.font = '20pt "HNB"'
         const line_spacing = 29
-        this.ctx.fillText(event.summary, 46, 375 + yoffset*105)
-        this.ctx.font = '21pt "HNL"'
+        let trunc_summary = event.summary
+        if (trunc_summary.length > 30) {
+            trunc_summary = trunc_summary.substring(0,27)  + "...";
+        }
+
+        this.ctx.fillText(trunc_summary, 46, 375 + yoffset*105)
+        this.ctx.font = '20pt "HNL"'
         this.ctx.fillText(event.organizer, 46, 375 + 1 * line_spacing + yoffset*105)
         this.ctx.fillText(this.getTimeStringFromDate(event.start) + " - " + this.getTimeStringFromDate(event.end), 46, 375 + 2 * line_spacing + yoffset*105)
     }
@@ -142,7 +147,7 @@ export class ImageProcessor {
         if (event.happeningNow(now)) {
             if (event.summary) {
                 let trunc_summary = event.summary
-                if (trunc_summary.length > 30) {
+                if (trunc_summary.length > 33) {
                     trunc_summary = trunc_summary.substring(0,30)  + "...";
                 }
                 this.drawOccupied(trunc_summary, event.organizer, this.getTimeStringFromDate(event.start) + " - " + this.getTimeStringFromDate(event.end))

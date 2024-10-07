@@ -1,6 +1,8 @@
 import {
-    ExchangeService, FolderId,
-    Mailbox,
+    AttendeeAvailability,
+    AttendeeInfo, CalendarEvent,
+    ExchangeService, FolderId, FolderView, GetUserAvailabilityResults,
+    Mailbox, SearchFilter, TimeWindow,
     WellKnownFolderName
 } from "ews-javascript-api";
 import * as dotenv from 'dotenv'
@@ -37,15 +39,28 @@ export class CalendarClient {
         const appointments = this.exch.FindAppointments(folderIdFromCalendar, view)
         let events: SimpleEvent[] = [];
         for (let appointment of (await appointments).Items) {
-            // console.log(appointment.Organizer.Name)
-            // console.log(appointment.Subject)
-            // console.log(appointment.Start)
-            // console.log(appointment.End)
-            // console.log(appointment.IsCancelled)
-
             events.push(new SimpleEvent(appointment.Start.MomentDate, appointment.End.MomentDate, appointment.Subject, appointment.Organizer.Name, appointment.IsCancelled))
         }
         return events
+    }
+
+    async readPersonalStuff(person_mail) {
+        var attendee: AttendeeInfo[] =[ new ews.AttendeeInfo(person_mail)];
+        var timeWindow: TimeWindow = new ews.TimeWindow(ews.DateTime.Now, ews.DateTime.Now.AddDays(2));
+        const id = new FolderId(WellKnownFolderName.Calendar, new Mailbox(person_mail));
+        const view = new FolderView(10)
+        const things = await this.exch.FindFolders(id, view)
+        console.log(things)
+
+        this.exch.GetUserAvailability(attendee, timeWindow, ews.AvailabilityData.FreeBusyAndSuggestions)
+            .then(function (availabilityResponse: GetUserAvailabilityResults) {
+                const responses:AttendeeAvailability = availabilityResponse.AttendeesAvailability.Responses.at(0)
+                for (let cEvent: CalendarEvent of responses.CalendarEvents) {
+                    console.log(cEvent)
+                }
+            }, function (errors:any) {
+                //log errors or do something with errors
+            });
     }
 
 }

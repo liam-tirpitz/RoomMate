@@ -48,8 +48,9 @@ function getCalendarFromCalendarID(calendarID: string) {
 })
 
 class CalendarData {
-    current_time: string;
-    next_update: string;
+    current_time_string: string;
+    current_time_unix: number;
+    next_update_unix: number;
     room_name: string;
     room_number: string;
     hash: string;
@@ -80,15 +81,17 @@ server.get("/data", async (request, reply) => {
         }
     }
     if(next_update) {
-        calendarData.next_update = next_update.toISOString()
+        calendarData.next_update_unix = next_update.unix()
     } else {
-        calendarData.next_update = ""
+        calendarData.next_update_unix = 0
     }
 
     const hash_string = JSON.stringify(calendarData)
 
     calendarData.hash = crypto.createHash('md5').update(hash_string).digest('hex');
-    calendarData.current_time = now.MomentDate.toISOString()
+    calendarData.current_time_string = now.MomentDate.toISOString()
+    calendarData.current_time_unix = now.MomentDate.unix()
+
 
     return JSON.stringify(calendarData)
 })
