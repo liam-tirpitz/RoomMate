@@ -55,6 +55,7 @@ class CalendarData {
     room_number: string;
     hash: string;
     next_appointments: SimpleEvent[];
+
 }
 
 server.get("/data", async (request, reply) => {
@@ -83,7 +84,7 @@ server.get("/data", async (request, reply) => {
     if(next_update) {
         calendarData.next_update_unix = next_update.unix()
     } else {
-        calendarData.next_update_unix = 0
+        calendarData.next_update_unix = now.AddDays(1).MomentDate.startOf("day").unix()
     }
 
     const hash_string = JSON.stringify(calendarData)
