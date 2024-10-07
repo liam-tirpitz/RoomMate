@@ -11,7 +11,7 @@
 #include "mbedtls/base64.h"
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define regular_wakeup_interval_in_s  600        /* Time ESP32 will go to sleep (in seconds) */
+#define regular_wakeup_interval_in_s  900        /* Time ESP32 will go to sleep (in seconds) */
 
 
 const char* ssid = "RWTH-devices";
