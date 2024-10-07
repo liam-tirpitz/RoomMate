@@ -55,7 +55,7 @@ class CalendarData {
     room_name: string;
     room_number: string;
     hash: string;
-    next_appointments: SimpleEvent[];
+    //next_appointments: SimpleEvent[];
     is_night: boolean = false;
     is_weekend: boolean = false;
 }
@@ -71,7 +71,7 @@ server.get("/data", async (request, reply) => {
     const client = new CalendarClient()
     const appointments = await client.readUpcomingEventsToday(email)
     const now = ews.DateTime.Now
-    calendarData.next_appointments = appointments
+    //calendarData.next_appointments = appointments
     calendarData.room_number = calendarDetails.id_string
     calendarData.room_name = calendarDetails.name
 
