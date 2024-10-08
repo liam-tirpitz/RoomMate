@@ -5,6 +5,7 @@ import * as ews from "ews-javascript-api";
 import * as crypto from "crypto";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import * as winston from "winston";
+import {SimpleEvent} from "./datamodels/SimpleEvent";
 
 const server = fastify()
 
@@ -74,7 +75,7 @@ class CalendarData {
     room_name: string;
     room_number: string;
     hash: string;
-    //next_appointments: SimpleEvent[];
+    next_appointments: SimpleEvent[];
     is_night: boolean = false;
     is_weekend: boolean = false;
 }
@@ -90,7 +91,7 @@ server.get("/data", async (request, reply) => {
     const client = new CalendarClient()
     const appointments = await client.readUpcomingEventsToday(email)
     const now = ews.DateTime.Now
-    //calendarData.next_appointments = appointments
+    calendarData.next_appointments = appointments
     calendarData.room_number = calendarDetails.id_string
     calendarData.room_name = calendarDetails.name
 
@@ -120,8 +121,8 @@ server.get("/data", async (request, reply) => {
         updateTime.set("hour", 8)
         calendarData.next_update_unix = updateTime.unix()
     }
-    const hash_string = JSON.stringify(appointments)
-
+    const hash_string = JSON.stringify(calendarData)
+    calendarData.next_appointments = undefined
     calendarData.hash = crypto.createHash('md5').update(hash_string).digest('hex');
     calendarData.current_time_string = now.MomentDate.toISOString()
     calendarData.current_time_unix = now.MomentDate.unix()
