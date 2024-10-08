@@ -2,9 +2,9 @@ import fastify from 'fastify'
 import {CalendarClient} from './calendar-api/ews';
 import {ImageProcessor} from "./image_processing/imageprocessing"
 import * as ews from "ews-javascript-api";
-import {SimpleEvent} from "./datamodels/SimpleEvent";
 import * as crypto from "crypto";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
+import * as winston from "winston";
 
 const server = fastify()
 
@@ -12,6 +12,25 @@ const devices = require('./config/devices.json');
 const calendars = require('./config/calendars.json');
 
 process.env.TZ = 'Europe/Berlin'
+
+
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp({
+            format: 'YYYY-MM-DD HH:mm:ss'
+        }),
+        winston.format.simple()
+    ),
+    defaultMeta: {},
+    transports: [
+        new winston.transports.File({ filename: 'error.log', level: 'error' }),
+        new winston.transports.File({ filename: 'combined.log' }),
+    ],
+});
+logger.add(new winston.transports.Console({
+    format: winston.format.simple(),
+}));
 
 function getCalendarIDFromDeviceID(devid: string) {
     for (const device of devices.devices) {
@@ -41,7 +60,7 @@ function getCalendarFromCalendarID(calendarID: string) {
         const email = calendarDetails.email
         const client = new CalendarClient()
         const appointments = await client.readUpcomingEventsToday(email)
-
+        logger.info("Image requested for: " + devid)
         const image_processor = new ImageProcessor()
         const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calid, appointments)
         return img
@@ -101,16 +120,13 @@ server.get("/data", async (request, reply) => {
         updateTime.set("hour", 8)
         calendarData.next_update_unix = updateTime.unix()
     }
-
-
-
-    const hash_string = JSON.stringify(calendarData)
+    const hash_string = JSON.stringify(appointments)
 
     calendarData.hash = crypto.createHash('md5').update(hash_string).digest('hex');
     calendarData.current_time_string = now.MomentDate.toISOString()
     calendarData.current_time_unix = now.MomentDate.unix()
 
-
+    logger.info("Data requested for: " + devid)
     return JSON.stringify(calendarData)
 })
 
