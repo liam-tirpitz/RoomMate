@@ -10,7 +10,7 @@
 #include <Screen.h>
 #include "mbedtls/base64.h"
 
-#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
+#define uS_TO_S_FACTOR 1000000ull  /* Conversion factor for micro seconds to seconds */
 #define regular_wakeup_interval_in_s  900        /* Time ESP32 will go to sleep (in seconds) */
 
 
@@ -164,7 +164,8 @@ void handleMetadata() {
   } else {
     sleep_time_in_s = regular_wakeup_interval_in_s;
   }
-  esp_sleep_enable_timer_wakeup(sleep_time_in_s * uS_TO_S_FACTOR);
+  uint64_t sleep_time_in_us = sleep_time_in_s * uS_TO_S_FACTOR;
+  esp_sleep_enable_timer_wakeup(sleep_time_in_us);
   Serial.println("Sleep configured.");
   Serial.print("Wait for ");
   Serial.print(sleep_time_in_s);
@@ -186,14 +187,14 @@ void sleep() {
 void setup() {
   Serial.begin(115200);
   setup_wifi_connection();
-  esp_sleep_enable_timer_wakeup(regular_wakeup_interval_in_s * uS_TO_S_FACTOR);
   screen.setup();
   devid = WiFi.macAddress();
-  devid.replace(":","");
+  devid.replace(":","");  
+  updateState();
+  sleep();
 }
 
 
 void loop() {
-  updateState();
-  sleep();
+
 }
