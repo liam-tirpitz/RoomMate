@@ -108,14 +108,14 @@ server.get("/data", async (request, reply) => {
         calendarData.next_update_unix = now.AddDays(1).MomentDate.startOf("day").unix()
     }
     const hours_of_day = now.Hour
-    if (hours_of_day > 20 || hours_of_day < 8) {
+    if (hours_of_day > 18 || hours_of_day < 8) {
         calendarData.is_night = true
     }
     const day_of_week = now.DayOfWeek
     if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday) {
         calendarData.is_weekend = true
     }
-    if (calendarData.is_weekend || calendarData.is_night && appointments.length == 0) {
+    if (calendarData.is_weekend || calendarData.is_night) {
         let updateTime = now.AddDays(1).MomentDate.startOf("day")
         updateTime.set("hour", 8)
         calendarData.next_update_unix = updateTime.unix()
