@@ -55,7 +55,7 @@ export class ImageProcessor {
         this.ctx.lineWidth = 2;
         this.ctx.beginPath()
         this.ctx.strokeStyle = 'black';
-        this.ctx.strokeRect(-2, 106, 482, 169);
+        this.ctx.strokeRect(-2, 106, 484, 169);
         this.ctx.closePath()
     }
 
