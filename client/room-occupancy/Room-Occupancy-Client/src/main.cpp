@@ -145,7 +145,9 @@ void handleMetadata() {
   if (needs_update) {
     Serial.println("Update required.");
     if(!getImageDataFromEndpoint()) {
+        screen.setup();
         screen.drawImage(byte_buff);
+        screen.sleep();
     }
     for (uint8_t i = 0; i < 5; i++) {
       last_hash[i] = hash[i];
@@ -157,7 +159,11 @@ void handleMetadata() {
   Serial.println("Configure sleep.");
   long diff = next_update_unix - current_time_unix;
   long sleep_time_in_s = 0;
-  if (next_update_unix > 0 && diff > 0 && diff < regular_wakeup_interval_in_s) {
+  if (
+      next_update_unix > 0 
+      && diff > 0 
+      // Skip next regular update if next event is less than 10 minutes in the future
+      && ((diff < regular_wakeup_interval_in_s) || (diff - regular_wakeup_interval_in_s) < 600)) { 
     sleep_time_in_s = diff + 30;
   } else if (is_night || is_weekend) {
     sleep_time_in_s = diff + 30;
@@ -180,14 +186,12 @@ void updateState() {
 }
 
 void sleep() {
-  screen.sleep();
   esp_deep_sleep_start();
 }
 
 void setup() {
   Serial.begin(115200);
   setup_wifi_connection();
-  screen.setup();
   devid = WiFi.macAddress();
   devid.replace(":","");  
   updateState();
