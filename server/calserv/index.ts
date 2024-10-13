@@ -105,8 +105,6 @@ server.get("/data", async (request, reply) => {
     }
     if (next_update) {
         calendarData.next_update_unix = next_update.unix()
-    } else {
-        calendarData.next_update_unix = now.AddDays(1).MomentDate.startOf("day").unix()
     }
     const hours_of_day = now.Hour
     if (hours_of_day > 18 || hours_of_day < 7) {
@@ -116,13 +114,21 @@ server.get("/data", async (request, reply) => {
     if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday) {
         calendarData.is_weekend = true
     }
-    if (calendarData.is_weekend || calendarData.is_night) {
+    if (calendarData.is_night) {
         let next_day = 0
         if (now.Hour > 18) next_day = 1 // Only move to next day if the request was sent before midnight, otherwise stay on the current day
         let updateTime = now.AddDays(next_day).MomentDate.startOf("day")
         updateTime.set("hour", 8)
         calendarData.next_update_unix = updateTime.unix()
+    } else if (calendarData.is_weekend) { // Its the weekend, but not the night
+        if (appointments.length == 0) {
+            let updateTime = now.AddDays(1).MomentDate.startOf("day")
+            updateTime.set("hour", 8)
+            calendarData.next_update_unix = updateTime.unix()
+        }
     }
+
+
     const hash_string = JSON.stringify(calendarData)
     calendarData.next_appointments = undefined
     calendarData.hash = crypto.createHash('md5').update(hash_string).digest('hex');
