@@ -9,10 +9,12 @@
 #include <ArduinoJson.h>
 #include <Screen.h>
 #include "mbedtls/base64.h"
+#include <Preferences.h>
 
 #define uS_TO_S_FACTOR 1000000ull  /* Conversion factor for micro seconds to seconds */
 #define regular_wakeup_interval_in_s  900        /* Time ESP32 will go to sleep (in seconds) */
 
+#define NAMESPACE "CALENDAR"
 
 const char* ssid = "RWTH-devices";
 const char* pass = "N9alrk2ULDSWpidF";
@@ -24,7 +26,7 @@ unsigned long previous_millis = 0;
 
 String devid = "";
 JsonDocument doc;
-RTC_DATA_ATTR char last_hash[16];
+//RTC_DATA_ATTR char last_hash[16];
 
 
 FooterState footerState;
@@ -33,6 +35,8 @@ Screen screen {&footerState};
 WiFiMulti wifiMulti;
 
 const String endpoint = "http://your-server.example.com:3001/";
+
+Preferences preferences;
 
 
 
@@ -136,8 +140,10 @@ void handleMetadata() {
 
   // Redraw screen if metadata changed
   bool needs_update = false;
+  preferences.begin(NAMESPACE, false); 
   for (uint8_t i = 0; i < 5; i++) {
-    if(last_hash[i] != hash[i]) {
+    char last_hash = preferences.getUInt(reinterpret_cast<const char*>(i), 0);
+    if(last_hash != hash[i]) {
       needs_update = true;
       break;
     }
@@ -150,12 +156,13 @@ void handleMetadata() {
         screen.sleep();
     }
     for (uint8_t i = 0; i < 5; i++) {
-      last_hash[i] = hash[i];
+      //last_hash[i] = hash[i];
+      preferences.putChar(reinterpret_cast<const char*>(i), hash[i]);
     }
   } else {
       Serial.println("Im Westen nichts neues.");
   }
-
+  preferences.end();
   Serial.println("Configure sleep.");
   long diff = next_update_unix - current_time_unix;
   long sleep_time_in_s = 0;
@@ -186,6 +193,10 @@ void updateState() {
 }
 
 void sleep() {
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH,   ESP_PD_OPTION_OFF);
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_OFF);
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_FAST_MEM, ESP_PD_OPTION_OFF);
+  esp_sleep_pd_config(ESP_PD_DOMAIN_XTAL,         ESP_PD_OPTION_OFF);
   esp_deep_sleep_start();
 }
 
