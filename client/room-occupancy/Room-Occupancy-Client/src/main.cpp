@@ -19,6 +19,8 @@
 const char* ssid = "RWTH-devices";
 const char* pass = "N9alrk2ULDSWpidF";
 
+const char* keys[] = {"h1", "h2", "h3", "h4", "h5"};
+
 unsigned char b64_buff[1000] = {0};
 unsigned char byte_buff[48000] = {0};
 
@@ -142,7 +144,7 @@ void handleMetadata() {
   bool needs_update = false;
   preferences.begin(NAMESPACE, false); 
   for (uint8_t i = 0; i < 5; i++) {
-    char last_hash = preferences.getUInt(reinterpret_cast<const char*>(i), 0);
+    char last_hash = preferences.getChar(keys[i], 0);
     if(last_hash != hash[i]) {
       needs_update = true;
       break;
@@ -156,8 +158,7 @@ void handleMetadata() {
         screen.sleep();
     }
     for (uint8_t i = 0; i < 5; i++) {
-      //last_hash[i] = hash[i];
-      preferences.putChar(reinterpret_cast<const char*>(i), hash[i]);
+      preferences.putChar(keys[i], hash[i]);
     }
   } else {
       Serial.println("Im Westen nichts neues.");
@@ -204,6 +205,7 @@ void setup() {
   Serial.begin(115200);
   setup_wifi_connection();
   devid = WiFi.macAddress();
+    Serial.println(devid);
   devid.replace(":","");  
   updateState();
   sleep();
