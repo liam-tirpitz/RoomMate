@@ -17,7 +17,8 @@
 #define NAMESPACE "CALENDAR"
 
 const char* ssid = "RWTH-devices";
-const char* pass = "N9alrk2ULDSWpidF";
+//const char* pass = "N9alrk2ULDSWpidF"; // Waveshare Dev-Board
+const char* pass = "wX5etl2YBZLzhpRN"; // Feather
 
 const char* keys[] = {"h1", "h2", "h3", "h4", "h5"};
 
