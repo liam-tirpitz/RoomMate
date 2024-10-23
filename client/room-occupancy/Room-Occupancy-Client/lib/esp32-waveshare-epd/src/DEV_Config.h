@@ -44,12 +44,22 @@
 /**
  * GPIO config
 **/
-#define EPD_SCK_PIN  13
-#define EPD_MOSI_PIN 14
+// Config for Feather
+
+#define EPD_SCK_PIN  5
+#define EPD_MOSI_PIN 19
 #define EPD_CS_PIN   15
-#define EPD_RST_PIN  26
-#define EPD_DC_PIN   27
-#define EPD_BUSY_PIN 25
+#define EPD_RST_PIN  27
+#define EPD_DC_PIN   33
+#define EPD_BUSY_PIN 32
+
+// Config for DEV-Board
+// #define EPD_SCK_PIN  13
+// #define EPD_MOSI_PIN 14
+// #define EPD_CS_PIN   15
+// #define EPD_RST_PIN  26
+// #define EPD_DC_PIN   27
+// #define EPD_BUSY_PIN 25
 
 #define GPIO_PIN_SET   1
 #define GPIO_PIN_RESET 0
