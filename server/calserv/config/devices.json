@@ -11,6 +11,12 @@
       "device_id": "94B5551C9B13",
       "location": "Seminarraum",
       "calendar_id": 1001
+    },
+    {
+      "id": 3,
+      "device_id": "E86BEA37D1B0",
+      "location": "Küche",
+      "calendar_id": 1000
     }
   ]
 }
