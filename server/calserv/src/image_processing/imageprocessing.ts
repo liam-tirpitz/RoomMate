@@ -316,8 +316,8 @@ horizontal1bit(data, canvasWidth) {
         let myImageData = this.ctx.getImageData(0, 0, this.screenHeight, this.screenWidth);
         const data_arr = this.horizontal1bit(Array.from(myImageData.data), this.screenHeight)
         const base64String = btoa(String.fromCharCode.apply(null, data_arr));
-        // console.log(JSON.stringify(base64String))
-        const out = fs.createWriteStream( room_id + '.png')
+        fs.mkdirSync('tmp', { recursive: true });
+        const out = fs.createWriteStream("tmp/" + room_id + '.png')
         const stream = this.canvas.createPNGStream()
         stream.pipe(out)
         out.on('finish', () =>  console.log('The PNG file was created.', (new Date()).toISOString()))
