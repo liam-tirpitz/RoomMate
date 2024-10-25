@@ -13,8 +13,7 @@ const server = fastify()
 const devices = require('../config/devices.json');
 const calendars = require('../config/calendars.json');
 
-process.env.TZ = 'Europe/Berlin'
-
+process.env.TZ = appconf.timezoe
 
 const logger = winston.createLogger({
     level: 'info',
