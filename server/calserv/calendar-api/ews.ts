@@ -9,20 +9,20 @@ import * as dotenv from 'dotenv'
 import * as ews from 'ews-javascript-api'
 import {CalendarView} from "ews-javascript-api/js/Search/CalendarView";
 import {SimpleEvent} from "../datamodels/SimpleEvent";
+import * as config from '../config/calendars.json'
+
 dotenv.config()
 
 
 export class CalendarClient {
     exch: ExchangeService;
-    config: any;
 
 
     constructor() {
-        this.config = require('../config/calendars.json');
         this.exch = new ews.ExchangeService(ews.ExchangeVersion.Exchange2010);
         if (process.env.EXC_USER && process.env.EXC_PASS) {
             this.exch.Credentials = new ews.WebCredentials(process.env.EXC_USER, process.env.EXC_PASS);
-            this.exch.Url = new ews.Uri(this.config.exchange.endpoint);
+            this.exch.Url = new ews.Uri(config.exchange.endpoint);
         } else {
             throw new Error('Missing Exchange Credentials!');
         }

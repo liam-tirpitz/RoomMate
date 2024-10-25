@@ -6,6 +6,7 @@ import * as crypto from "crypto";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import * as winston from "winston";
 import {SimpleEvent} from "./datamodels/SimpleEvent";
+import * as appconf from "./config/application.json"
 
 const server = fastify()
 
@@ -107,23 +108,23 @@ server.get("/data", async (request, reply) => {
         calendarData.next_update_unix = next_update.unix()
     }
     const hours_of_day = now.Hour
-    if (hours_of_day > 18 || hours_of_day < 7) {
+    if (hours_of_day >= appconf.night_start_hour  || hours_of_day < (appconf.night_end_hour-1)) {
         calendarData.is_night = true
     }
     const day_of_week = now.DayOfWeek
-    if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday) {
+    if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday || (day_of_week == DayOfWeek.Friday && hours_of_day >= appconf.night_start_hour)) {
         calendarData.is_weekend = true
     }
     if (calendarData.is_night) {
         let next_day = 0
-        if (now.Hour > 18) next_day = 1 // Only move to next day if the request was sent before midnight, otherwise stay on the current day
+        if (now.Hour >= appconf.night_start_hour) next_day = 1 // Only move to next day if the request was sent before midnight, otherwise stay on the current day
         let updateTime = now.AddDays(next_day).MomentDate.startOf("day")
-        updateTime.set("hour", 8)
+        updateTime.set("hour", appconf.night_end_hour)
         calendarData.next_update_unix = updateTime.unix()
     } else if (calendarData.is_weekend) { // Its the weekend, but not the night
         if (appointments.length == 0) {
             let updateTime = now.AddDays(1).MomentDate.startOf("day")
-            updateTime.set("hour", 8)
+            updateTime.set("hour", appconf.night_end_hour)
             calendarData.next_update_unix = updateTime.unix()
         }
     }

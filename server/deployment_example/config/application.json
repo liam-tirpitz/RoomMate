@@ -1,0 +1,5 @@
+{
+  "soon_threshold_in_min": 15,
+  "night_start_hour": 19,
+  "night_end_hour": 8
+}
