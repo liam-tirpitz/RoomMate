@@ -7,7 +7,8 @@
       "id": 200,
       "id_string": "200a",
       "name": "Meetingraum",
-      "email": "room@domain"
+      "email": "room@domain",
+      "logo": "institute_logo.png"
     }
   ]
 }

@@ -18,7 +18,6 @@ import {dithering} from "./image2cpp/dithering";
 export class ImageProcessor {
     ctx: CanvasRenderingContext2D;
     canvas: Canvas;
-    img: Promise<Image> = loadImage('image_processing/template.png')
     dithering_threshold: number = 128
     remove_zero_commas: boolean = false
     _bitswap: boolean = false
@@ -32,9 +31,9 @@ export class ImageProcessor {
     }
 
     setupCanvas(): Canvas {
-        registerFont('image_processing/fonts/HelveticaNeueLTCom-Bd.ttf', { family: 'HNB' })
-        registerFont('image_processing/fonts/HelveticaNeueLTCom-Lt.ttf', { family: 'HNL' })
-        return createCanvas(480, 800)
+        registerFont('./src/image_processing/fonts/HelveticaNeueLTCom-Bd.ttf', { family: 'HNB' })
+        registerFont('./src/image_processing/fonts/HelveticaNeueLTCom-Lt.ttf', { family: 'HNL' })
+        return createCanvas(this.screenWidth, this.screenHeight)
     }
 
     drawCurrentEventTime(timestring: string, black_font: boolean = false) {
@@ -48,7 +47,7 @@ export class ImageProcessor {
 
     drawCurrentEventBlackBox() {
         this.ctx.fillStyle = "black";
-        this.ctx.fillRect(0, 106, 480, 169);
+        this.ctx.fillRect(0, 106, this.screenWidth, 169);
     }
 
     drawCurrentEventWhiteBox() {
@@ -128,9 +127,12 @@ export class ImageProcessor {
     }
 
 
-    async drawHeader(room_name: string, room_number: string) {
-        this.ctx.drawImage(await this.img, 0, 0)
-
+    async drawHeader(room_name: string, room_number: string, logo: string) {
+        const logo_img = loadImage('./config/' + logo)
+        this.ctx.fillStyle = "white";
+        this.ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
+        this.ctx.fillStyle = "black";
+        this.ctx.drawImage(await logo_img, 0, 0)
         this.ctx.font = '21pt "HNB"'
         this.ctx.fillText(room_name, 248, 62)
 
@@ -288,8 +290,8 @@ horizontal1bit(data, canvasWidth) {
     }
 
 
-    async buildImage(room_name: string, room_number: string, room_id: string, data: SimpleEvent[]) {
-        const header = await this.drawHeader(room_name, room_number)
+    async buildImage(room_name: string, room_number: string, room_id: string, logo: string, data: SimpleEvent[]) {
+        const header = await this.drawHeader(room_name, room_number, logo)
         if (data.length) {
             this.drawCurrentEvent(data[0])
             const now = DateTime.Now
@@ -310,9 +312,9 @@ horizontal1bit(data, canvasWidth) {
         }
 
         this.rotate(90)
-        dithering(this.ctx, 480, 800, this.dithering_threshold, 0);
-        let myImageData = this.ctx.getImageData(0, 0, 800, 480);
-        const data_arr = this.horizontal1bit(Array.from(myImageData.data), 800)
+        dithering(this.ctx, this.screenWidth, this.screenHeight, this.dithering_threshold, 0);
+        let myImageData = this.ctx.getImageData(0, 0, this.screenHeight, this.screenWidth);
+        const data_arr = this.horizontal1bit(Array.from(myImageData.data), this.screenHeight)
         const base64String = btoa(String.fromCharCode.apply(null, data_arr));
         // console.log(JSON.stringify(base64String))
         const out = fs.createWriteStream( room_id + '.png')

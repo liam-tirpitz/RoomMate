@@ -64,7 +64,7 @@ function getCalendarFromCalendarID(calendarID: string) {
         const appointments = await client.readUpcomingEventsToday(email)
         logger.info("Image requested for: " + devid)
         const image_processor = new ImageProcessor()
-        const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calid, appointments)
+        const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calid, calendarDetails.logo, appointments)
         return img
     })
 })
