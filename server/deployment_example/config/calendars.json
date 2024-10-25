@@ -1,0 +1,13 @@
+{
+  "exchange": {
+    "endpoint": "https://ENDPOINT/EWS/Exchange.asmx"
+  },
+  "calendars": [
+    {
+      "id": 200,
+      "id_string": "200a",
+      "name": "Meetingraum",
+      "email": "room@domain"
+    }
+  ]
+}

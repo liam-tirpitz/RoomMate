@@ -1,0 +1,10 @@
+{
+  "devices": [
+    {
+      "id": 1,
+      "device_id": "aaaaaaaaaaaa",
+      "location": "Left_Door",
+      "calendar_id": 200
+    }
+  ]
+}
