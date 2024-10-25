@@ -8,6 +8,7 @@ COPY  --chown=node:node ["package.json", "package-lock.json*", "./"]
 RUN ls .
 RUN npm install
 COPY --chown=node:node . .
+COPY --chown=node:node deployment_example/config ./config
 RUN npm run build
 
 EXPOSE 3001
