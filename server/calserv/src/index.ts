@@ -1,17 +1,17 @@
 import fastify from 'fastify'
-import {CalendarClient} from './calendar-api/ews';
+import {CalendarClient} from './calendar-apis/ews';
 import {ImageProcessor} from "./image_processing/imageprocessing"
 import * as ews from "ews-javascript-api";
 import * as crypto from "crypto";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import * as winston from "winston";
 import {SimpleEvent} from "./datamodels/SimpleEvent";
-import * as appconf from "./config/application.json"
+import * as appconf from "../config/application.json"
 
 const server = fastify()
 
-const devices = require('./config/devices.json');
-const calendars = require('./config/calendars.json');
+const devices = require('../config/devices.json');
+const calendars = require('../config/calendars.json');
 
 process.env.TZ = 'Europe/Berlin'
 

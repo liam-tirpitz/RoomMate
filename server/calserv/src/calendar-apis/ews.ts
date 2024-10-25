@@ -9,7 +9,7 @@ import * as dotenv from 'dotenv'
 import * as ews from 'ews-javascript-api'
 import {CalendarView} from "ews-javascript-api/js/Search/CalendarView";
 import {SimpleEvent} from "../datamodels/SimpleEvent";
-import * as config from '../config/calendars.json'
+import * as config from '../../config/calendars.json'
 
 dotenv.config()
 
