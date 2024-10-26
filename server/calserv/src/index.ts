@@ -4,9 +4,9 @@ import {ImageProcessor} from "./image_processing/imageprocessing"
 import * as ews from "ews-javascript-api";
 import * as crypto from "crypto";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
-import * as winston from "winston";
-import {SimpleEvent} from "./datamodels/SimpleEvent";
 import * as appconf from "../config/application.json"
+import {CalendarData} from "./datamodels/CalendarData";
+import {Logging} from "./logging";
 
 const server = fastify()
 
@@ -15,23 +15,6 @@ const calendars = require('../config/calendars.json');
 
 process.env.TZ = appconf.timezoe
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp({
-            format: 'YYYY-MM-DD HH:mm:ss'
-        }),
-        winston.format.simple()
-    ),
-    defaultMeta: {},
-    transports: [
-        new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-        new winston.transports.File({ filename: 'logs/combined.log' }),
-    ],
-});
-logger.add(new winston.transports.Console({
-    format: winston.format.simple(),
-}));
 
 function getCalendarIDFromDeviceID(devid: string) {
     for (const device of devices.devices) {
@@ -61,24 +44,12 @@ function getCalendarFromCalendarID(calendarID: string) {
         const email = calendarDetails.email
         const client = new CalendarClient()
         const appointments = await client.readUpcomingEventsToday(email)
-        logger.info("Image requested for: " + devid)
+        Logging.instance.logger.info("Image requested for: " + devid)
         const image_processor = new ImageProcessor()
         const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calid, calendarDetails.logo, appointments)
         return img
     })
 })
-
-class CalendarData {
-    current_time_string: string;
-    current_time_unix: number;
-    next_update_unix: number;
-    room_name: string;
-    room_number: string;
-    hash: string;
-    next_appointments: SimpleEvent[];
-    is_night: boolean = false;
-    is_weekend: boolean = false;
-}
 
 server.get("/data", async (request, reply) => {
     let calendarData: CalendarData = new CalendarData();
@@ -135,7 +106,7 @@ server.get("/data", async (request, reply) => {
     calendarData.current_time_string = now.MomentDate.toISOString()
     calendarData.current_time_unix = now.MomentDate.unix()
 
-    logger.info("Data requested for: " + devid)
+    Logging.instance.logger.info("Data requested for: " + devid)
     return JSON.stringify(calendarData)
 })
 
