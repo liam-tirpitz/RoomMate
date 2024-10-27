@@ -1,6 +1,6 @@
 import {EWSCalendarClient} from "./calendar-apis/ews";
 import {Logging} from "./logging";
-import {ImageProcessor} from "./image_processing/imageprocessing";
+import {RoomImageProcessor} from "./image_processing/RoomImageProcessor";
 import {DataRetrieval} from "./DataRetrieval";
 import * as ews from "ews-javascript-api";
 import * as config from "../config/calendars.json";
@@ -40,9 +40,9 @@ export class RequestHandler {
         if (!calendarDetails) return
         const appointments = this.getAppointments(calendarDetails)
         Logging.instance.logger.info("Image requested for: " + device_id)
-        const image_processor = new ImageProcessor()
-        const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments)
-        return img
+        const image_processor = new RoomImageProcessor()
+        await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments)
+        return await image_processor.finalizeImage(calendarDetails.id_string)
     }
 
     async getData(device_id: string): Promise<string> {
