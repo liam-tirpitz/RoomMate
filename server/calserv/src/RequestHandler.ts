@@ -7,35 +7,56 @@ import * as appconf from "../config/application.json";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
 import {CalendarData} from "./datamodels/CalendarData";
+import {EWSCalendarInfo} from "./datamodels/EWSCalendarInfo";
+import {SimpleEvent} from "./datamodels/SimpleEvent";
 
 export class RequestHandler {
     dataRetrieval: DataRetrieval
+    ewsClient: EWSCalendarClient
 
     constructor() {
         this.dataRetrieval = new DataRetrieval()
+        this.ewsClient = new EWSCalendarClient()
     }
+
+    async getAppointmentsFromEWS(ewsInfo: EWSCalendarInfo): Promise<SimpleEvent[]> {
+        const email = ewsInfo.email
+        return this.ewsClient.readUpcomingEventsToday(email)
+
+    }
+
     async getImage(device_id: string): Promise<string | undefined> {
         const calid = this.dataRetrieval.getCalendarIDFromDeviceID(device_id)
         if (!calid) return
         const calendarDetails = this.dataRetrieval.getCalendarFromCalendarID(calid)
-        const email = calendarDetails.ews_info.email
-        const client = new EWSCalendarClient()
-        const appointments = await client.readUpcomingEventsToday(email)
+        let appointments
+        if (calendarDetails.ews_info) {
+            appointments = this.getAppointmentsFromEWS(calendarDetails.ews_info)
+        } else {
+            //Implement ICal here
+            return
+        }
+
         Logging.instance.logger.info("Image requested for: " + device_id)
         const image_processor = new ImageProcessor()
-        const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, appointments)
+        const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments)
         return img
     }
 
     async getData(device_id: string): Promise<string | undefined> {
         let calendarData: CalendarData = new CalendarData();
         const calid = this.dataRetrieval.getCalendarIDFromDeviceID(device_id)
-
         if (!calid) return
         const calendarDetails = this.dataRetrieval.getCalendarFromCalendarID(calid)
-        const email = calendarDetails.ews_info.email
-        const client = new EWSCalendarClient()
-        const appointments = await client.readUpcomingEventsToday(email)
+        let appointments
+        if (calendarDetails.ews_info) {
+            appointments = this.getAppointmentsFromEWS(calendarDetails.ews_info)
+        } else {
+            //Implement ICal here
+            return
+        }
+
+
         const now = ews.DateTime.Now
         calendarData.next_appointments = appointments
         calendarData.room_number = calendarDetails.id_string
