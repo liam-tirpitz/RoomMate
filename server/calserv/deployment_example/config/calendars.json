@@ -7,8 +7,21 @@
       "id": 200,
       "id_string": "200a",
       "name": "Meetingraum",
-      "email": "room@domain",
-      "logo": "institute_logo.png"
+      "logo": "institute_logo.png",
+      "exchange_info": {
+        "email": "room@domain"
+      }
+    },
+    {
+      "id": 201,
+      "id_string": "201",
+      "name": "Meetingraum 2",
+      "email": "room2@domain",
+      "logo": "institute_logo.png",
+      "ical_info": {
+        "endpoint": "www.domain.de/calendar"
+      }
     }
+
   ]
 }

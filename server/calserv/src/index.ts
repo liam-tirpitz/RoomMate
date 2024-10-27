@@ -1,5 +1,5 @@
 import fastify from 'fastify'
-import {CalendarClient} from './calendar-apis/ews';
+import {EWSCalendarClient} from './calendar-apis/ews';
 import {ImageProcessor} from "./image_processing/imageprocessing"
 import * as ews from "ews-javascript-api";
 import * as crypto from "crypto";
@@ -7,46 +7,26 @@ import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import * as appconf from "../config/application.json"
 import {CalendarData} from "./datamodels/CalendarData";
 import {Logging} from "./logging";
+import {DataRetrieval} from "./DataRetrieval";
 
 const server = fastify()
+const dataRetrieval: DataRetrieval = new DataRetrieval()
 
-const devices = require('../config/devices.json');
-const calendars = require('../config/calendars.json');
-
-process.env.TZ = appconf.timezoe
-
-
-function getCalendarIDFromDeviceID(devid: string) {
-    for (const device of devices.devices) {
-        if (device.device_id == devid) {
-            return device.calendar_id
-        }
-    }
-    return undefined
-}
-
-function getCalendarFromCalendarID(calendarID: string) {
-    for (const calendar of calendars.calendars) {
-        if (calendar.id == calendarID) {
-            return calendar
-        }
-    }
-    return undefined
-}
+process.env.TZ = appconf.timezoe;
 
 
 ['/occupancy', '/image'].forEach(path => {
     server.get(path, async (request, reply) => {
         const devid = request.query['devid']
-        const calid = getCalendarIDFromDeviceID(devid)
+        const calid = dataRetrieval.getCalendarIDFromDeviceID(devid)
         if (!calid) return 'Nein.'
-        const calendarDetails = getCalendarFromCalendarID(calid)
-        const email = calendarDetails.email
-        const client = new CalendarClient()
+        const calendarDetails = dataRetrieval.getCalendarFromCalendarID(calid)
+        const email = calendarDetails.ews_info.email
+        const client = new EWSCalendarClient()
         const appointments = await client.readUpcomingEventsToday(email)
         Logging.instance.logger.info("Image requested for: " + devid)
         const image_processor = new ImageProcessor()
-        const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calid, calendarDetails.logo, appointments)
+        const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, appointments)
         return img
     })
 })
@@ -55,11 +35,11 @@ server.get("/data", async (request, reply) => {
     let calendarData: CalendarData = new CalendarData();
 
     const devid = request.query['devid']
-    const calid = getCalendarIDFromDeviceID(devid)
+    const calid = dataRetrieval.getCalendarIDFromDeviceID(devid)
     if (!calid) return 'Nein.'
-    const calendarDetails = getCalendarFromCalendarID(calid)
-    const email = calendarDetails.email
-    const client = new CalendarClient()
+    const calendarDetails = dataRetrieval.getCalendarFromCalendarID(calid)
+    const email = calendarDetails.ews_info.email
+    const client = new EWSCalendarClient()
     const appointments = await client.readUpcomingEventsToday(email)
     const now = ews.DateTime.Now
     calendarData.next_appointments = appointments

@@ -14,7 +14,7 @@ import * as config from '../../config/calendars.json'
 dotenv.config()
 
 
-export class CalendarClient {
+export class EWSCalendarClient {
     exch: ExchangeService;
 
 
