@@ -39,7 +39,7 @@ export class EWSCalendarClient {
     }
 
 
-        async readUpcomingEventsToday(room_mail: string) {
+    async readUpcomingEventsToday(room_mail: string) {
         let now = ews.DateTime.Now
         const now_moment = now.MomentDate
         const eod_moment = now_moment.clone().endOf('day')
@@ -57,7 +57,7 @@ export class EWSCalendarClient {
 
     async readPersonAvailability(person_mail: string) {
         var attendee: AttendeeInfo[] =[ new ews.AttendeeInfo(person_mail)];
-        var timeWindow: TimeWindow = new ews.TimeWindow(ews.DateTime.Now, ews.DateTime.Now.AddDays(2));
+        var timeWindow: TimeWindow = new ews.TimeWindow(ews.DateTime.Now, ews.DateTime.Now.AddDays(1));
         // const id = new FolderId(WellKnownFolderName.Calendar, new Mailbox(person_mail));
         // const view = new FolderView(10)
         // const things = await this.exch.FindFolders(id, view)
@@ -69,7 +69,6 @@ export class EWSCalendarClient {
         for (let cEvent of responses.CalendarEvents) {
             events.push(new PersonalInfo(cEvent.StartTime.MomentDate, cEvent.EndTime.MomentDate, cEvent.FreeBusyStatus))
         }
-        console.log(events)
         return events
     }
 

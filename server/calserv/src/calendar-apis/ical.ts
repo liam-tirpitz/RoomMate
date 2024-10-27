@@ -2,6 +2,7 @@ import {SimpleEvent} from "../datamodels/SimpleEvent";
 import {ICalCalendarInfo} from "../datamodels/ICalCalendarInfo";
 import moment from "moment-timezone"
 import * as ews from "ews-javascript-api";
+import * as utils from "../utils"
 
 export class ICalClient {
 
@@ -17,11 +18,6 @@ export class ICalClient {
 
     async readUpcomingEventsToday(icalInfo: ICalCalendarInfo): Promise<SimpleEvent[]> {
         const data = await this.getCalendar(icalInfo.endpoint)
-        const now = ews.DateTime.Now
-        const start_of_today = moment().startOf('day');
-        const end_of_today = moment().endOf('day');
-        // const end_of_today = moment().add(5, 'days').endOf('day');
-
         let results: SimpleEvent[] = []
 
         for (let k in data) {
@@ -29,10 +25,7 @@ export class ICalClient {
             if (event.type === "VEVENT") {
 
                 const simpleEvent = new SimpleEvent(moment(event.start), moment(event.end), this.cleanSummaryString(event.summary), event.description, false)
-                if ((simpleEvent.start <= end_of_today && simpleEvent.end >= start_of_today) ||
-                    (simpleEvent.start < start_of_today && simpleEvent.end > start_of_today) ||
-                    (simpleEvent.start < end_of_today && simpleEvent.end > end_of_today) // TODO double check that at some point for logical correctness and behavior
-                ) {
+                if (utils.isEventToday(simpleEvent.start, simpleEvent.end)) {
                     results.push(simpleEvent)
                 }
             }

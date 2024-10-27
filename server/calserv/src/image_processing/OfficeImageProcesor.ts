@@ -49,13 +49,13 @@ export class OfficeImageProcesor extends ImageProcessor {
     }
 
 
-    async buildImage(room: Room, personalInfos: PersonalInfo[][]) {
+    async buildImage(room: Room, personalInfos: PersonalInfo[]) {
         await this.drawHeader(room.name, room.id_string, room.logo)
 
         for (const [index, person] of room.persons.entries()) {
             this.drawPersonInformation(person, index)
-            if (personalInfos[index].length > 0) {
-                this.drawMessage(personalInfos[index][0], index) // TODO handle multiple events
+            if (personalInfos[index]) {
+                this.drawMessage(personalInfos[index], index) // TODO handle multiple events
             }
             // this.drawOutOfOfficeNotice("30.10.2024", index)
         }

@@ -13,6 +13,7 @@ import {ICalClient} from "./calendar-apis/ical";
 import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
 import {Person} from "./datamodels/Person";
 import {PersonalInfo} from "./datamodels/PersonalInfo";
+import * as utils from "./utils"
 
 export class RequestHandler {
     dataRetrieval: ConfigRetrieval
@@ -37,6 +38,17 @@ export class RequestHandler {
         }
     }
 
+    getOoOFromPerson(infos : PersonalInfo[]): PersonalInfo {
+        const result = infos.filter(value =>
+            value.freeBusyStatus == 3 && utils.isEventToday(value.start, value.end))
+        result.sort((a,b) => b.end.valueOf() - a.end.valueOf())
+        if (result.length > 0) {
+            return result[0]
+        } else {
+            return
+        }
+    }
+
 
     async getImage(device_id: string): Promise<string> {
         const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
@@ -44,11 +56,13 @@ export class RequestHandler {
         Logging.instance.logger.info("Image requested for: " + device_id)
         let image_processor
         if (calendarDetails.persons) {
-            let freeBusyDetails: PersonalInfo[][] = []
+            let freeBusyDetails: PersonalInfo[] = []
             for (const person of calendarDetails.persons as Person[]) {
-                freeBusyDetails.push(await this.ewsClient.readPersonAvailability(person.ews_info.email))
+                const result = await this.ewsClient.readPersonAvailability(person.ews_info.email)
+                freeBusyDetails.push(this.getOoOFromPerson(result))
             }
             image_processor = new OfficeImageProcesor()
+            console.log(freeBusyDetails)
             await image_processor.buildImage(calendarDetails, freeBusyDetails)
 
         } else {
