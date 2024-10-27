@@ -1,4 +1,4 @@
-export class DeviceInfo {
+export class Device {
     id: number
     device_id: string
     location: string

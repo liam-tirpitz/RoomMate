@@ -2,7 +2,7 @@
 // import * as devices from '../config/devices.json';
 
 import {CalendarInfo} from "./datamodels/CalendarInfo";
-import {DeviceInfo} from "./datamodels/DeviceInfo";
+import {Device} from "./datamodels/Device";
 
 export class DataRetrieval {
     devices: any
@@ -16,7 +16,7 @@ export class DataRetrieval {
     }
 
     getCalendarIDFromDeviceID(devid: string) {
-        for (const device of this.devices.devices as DeviceInfo[]) {
+        for (const device of this.devices.devices as Device[]) {
             if (device.device_id == devid) {
                 return device.calendar_id
             }

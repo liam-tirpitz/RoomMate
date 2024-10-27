@@ -1,16 +1,9 @@
 import fastify from 'fastify'
-import {EWSCalendarClient} from './calendar-apis/ews';
-import {ImageProcessor} from "./image_processing/imageprocessing"
-import * as ews from "ews-javascript-api";
-import * as crypto from "crypto";
-import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import * as appconf from "../config/application.json"
-import {CalendarData} from "./datamodels/CalendarData";
-import {Logging} from "./logging";
-import {DataRetrieval} from "./DataRetrieval";
+import {RequestHandler} from "./RequestHandler";
 
 const server = fastify()
-const dataRetrieval: DataRetrieval = new DataRetrieval()
+const requestHandler: RequestHandler = new RequestHandler()
 
 process.env.TZ = appconf.timezoe;
 
@@ -18,76 +11,36 @@ process.env.TZ = appconf.timezoe;
 ['/occupancy', '/image'].forEach(path => {
     server.get(path, async (request, reply) => {
         const devid = request.query['devid']
-        const calid = dataRetrieval.getCalendarIDFromDeviceID(devid)
-        if (!calid) return 'Nein.'
-        const calendarDetails = dataRetrieval.getCalendarFromCalendarID(calid)
-        const email = calendarDetails.ews_info.email
-        const client = new EWSCalendarClient()
-        const appointments = await client.readUpcomingEventsToday(email)
-        Logging.instance.logger.info("Image requested for: " + devid)
-        const image_processor = new ImageProcessor()
-        const img = await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, appointments)
-        return img
+        const result = await requestHandler.getImage(devid)
+        if (result) {
+            reply
+                .code(200)
+                //.header('Content-Type', 'image/example')
+                .send(result)
+        } else {
+            reply.statusCode = 404
+            reply
+                .code(200)
+                .send("Device-ID not found.")
+        }
     })
 })
 
 server.get("/data", async (request, reply) => {
-    let calendarData: CalendarData = new CalendarData();
-
     const devid = request.query['devid']
-    const calid = dataRetrieval.getCalendarIDFromDeviceID(devid)
-    if (!calid) return 'Nein.'
-    const calendarDetails = dataRetrieval.getCalendarFromCalendarID(calid)
-    const email = calendarDetails.ews_info.email
-    const client = new EWSCalendarClient()
-    const appointments = await client.readUpcomingEventsToday(email)
-    const now = ews.DateTime.Now
-    calendarData.next_appointments = appointments
-    calendarData.room_number = calendarDetails.id_string
-    calendarData.room_name = calendarDetails.name
 
-    let next_update: moment.Moment = undefined
-    if (appointments.length > 0) {
-        if (appointments[0].happeningNow(now)) {
-            next_update = appointments[0].end
-        } else {
-            next_update = appointments[0].start
-        }
+    const result = await requestHandler.getData(devid)
+    if (result) {
+        reply
+            .code(200)
+            .header('Content-Type', 'application/json')
+            .send(result)
+    } else {
+        reply.statusCode = 404
+        reply
+            .code(200)
+            .send("Device-ID not found.")
     }
-    if (next_update) {
-        calendarData.next_update_unix = next_update.unix()
-    }
-    const hours_of_day = now.Hour
-    if (hours_of_day >= appconf.night_start_hour  || hours_of_day < (appconf.night_end_hour-1)) {
-        calendarData.is_night = true
-    }
-    const day_of_week = now.DayOfWeek
-    if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday || (day_of_week == DayOfWeek.Friday && hours_of_day >= appconf.night_start_hour)) {
-        calendarData.is_weekend = true
-    }
-    if (calendarData.is_night) {
-        let next_day = 0
-        if (now.Hour >= appconf.night_start_hour) next_day = 1 // Only move to next day if the request was sent before midnight, otherwise stay on the current day
-        let updateTime = now.AddDays(next_day).MomentDate.startOf("day")
-        updateTime.set("hour", appconf.night_end_hour)
-        calendarData.next_update_unix = updateTime.unix()
-    } else if (calendarData.is_weekend) { // Its the weekend, but not the night
-        if (appointments.length == 0) {
-            let updateTime = now.AddDays(1).MomentDate.startOf("day")
-            updateTime.set("hour", appconf.night_end_hour)
-            calendarData.next_update_unix = updateTime.unix()
-        }
-    }
-
-
-    const hash_string = JSON.stringify(calendarData)
-    calendarData.next_appointments = undefined
-    calendarData.hash = crypto.createHash('md5').update(hash_string).digest('hex');
-    calendarData.current_time_string = now.MomentDate.toISOString()
-    calendarData.current_time_unix = now.MomentDate.unix()
-
-    Logging.instance.logger.info("Data requested for: " + devid)
-    return JSON.stringify(calendarData)
 })
 
 
