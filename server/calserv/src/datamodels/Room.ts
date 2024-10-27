@@ -1,7 +1,7 @@
 import {EWSCalendarInfo} from "./EWSCalendarInfo";
 import {ICalCalendarInfo} from "./ICalCalendarInfo";
 
-export class CalendarInfo {
+export class Room {
     id: number
     id_string: string
     name: string

@@ -1,7 +1,7 @@
 // import * as calendars from "../config/calendars.json";
 // import * as devices from '../config/devices.json';
 
-import {CalendarInfo} from "./datamodels/CalendarInfo";
+import {Room} from "./datamodels/Room";
 import {Device} from "./datamodels/Device";
 
 export class DataRetrieval {
@@ -23,8 +23,8 @@ export class DataRetrieval {
         return undefined
     }
 
-    getCalendarFromCalendarID(calendarID: number): CalendarInfo {
-        for (const calendar of this.calendars.calendars as CalendarInfo[]) {
+    getCalendarFromCalendarID(calendarID: number): Room {
+        for (const calendar of this.calendars.calendars as Room[]) {
             if (calendar.id == calendarID) {
                 return calendar
             }

@@ -1,6 +1,6 @@
 import {SimpleEvent} from "./SimpleEvent";
 
-export class CalendarData {
+export class InfoPacket {
     current_time_string: string;
     current_time_unix: number;
     next_update_unix: number;

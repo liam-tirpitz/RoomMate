@@ -12,9 +12,7 @@ export class ICalClient {
             result = result.substring(pos + 1)
         }
         return result
-
     }
-
 
 
     async readUpcomingEventsToday(icalInfo: ICalCalendarInfo): Promise<SimpleEvent[]> {
@@ -28,7 +26,6 @@ export class ICalClient {
 
         for (let k in data) {
             const event = data[k];
-            //console.log(event)
             if (event.type === "VEVENT") {
 
                 const simpleEvent = new SimpleEvent(moment(event.start), moment(event.end), this.cleanSummaryString(event.summary), event.description, false)
@@ -41,7 +38,6 @@ export class ICalClient {
             }
         }
         results.sort((a,b)=> a.start.valueOf() - b.start.valueOf())
-        console.log(results)
         return results
     }
 

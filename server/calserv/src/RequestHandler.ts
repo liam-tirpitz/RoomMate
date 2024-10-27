@@ -6,9 +6,9 @@ import * as ews from "ews-javascript-api";
 import * as appconf from "../config/application.json";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
-import {CalendarData} from "./datamodels/CalendarData";
+import {InfoPacket} from "./datamodels/InfoPacket";
 import {SimpleEvent} from "./datamodels/SimpleEvent";
-import {CalendarInfo} from "./datamodels/CalendarInfo";
+import {Room} from "./datamodels/Room";
 import {ICalClient} from "./calendar-apis/ical";
 
 export class RequestHandler {
@@ -22,7 +22,7 @@ export class RequestHandler {
         this.iCalClient = new ICalClient()
     }
 
-    async getAppointments(calendarDetails: CalendarInfo): Promise<SimpleEvent[]> {
+    async getAppointments(calendarDetails: Room): Promise<SimpleEvent[]> {
         let appointments
         if (calendarDetails.ews_info) {
             return this.ewsClient.readUpcomingEventsToday(calendarDetails.ews_info.email)
@@ -46,7 +46,7 @@ export class RequestHandler {
     }
 
     async getData(device_id: string): Promise<string> {
-        let calendarData: CalendarData = new CalendarData();
+        let calendarData: InfoPacket = new InfoPacket();
         const calid = this.dataRetrieval.getCalendarIDFromDeviceID(device_id)
         if (!calid) return
         const calendarDetails = this.dataRetrieval.getCalendarFromCalendarID(calid)
