@@ -1,7 +1,7 @@
 import {EWSCalendarClient} from "./calendar-apis/ews";
 import {Logging} from "./logging";
-import {RoomImageProcessor} from "./image_processing/RoomImageProcessor";
-import {DataRetrieval} from "./DataRetrieval";
+import {BookableResourceImageProcessor} from "./image_processing/BookableResourceImageProcessor";
+import {ConfigRetrieval} from "./ConfigRetrieval";
 import * as ews from "ews-javascript-api";
 import * as config from "../config/calendars.json";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
@@ -10,14 +10,15 @@ import {InfoPacket} from "./datamodels/InfoPacket";
 import {SimpleEvent} from "./datamodels/SimpleEvent";
 import {Room} from "./datamodels/Room";
 import {ICalClient} from "./calendar-apis/ical";
+import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
 
 export class RequestHandler {
-    dataRetrieval: DataRetrieval
+    dataRetrieval: ConfigRetrieval
     ewsClient: EWSCalendarClient
     iCalClient: ICalClient
 
     constructor() {
-        this.dataRetrieval = new DataRetrieval()
+        this.dataRetrieval = new ConfigRetrieval()
         this.ewsClient = new EWSCalendarClient()
         this.iCalClient = new ICalClient()
     }
@@ -27,8 +28,8 @@ export class RequestHandler {
             return this.ewsClient.readUpcomingEventsToday(calendarDetails.ews_info.email)
         } else if (calendarDetails.ical_info){
             return this.iCalClient.readUpcomingEventsToday(calendarDetails.ical_info)
-        } else if (calendarDetails.persons) {
-            return
+        // } else if (calendarDetails.persons) {
+        //     return
         } else {
             return
         }
@@ -38,10 +39,18 @@ export class RequestHandler {
     async getImage(device_id: string): Promise<string> {
         const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
         if (!calendarDetails) return
-        const appointments = this.getAppointments(calendarDetails)
         Logging.instance.logger.info("Image requested for: " + device_id)
-        const image_processor = new RoomImageProcessor()
-        await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments)
+        let image_processor
+        if (calendarDetails.persons) {
+            image_processor = new OfficeImageProcesor()
+            await image_processor.buildImage(calendarDetails)
+
+
+        } else {
+            const appointments = this.getAppointments(calendarDetails)
+            image_processor = new BookableResourceImageProcessor()
+            await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments)
+        }
         return await image_processor.finalizeImage(calendarDetails.id_string)
     }
 

@@ -1,7 +1,7 @@
 import {Room} from "./datamodels/Room";
 import {Device} from "./datamodels/Device";
 
-export class DataRetrieval {
+export class ConfigRetrieval {
     calendars: any
 
 

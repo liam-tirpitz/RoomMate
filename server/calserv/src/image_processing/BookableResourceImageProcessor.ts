@@ -3,7 +3,7 @@ import {NodeCanvasRenderingContext2DSettings} from "canvas";
 import {SimpleEvent} from "../datamodels/SimpleEvent";
 import {DateTime} from "ews-javascript-api";
 
-export class RoomImageProcessor extends ImageProcessor {
+export class BookableResourceImageProcessor extends ImageProcessor {
 
     constructor() {
         super()
