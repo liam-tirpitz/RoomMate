@@ -2,6 +2,12 @@
   "exchange": {
     "endpoint": "https://ENDPOINT/EWS/Exchange.asmx"
   },
+  "global_config": {
+    "soon_threshold_in_min": 15,
+    "night_start_hour": 19,
+    "night_end_hour": 8,
+    "timezoe": "Europe/Berlin"
+  },
   "calendars": [
     {
       "id": 200,
@@ -10,7 +16,13 @@
       "logo": "institute_logo.png",
       "ews_info": {
         "email": "room@domain"
-      }
+      },
+      "devices": [
+        {
+          "device_id": "aaaaaaaaaaaa",
+          "location": "Left_Door"
+        }
+      ]
     },
     {
       "id": 201,
@@ -20,7 +32,8 @@
       "logo": "institute_logo.png",
       "ical_info": {
         "endpoint": "www.domain.de/calendar"
-      }
+      },
+      "devices": []
     }
 
   ]

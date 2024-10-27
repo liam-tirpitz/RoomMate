@@ -3,7 +3,7 @@ import {Logging} from "./logging";
 import {ImageProcessor} from "./image_processing/imageprocessing";
 import {DataRetrieval} from "./DataRetrieval";
 import * as ews from "ews-javascript-api";
-import * as appconf from "../config/application.json";
+import * as config from "../config/calendars.json";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
 import {InfoPacket} from "./datamodels/InfoPacket";
@@ -23,11 +23,12 @@ export class RequestHandler {
     }
 
     async getAppointments(calendarDetails: Room): Promise<SimpleEvent[]> {
-        let appointments
         if (calendarDetails.ews_info) {
             return this.ewsClient.readUpcomingEventsToday(calendarDetails.ews_info.email)
         } else if (calendarDetails.ical_info){
             return this.iCalClient.readUpcomingEventsToday(calendarDetails.ical_info)
+        } else if (calendarDetails.persons) {
+            return
         } else {
             return
         }
@@ -35,9 +36,8 @@ export class RequestHandler {
 
 
     async getImage(device_id: string): Promise<string> {
-        const calid = this.dataRetrieval.getCalendarIDFromDeviceID(device_id)
-        if (!calid) return
-        const calendarDetails = this.dataRetrieval.getCalendarFromCalendarID(calid)
+        const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
+        if (!calendarDetails) return
         const appointments = this.getAppointments(calendarDetails)
         Logging.instance.logger.info("Image requested for: " + device_id)
         const image_processor = new ImageProcessor()
@@ -47,9 +47,8 @@ export class RequestHandler {
 
     async getData(device_id: string): Promise<string> {
         let calendarData: InfoPacket = new InfoPacket();
-        const calid = this.dataRetrieval.getCalendarIDFromDeviceID(device_id)
-        if (!calid) return
-        const calendarDetails = this.dataRetrieval.getCalendarFromCalendarID(calid)
+        const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
+        if (!calendarDetails) return
         const appointments = await this.getAppointments(calendarDetails)
 
 
@@ -70,23 +69,23 @@ export class RequestHandler {
             calendarData.next_update_unix = next_update.unix()
         }
         const hours_of_day = now.Hour
-        if (hours_of_day >= appconf.night_start_hour  || hours_of_day < (appconf.night_end_hour-1)) {
+        if (hours_of_day >= config.global_config.night_start_hour  || hours_of_day < (config.global_config.night_end_hour-1)) {
             calendarData.is_night = true
         }
         const day_of_week = now.DayOfWeek
-        if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday || (day_of_week == DayOfWeek.Friday && hours_of_day >= appconf.night_start_hour)) {
+        if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday || (day_of_week == DayOfWeek.Friday && hours_of_day >= config.global_config.night_start_hour)) {
             calendarData.is_weekend = true
         }
         if (calendarData.is_night) {
             let next_day = 0
-            if (now.Hour >= appconf.night_start_hour) next_day = 1 // Only move to next day if the request was sent before midnight, otherwise stay on the current day
+            if (now.Hour >= config.global_config.night_start_hour) next_day = 1 // Only move to next day if the request was sent before midnight, otherwise stay on the current day
             let updateTime = now.AddDays(next_day).MomentDate.startOf("day")
-            updateTime.set("hour", appconf.night_end_hour)
+            updateTime.set("hour", config.global_config.night_end_hour)
             calendarData.next_update_unix = updateTime.unix()
         } else if (calendarData.is_weekend) { // Its the weekend, but not the night
             if (appointments.length == 0) {
                 let updateTime = now.AddDays(1).MomentDate.startOf("day")
-                updateTime.set("hour", appconf.night_end_hour)
+                updateTime.set("hour", config.global_config.night_end_hour)
                 calendarData.next_update_unix = updateTime.unix()
             }
         }

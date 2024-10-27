@@ -1,7 +1,7 @@
 import {
     AttendeeAvailability,
     AttendeeInfo, CalendarEvent,
-    ExchangeService, FolderId, FolderView, GetUserAvailabilityResults,
+    ExchangeService, FolderId, FolderView, GetUserAvailabilityResults, LegacyFreeBusyStatus,
     Mailbox, SearchFilter, TimeWindow,
     WellKnownFolderName
 } from "ews-javascript-api";
@@ -28,7 +28,27 @@ export class EWSCalendarClient {
         }
     }
 
-    async readUpcomingEventsToday(room_mail: string) {
+    getBusyStatusString(cEvent: CalendarEvent) {
+        switch (cEvent.FreeBusyStatus) {
+            case LegacyFreeBusyStatus.OOF:
+                return "Out of Office"
+            case LegacyFreeBusyStatus.Busy:
+                return "Busy"
+        }
+    }
+
+    getByline(cEvent: CalendarEvent) {
+        switch (cEvent.FreeBusyStatus) {
+            case LegacyFreeBusyStatus.OOF:
+                return
+            case LegacyFreeBusyStatus.Busy:
+                return "Busy"
+        }
+
+    }
+
+
+        async readUpcomingEventsToday(room_mail: string) {
         let now = ews.DateTime.Now
         const now_moment = now.MomentDate
         const eod_moment = now_moment.clone().endOf('day')
@@ -44,23 +64,21 @@ export class EWSCalendarClient {
         return events
     }
 
-    async readPersonalStuff(person_mail) {
+    async readPersonAvailability(person_mail) {
         var attendee: AttendeeInfo[] =[ new ews.AttendeeInfo(person_mail)];
         var timeWindow: TimeWindow = new ews.TimeWindow(ews.DateTime.Now, ews.DateTime.Now.AddDays(2));
-        const id = new FolderId(WellKnownFolderName.Calendar, new Mailbox(person_mail));
-        const view = new FolderView(10)
-        const things = await this.exch.FindFolders(id, view)
-        console.log(things)
+        // const id = new FolderId(WellKnownFolderName.Calendar, new Mailbox(person_mail));
+        // const view = new FolderView(10)
+        // const things = await this.exch.FindFolders(id, view)
+        // console.log(things)
+        let events: SimpleEvent[] = [];
 
-        this.exch.GetUserAvailability(attendee, timeWindow, ews.AvailabilityData.FreeBusyAndSuggestions)
-            .then(function (availabilityResponse: GetUserAvailabilityResults) {
-                const responses:AttendeeAvailability = availabilityResponse.AttendeesAvailability.Responses.at(0)
-                for (let cEvent of responses.CalendarEvents) {
-                    console.log(cEvent)
-                }
-            }, function (errors:any) {
-                //log errors or do something with errors
-            });
+        const availabilityResponse: GetUserAvailabilityResults = await this.exch.GetUserAvailability(attendee, timeWindow, ews.AvailabilityData.FreeBusyAndSuggestions)
+        const responses:AttendeeAvailability = availabilityResponse.AttendeesAvailability.Responses.at(0)
+        for (let cEvent of responses.CalendarEvents) {
+            events.push(new SimpleEvent(cEvent.StartTime.MomentDate, cEvent.EndTime.MomentDate, this.getBusyStatusString(cEvent), "Until abc", false))
+        }
+        console.log(events)
     }
 
 }

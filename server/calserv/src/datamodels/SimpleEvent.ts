@@ -1,6 +1,6 @@
 import * as moment from "moment-timezone";
 import {DateTime} from "ews-javascript-api";
-import * as config from '../../config/application.json'
+import * as config from '../../config/calendars.json'
 
 export class SimpleEvent {
     start: moment.Moment;
@@ -22,7 +22,7 @@ export class SimpleEvent {
     }
 
     happeningSoon(now: DateTime): boolean {
-        return now.MomentDate < this.start && (this.start.valueOf() - now.valueOf()) < config.soon_threshold_in_min * 60 * 1000
+        return now.MomentDate < this.start && (this.start.valueOf() - now.valueOf()) < config.global_config.soon_threshold_in_min * 60 * 1000
 
     }
 

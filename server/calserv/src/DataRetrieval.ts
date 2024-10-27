@@ -1,32 +1,41 @@
-// import * as calendars from "../config/calendars.json";
-// import * as devices from '../config/devices.json';
-
 import {Room} from "./datamodels/Room";
 import {Device} from "./datamodels/Device";
 
 export class DataRetrieval {
-    devices: any
     calendars: any
 
 
     constructor() {
-        this.devices = require('../config/devices.json');
         this.calendars = require('../config/calendars.json');
     }
 
-    getCalendarIDFromDeviceID(devid: string) {
-        for (const device of this.devices.devices as Device[]) {
-            if (device.device_id == devid) {
-                return device.calendar_id
+    getRoomFromDeviceID(devid: string): Room {
+        for (const room of this.calendars.calendars as Room[]) {
+            for (const device of room.devices as Device[]) {
+                if (device.device_id == devid) {
+                    return room
+                }
             }
         }
         return undefined
     }
 
-    getCalendarFromCalendarID(calendarID: number): Room {
-        for (const calendar of this.calendars.calendars as Room[]) {
-            if (calendar.id == calendarID) {
-                return calendar
+    getDeviceFromDeviceID(devid: string): Device {
+        for (const room of this.calendars.calendars as Room[]) {
+            for (const device of room.devices as Device[]) {
+                if (device.device_id == devid) {
+                    return device
+                }
+            }
+        }
+        return undefined
+    }
+
+
+    getRoomFromRoomID(roomID: number): Room {
+        for (const room of this.calendars.calendars as Room[]) {
+            if (room.id == roomID) {
+                return room
             }
         }
         return undefined

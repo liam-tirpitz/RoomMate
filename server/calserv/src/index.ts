@@ -1,11 +1,11 @@
 import fastify from 'fastify'
-import * as appconf from "../config/application.json"
+import * as config from "../config/calendars.json"
 import {RequestHandler} from "./RequestHandler";
 
 const server = fastify()
 const requestHandler: RequestHandler = new RequestHandler()
 
-process.env.TZ = appconf.timezoe;
+process.env.TZ = config.global_config.timezoe;
 
 
 ['/occupancy', '/image'].forEach(path => {
