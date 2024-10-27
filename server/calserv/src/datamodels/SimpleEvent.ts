@@ -6,14 +6,14 @@ export class SimpleEvent {
     start: moment.Moment;
     end: moment.Moment;
     summary: string;
-    organizer: string;
+    byline: string;
     is_cancelled: boolean;
 
     constructor(start: moment.Moment, end: moment.Moment, summary: string, organizer: string, is_cancelled: boolean) {
         this.start = start;
         this.end = end;
         this.summary = summary;
-        this.organizer = organizer;
+        this.byline = organizer;
         this.is_cancelled = is_cancelled;
     }
 

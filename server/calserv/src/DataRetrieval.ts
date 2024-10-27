@@ -12,7 +12,6 @@ export class DataRetrieval {
     constructor() {
         this.devices = require('../config/devices.json');
         this.calendars = require('../config/calendars.json');
-
     }
 
     getCalendarIDFromDeviceID(devid: string) {

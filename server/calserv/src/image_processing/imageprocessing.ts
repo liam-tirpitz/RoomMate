@@ -122,7 +122,7 @@ export class ImageProcessor {
 
         this.ctx.fillText(trunc_summary, 46, 375 + yoffset*105)
         this.ctx.font = '20pt "HNL"'
-        this.ctx.fillText(event.organizer, 46, 375 + 1 * line_spacing + yoffset*105)
+        this.ctx.fillText(event.byline, 46, 375 + 1 * line_spacing + yoffset*105)
         this.ctx.fillText(this.getTimeStringFromDate(event.start) + " - " + this.getTimeStringFromDate(event.end), 46, 375 + 2 * line_spacing + yoffset*105)
     }
 
@@ -152,7 +152,7 @@ export class ImageProcessor {
                 if (trunc_summary.length > 33) {
                     trunc_summary = trunc_summary.substring(0,30)  + "...";
                 }
-                this.drawOccupied(trunc_summary, event.organizer, this.getTimeStringFromDate(event.start) + " - " + this.getTimeStringFromDate(event.end))
+                this.drawOccupied(trunc_summary, event.byline, this.getTimeStringFromDate(event.start) + " - " + this.getTimeStringFromDate(event.end))
             } else {
                 this.drawOccupiedUnknown(this.getTimeStringFromDate(event.end))
             }
