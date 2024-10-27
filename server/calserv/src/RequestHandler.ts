@@ -11,6 +11,8 @@ import {SimpleEvent} from "./datamodels/SimpleEvent";
 import {Room} from "./datamodels/Room";
 import {ICalClient} from "./calendar-apis/ical";
 import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
+import {Person} from "./datamodels/Person";
+import {PersonalInfo} from "./datamodels/PersonalInfo";
 
 export class RequestHandler {
     dataRetrieval: ConfigRetrieval
@@ -42,9 +44,12 @@ export class RequestHandler {
         Logging.instance.logger.info("Image requested for: " + device_id)
         let image_processor
         if (calendarDetails.persons) {
+            let freeBusyDetails: PersonalInfo[][] = []
+            for (const person of calendarDetails.persons as Person[]) {
+                freeBusyDetails.push(await this.ewsClient.readPersonAvailability(person.ews_info.email))
+            }
             image_processor = new OfficeImageProcesor()
-            await image_processor.buildImage(calendarDetails)
-
+            await image_processor.buildImage(calendarDetails, freeBusyDetails)
 
         } else {
             const appointments = this.getAppointments(calendarDetails)

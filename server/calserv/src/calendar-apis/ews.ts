@@ -10,6 +10,7 @@ import * as ews from 'ews-javascript-api'
 import {CalendarView} from "ews-javascript-api/js/Search/CalendarView";
 import {SimpleEvent} from "../datamodels/SimpleEvent";
 import * as config from '../../config/calendars.json'
+import {PersonalInfo} from "../datamodels/PersonalInfo";
 
 dotenv.config()
 
@@ -37,16 +38,6 @@ export class EWSCalendarClient {
         }
     }
 
-    getByline(cEvent: CalendarEvent) {
-        switch (cEvent.FreeBusyStatus) {
-            case LegacyFreeBusyStatus.OOF:
-                return
-            case LegacyFreeBusyStatus.Busy:
-                return "Busy"
-        }
-
-    }
-
 
         async readUpcomingEventsToday(room_mail: string) {
         let now = ews.DateTime.Now
@@ -64,21 +55,22 @@ export class EWSCalendarClient {
         return events
     }
 
-    async readPersonAvailability(person_mail) {
+    async readPersonAvailability(person_mail: string) {
         var attendee: AttendeeInfo[] =[ new ews.AttendeeInfo(person_mail)];
         var timeWindow: TimeWindow = new ews.TimeWindow(ews.DateTime.Now, ews.DateTime.Now.AddDays(2));
         // const id = new FolderId(WellKnownFolderName.Calendar, new Mailbox(person_mail));
         // const view = new FolderView(10)
         // const things = await this.exch.FindFolders(id, view)
         // console.log(things)
-        let events: SimpleEvent[] = [];
+        let events: PersonalInfo[] = [];
 
         const availabilityResponse: GetUserAvailabilityResults = await this.exch.GetUserAvailability(attendee, timeWindow, ews.AvailabilityData.FreeBusyAndSuggestions)
         const responses:AttendeeAvailability = availabilityResponse.AttendeesAvailability.Responses.at(0)
         for (let cEvent of responses.CalendarEvents) {
-            events.push(new SimpleEvent(cEvent.StartTime.MomentDate, cEvent.EndTime.MomentDate, this.getBusyStatusString(cEvent), "Until abc", false))
+            events.push(new PersonalInfo(cEvent.StartTime.MomentDate, cEvent.EndTime.MomentDate, cEvent.FreeBusyStatus))
         }
         console.log(events)
+        return events
     }
 
 }

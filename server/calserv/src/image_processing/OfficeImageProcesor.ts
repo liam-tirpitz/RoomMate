@@ -1,6 +1,7 @@
 import {ImageProcessor} from "./ImageProcessor";
 import {Room} from "../datamodels/Room";
 import {Person} from "../datamodels/Person";
+import {PersonalInfo} from "../datamodels/PersonalInfo";
 
 export class OfficeImageProcesor extends ImageProcessor {
 
@@ -33,7 +34,7 @@ export class OfficeImageProcesor extends ImageProcessor {
         this.ctx.fillText(person.group, init_x, init_y + 2 * line_spacing + yoffset_factor*yoffset_single)
     }
 
-    drawOutOfOfficeNotice(until: string, yoffset_factor: number) {
+    drawMessage(personalInfo: PersonalInfo, yoffset_factor: number) {
         this.ctx.fillStyle = "rgba(255, 255, 255, 1)";
         this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
         this.ctx.font = '26pt "HNB"'
@@ -43,18 +44,19 @@ export class OfficeImageProcesor extends ImageProcessor {
         const yoffset_single = 307
         const line_spacing = 45
 
-
-        this.ctx.fillText("Out of Office", init_x, init_y + yoffset_factor*yoffset_single)
-        this.ctx.fillText("Until " + until, 101, init_y + yoffset_factor*yoffset_single + line_spacing)
-
+        this.ctx.fillText(personalInfo.getMessage(), init_x, init_y + yoffset_factor*yoffset_single)
+        this.ctx.fillText(personalInfo.getByline(), 101, init_y + yoffset_factor*yoffset_single + line_spacing)
     }
 
 
-        async buildImage(room: Room) {
+    async buildImage(room: Room, personalInfos: PersonalInfo[][]) {
         await this.drawHeader(room.name, room.id_string, room.logo)
 
         for (const [index, person] of room.persons.entries()) {
             this.drawPersonInformation(person, index)
+            if (personalInfos[index].length > 0) {
+                this.drawMessage(personalInfos[index][0], index) // TODO handle multiple events
+            }
             // this.drawOutOfOfficeNotice("30.10.2024", index)
         }
         if (room.persons.length > 1) {
