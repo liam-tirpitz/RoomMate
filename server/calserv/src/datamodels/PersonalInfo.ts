@@ -1,4 +1,4 @@
-import {CalendarEvent, LegacyFreeBusyStatus} from "ews-javascript-api";
+import {LegacyFreeBusyStatus} from "ews-javascript-api";
 import moment from "moment-timezone";
 
 export class PersonalInfo {
@@ -20,6 +20,12 @@ export class PersonalInfo {
                 return "Out of Office"
             case LegacyFreeBusyStatus.Busy:
                 return "Busy"
+            case LegacyFreeBusyStatus.WorkingElsewhere:
+                return "Working Remote"
+            // case LegacyFreeBusyStatus.Free:
+            //     return "Free"
+            default:
+                return ""
         }
     }
 
@@ -28,7 +34,12 @@ export class PersonalInfo {
             case LegacyFreeBusyStatus.OOF:
                 return "Until " + this.end.toDate().toLocaleDateString(undefined, {day: "2-digit", month: "2-digit", year: "numeric"})
             case LegacyFreeBusyStatus.Busy:
-                return "Busy"
+                return "Until " + this.end.toDate().toLocaleTimeString(undefined, {hour: "2-digit", minute: "2-digit"})
+            case LegacyFreeBusyStatus.WorkingElsewhere:
+                return ""
+            default:
+                return ""
+
         }
     }
 

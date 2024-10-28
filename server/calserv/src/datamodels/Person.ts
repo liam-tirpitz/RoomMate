@@ -5,4 +5,6 @@ export class Person {
     job: string
     group: string
     ews_info: EWSCalendarInfo
+    phone: string | undefined
+    email: string | undefined
 }

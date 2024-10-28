@@ -14,6 +14,7 @@ import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
 import {Person} from "./datamodels/Person";
 import {PersonalInfo} from "./datamodels/PersonalInfo";
 import * as utils from "./utils"
+import {LegacyFreeBusyStatus} from "ews-javascript-api";
 
 export class RequestHandler {
     dataRetrieval: ConfigRetrieval
@@ -40,7 +41,7 @@ export class RequestHandler {
 
     getOoOFromPerson(infos : PersonalInfo[]): PersonalInfo {
         const result = infos.filter(value =>
-            value.freeBusyStatus == 3 && utils.isEventToday(value.start, value.end))
+            value.freeBusyStatus == LegacyFreeBusyStatus.OOF && utils.isEventToday(value.start, value.end))
         result.sort((a,b) => b.end.valueOf() - a.end.valueOf())
         if (result.length > 0) {
             return result[0]
@@ -48,6 +49,20 @@ export class RequestHandler {
             return
         }
     }
+
+    getBusyFromPerson(infos : PersonalInfo[]): PersonalInfo {
+        const result = infos.filter(value =>
+            (value.freeBusyStatus == LegacyFreeBusyStatus.Busy || LegacyFreeBusyStatus.WorkingElsewhere)
+            && utils.isEventNow(value.start, value.end))
+        result.sort((a,b) => b.end.valueOf() - a.end.valueOf())
+        if (result.length > 0) {
+            return result[0]
+        } else {
+            return
+        }
+    }
+
+
 
 
     async getImage(device_id: string): Promise<string> {
@@ -59,7 +74,13 @@ export class RequestHandler {
             let freeBusyDetails: PersonalInfo[] = []
             for (const person of calendarDetails.persons as Person[]) {
                 const result = await this.ewsClient.readPersonAvailability(person.ews_info.email)
-                freeBusyDetails.push(this.getOoOFromPerson(result))
+                const ooOResult = this.getOoOFromPerson(result)
+                if (!ooOResult) {
+                    const busyResult = this.getBusyFromPerson(result)
+                    freeBusyDetails.push(busyResult)
+                } else {
+                    freeBusyDetails.push(ooOResult)
+                }
             }
             image_processor = new OfficeImageProcesor()
             console.log(freeBusyDetails)
