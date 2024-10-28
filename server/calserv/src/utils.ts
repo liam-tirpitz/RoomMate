@@ -15,6 +15,6 @@ export function isEventToday(start: moment.Moment, end: moment.Moment): boolean 
 
 export function isEventNow(start: moment.Moment, end: moment.Moment): boolean {
     const now = ews.DateTime.Now
-    return (start <= now && end >= now)
+    return (start.valueOf() <= now.valueOf() && end.valueOf() >= now.valueOf())
 }
 
