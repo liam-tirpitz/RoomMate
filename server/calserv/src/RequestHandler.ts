@@ -3,6 +3,7 @@ import {Logging} from "./logging";
 import {BookableResourceImageProcessor} from "./image_processing/BookableResourceImageProcessor";
 import {ConfigRetrieval} from "./ConfigRetrieval";
 import * as ews from "ews-javascript-api";
+import {LegacyFreeBusyStatus} from "ews-javascript-api";
 import * as config from "../config/calendars.json";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
@@ -14,7 +15,6 @@ import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
 import {Person} from "./datamodels/Person";
 import {PersonalInfo} from "./datamodels/PersonalInfo";
 import * as utils from "./utils"
-import {LegacyFreeBusyStatus} from "ews-javascript-api";
 
 export class RequestHandler {
     dataRetrieval: ConfigRetrieval
@@ -32,8 +32,15 @@ export class RequestHandler {
             return this.ewsClient.readUpcomingEventsToday(calendarDetails.ews_info.email)
         } else if (calendarDetails.ical_info){
             return this.iCalClient.readUpcomingEventsToday(calendarDetails.ical_info)
-        // } else if (calendarDetails.persons) {
-        //     return
+        } else if (calendarDetails.persons) {
+            let appointments: PersonalInfo[] = [];
+            let emails: string[] = []
+            for (const person of calendarDetails.persons as Person[]) {
+                emails.push(person.ews_info.email)
+            }
+            const personal_appointments = await this.ewsClient.readPersonsAvailabilityToday(emails)
+            appointments = personal_appointments.reduce((accumulator, value) => accumulator.concat(value), []); // TODO sorting so upcoming event is first
+            return appointments
         } else {
             return
         }
@@ -62,7 +69,15 @@ export class RequestHandler {
         }
     }
 
-
+    async getCurrentStatusFromPerson(person: Person) {
+        const result = await this.ewsClient.readPersonsAvailabilityToday([person.ews_info.email])
+        const ooOResult = this.getOoOFromPerson(result[0])
+        if (!ooOResult) {
+            return this.getBusyFromPerson(result[0])
+        } else {
+            return ooOResult
+        }
+    }
 
 
     async getImage(device_id: string): Promise<string> {
@@ -73,17 +88,9 @@ export class RequestHandler {
         if (calendarDetails.persons) {
             let freeBusyDetails: PersonalInfo[] = []
             for (const person of calendarDetails.persons as Person[]) {
-                const result = await this.ewsClient.readPersonAvailability(person.ews_info.email)
-                const ooOResult = this.getOoOFromPerson(result)
-                if (!ooOResult) {
-                    const busyResult = this.getBusyFromPerson(result)
-                    freeBusyDetails.push(busyResult)
-                } else {
-                    freeBusyDetails.push(ooOResult)
-                }
+                freeBusyDetails.push(await this.getCurrentStatusFromPerson(person))
             }
             image_processor = new OfficeImageProcesor()
-            console.log(freeBusyDetails)
             await image_processor.buildImage(calendarDetails, freeBusyDetails)
 
         } else {
@@ -99,7 +106,6 @@ export class RequestHandler {
         const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
         if (!calendarDetails) return
         const appointments = await this.getAppointments(calendarDetails)
-
 
         const now = ews.DateTime.Now
         calendarData.next_appointments = appointments

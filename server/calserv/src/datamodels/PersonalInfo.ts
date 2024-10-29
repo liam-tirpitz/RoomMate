@@ -1,20 +1,28 @@
 import {LegacyFreeBusyStatus} from "ews-javascript-api";
 import moment from "moment-timezone";
+import {SimpleEvent} from "./SimpleEvent";
 
-export class PersonalInfo {
+
+export class PersonalInfo extends SimpleEvent{
     freeBusyStatus: LegacyFreeBusyStatus
-    start: moment.Moment
-    end: moment.Moment
 
 
     constructor(start: moment.Moment, end: moment.Moment, freeBusyStatus: LegacyFreeBusyStatus) {
-        this.start = start;
-        this.end = end;
+        super(start, end, "", "", false)
         this.freeBusyStatus = freeBusyStatus;
 
     }
 
-    public getMessage(): string {
+    get summary(): string {
+        return this.getMessage();
+    }
+
+    get byline(): string {
+        return this.getByline();
+    }
+
+
+    private getMessage(): string {
         switch (this.freeBusyStatus) {
             case LegacyFreeBusyStatus.OOF:
                 return "Out of Office"
@@ -29,7 +37,7 @@ export class PersonalInfo {
         }
     }
 
-    public getByline(): string {
+    private getByline(): string {
         switch (this.freeBusyStatus) {
             case LegacyFreeBusyStatus.OOF:
                 return "Until " + this.end.toDate().toLocaleDateString(undefined, {day: "2-digit", month: "2-digit", year: "numeric"})

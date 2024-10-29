@@ -28,6 +28,7 @@ process.env.TZ = config.global_config.timezoe;
 
 server.get("/data", async (request, reply) => {
     const devid = request.query['devid']
+    const voltage = request.query['voltage']
 
     const result = await requestHandler.getData(devid)
     if (result) {

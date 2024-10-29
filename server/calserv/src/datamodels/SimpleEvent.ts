@@ -5,16 +5,25 @@ import * as config from '../../config/calendars.json'
 export class SimpleEvent {
     start: moment.Moment;
     end: moment.Moment;
-    summary: string;
-    byline: string;
+    private readonly _summary: string;
+    private readonly _byline: string;
     is_cancelled: boolean;
 
     constructor(start: moment.Moment, end: moment.Moment, summary: string, organizer: string, is_cancelled: boolean) {
         this.start = start;
         this.end = end;
-        this.summary = summary;
-        this.byline = organizer;
+        this._summary = summary;
+        this._byline = organizer;
         this.is_cancelled = is_cancelled;
+    }
+
+
+    get summary(): string {
+        return this._summary;
+    }
+
+    get byline(): string {
+        return this._byline;
     }
 
     happeningNow(now: DateTime): boolean {

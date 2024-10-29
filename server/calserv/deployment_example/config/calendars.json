@@ -28,12 +28,31 @@
       "id": 201,
       "id_string": "201",
       "name": "Meetingraum 2",
-      "email": "room2@domain",
       "logo": "institute_logo.png",
       "ical_info": {
         "endpoint": "www.domain.de/calendar"
       },
       "devices": []
+    },
+    {
+      "id": 202,
+      "id_string": "202",
+      "name": "Büro",
+      "logo": "institute_logo.png",
+      "devices": [],
+      "persons": [
+        {
+          "name": "He-Ran An, M.Sc.",
+          "job": "Wissenschaftliche Mitarbeiterin",
+          "group": "DSMA",
+          "email": "an@institute.rwth-aachen.de",
+          "phone": "+49 241 8000000",
+          "ews_info": {
+            "email": "an@institute.rwth-aachen.de"
+          }
+        }
+
+      ]
     }
 
   ]

@@ -56,9 +56,9 @@ export class OfficeImageProcesor extends ImageProcessor {
 
         this.ctx.textAlign = "center"
         this.ctx.font = '26pt "HNB"'
-        this.ctx.fillText(personalInfo.getMessage(), this.screenWidth/2, init_y + yoffset_factor*yoffset_single)
+        this.ctx.fillText(personalInfo.summary, this.screenWidth/2, init_y + yoffset_factor*yoffset_single)
         this.ctx.font = '22pt "HNB"'
-        this.ctx.fillText(personalInfo.getByline(), this.screenWidth/2, init_y + yoffset_factor*yoffset_single + line_spacing)
+        this.ctx.fillText(personalInfo.byline, this.screenWidth/2, init_y + yoffset_factor*yoffset_single + line_spacing)
     }
 
 

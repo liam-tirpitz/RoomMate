@@ -6,10 +6,11 @@ export function isEventToday(start: moment.Moment, end: moment.Moment): boolean 
     const start_of_today = moment().startOf('day');
     const end_of_today = moment().endOf('day');
     // const end_of_today = moment().add(5, 'days').endOf('day');
+    // console.log(start.valueOf(), end.valueOf(), start_of_today.valueOf(), end_of_today.valueOf() )
 
     return (start <= end_of_today && end >= start_of_today) ||
-    (start < start_of_today && end > start_of_today) ||
-    (start < end_of_today && end > end_of_today)
+    (start < start_of_today && end >= start_of_today) ||
+    (start < end_of_today && end >= end_of_today)
     // TODO double check that at some point for logical correctness and behavior
 }
 
