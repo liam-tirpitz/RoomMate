@@ -62,7 +62,7 @@ export class ImageProcessor {
         const data_arr = this.horizontal1bit(Array.from(myImageData.data), this.screenHeight)
         const base64String = btoa(String.fromCharCode.apply(null, data_arr));
         fs.mkdirSync('tmp', { recursive: true });
-        const out = fs.createWriteStream("tmp/" + room_id + '.png')
+        const out = fs.createWriteStream("tmp/" + room_id.replace(".", "_") + '.png')
         const stream = this.canvas.createPNGStream()
         stream.pipe(out)
         out.on('finish', () =>  console.log('The PNG file was created.', (new Date()).toISOString()))
@@ -160,6 +160,16 @@ export class ImageProcessor {
         }
         return outputBytes;
     }
+
+    async drawLowBattery(y_offset: number){
+        const low_bat = await loadImage('./src/image_processing/assets/lowbat.png')
+        const img_width = 100
+        this.ctx.textAlign = "center"
+        this.ctx.font = '26pt "HNB"'
+        this.ctx.fillText("Low Battery", this.screenWidth/2, y_offset)
+        this.ctx.drawImage(low_bat, this.screenWidth/2 - img_width/2, y_offset, img_width, img_width * low_bat.height / low_bat.width)
+    }
+
 
 
 }

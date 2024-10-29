@@ -15,6 +15,7 @@ import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
 import {Person} from "./datamodels/Person";
 import {PersonalInfo} from "./datamodels/PersonalInfo";
 import * as utils from "./utils"
+import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImageProcessor";
 
 export class RequestHandler {
     dataRetrieval: ConfigRetrieval
@@ -80,23 +81,27 @@ export class RequestHandler {
     }
 
 
-    async getImage(device_id: string): Promise<string> {
+    async getImage(device_id: string, voltage: number): Promise<string> {
         const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
         if (!calendarDetails) return
         Logging.instance.logger.info("Image requested for: " + device_id)
         let image_processor
-        if (calendarDetails.persons) {
+         if (calendarDetails.persons) {
             let freeBusyDetails: PersonalInfo[] = []
             for (const person of calendarDetails.persons as Person[]) {
                 freeBusyDetails.push(await this.getCurrentStatusFromPerson(person))
             }
             image_processor = new OfficeImageProcesor()
-            await image_processor.buildImage(calendarDetails, freeBusyDetails)
-
+            await image_processor.buildImage(calendarDetails, freeBusyDetails, voltage)
         } else {
-            const appointments = this.getAppointments(calendarDetails)
-            image_processor = new BookableResourceImageProcessor()
-            await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments)
+             if (voltage && voltage < config.global_config.low_battery_voltage_cutoff_in_mv) {
+                 image_processor = new SpecialStateImageProcessor()
+                 await image_processor.buildLowBatImage(calendarDetails, voltage)
+             } else {
+                 const appointments = this.getAppointments(calendarDetails)
+                 image_processor = new BookableResourceImageProcessor()
+                 await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments)
+             }
         }
         return await image_processor.finalizeImage(calendarDetails.id_string)
     }

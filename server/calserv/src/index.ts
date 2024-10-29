@@ -11,7 +11,9 @@ process.env.TZ = config.global_config.timezoe;
 ['/occupancy', '/image'].forEach(path => {
     server.get(path, async (request, reply) => {
         const devid = request.query['devid']
-        const result = await requestHandler.getImage(devid)
+        const voltage = request.query['voltage']
+
+        const result = await requestHandler.getImage(devid, voltage)
         if (result) {
             reply
                 .code(200)
@@ -28,7 +30,6 @@ process.env.TZ = config.global_config.timezoe;
 
 server.get("/data", async (request, reply) => {
     const devid = request.query['devid']
-    const voltage = request.query['voltage']
 
     const result = await requestHandler.getData(devid)
     if (result) {

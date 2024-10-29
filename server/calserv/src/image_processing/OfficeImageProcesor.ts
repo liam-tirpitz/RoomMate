@@ -2,9 +2,11 @@ import {ImageProcessor} from "./ImageProcessor";
 import {Room} from "../datamodels/Room";
 import {Person} from "../datamodels/Person";
 import {PersonalInfo} from "../datamodels/PersonalInfo";
+import * as config from "../../config/calendars.json";
 
 export class OfficeImageProcesor extends ImageProcessor {
-
+    init_y = 279
+    single_offset = 307
     constructor() {
         super()
     }
@@ -50,24 +52,24 @@ export class OfficeImageProcesor extends ImageProcessor {
         this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
 
         const init_x = 122
-        const init_y = 279
-        const yoffset_single = 307
         const line_spacing = 45
 
         this.ctx.textAlign = "center"
         this.ctx.font = '26pt "HNB"'
-        this.ctx.fillText(personalInfo.summary, this.screenWidth/2, init_y + yoffset_factor*yoffset_single)
+        this.ctx.fillText(personalInfo.summary, this.screenWidth/2, this.init_y + yoffset_factor*this.single_offset)
         this.ctx.font = '22pt "HNB"'
-        this.ctx.fillText(personalInfo.byline, this.screenWidth/2, init_y + yoffset_factor*yoffset_single + line_spacing)
+        this.ctx.fillText(personalInfo.byline, this.screenWidth/2, this.init_y + yoffset_factor*this.single_offset + line_spacing)
     }
 
 
-    async buildImage(room: Room, personalInfos: PersonalInfo[]) {
+    async buildImage(room: Room, personalInfos: PersonalInfo[], voltage: number) {
         await this.drawHeader(room.name, room.id_string, room.logo)
 
         for (const [index, person] of room.persons.entries()) {
             this.drawPersonInformation(person, index)
-            if (personalInfos[index]) {
+            if (voltage && voltage < config.global_config.low_battery_voltage_cutoff_in_mv) {
+                await this.drawLowBattery(this.init_y + index * this.single_offset)
+            } else if (personalInfos[index]) {
                 this.drawBusyMessage(personalInfos[index], index)
             }
             // this.drawOutOfOfficeNotice("30.10.2024", index)
