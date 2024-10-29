@@ -1,6 +1,13 @@
 {
   "exchange": {
-    "endpoint": "https://ENDPOINT/EWS/Exchange.asmx"
+    "tenants": [
+      {
+        "id": 1,
+        "endpoint": "https://ENDPOINT/EWS/Exchange.asmx",
+        "user": "USER@DOMAIN",
+        "secret": "SECRET"
+      }
+    ]
   },
   "global_config": {
     "soon_threshold_in_min": 15,

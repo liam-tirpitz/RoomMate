@@ -16,31 +16,37 @@ import {Person} from "./datamodels/Person";
 import {PersonalInfo} from "./datamodels/PersonalInfo";
 import * as utils from "./utils"
 import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImageProcessor";
+import {EWSTenant} from "./datamodels/EWSTenant";
 const { format } = require('logform');
 
 export class RequestHandler {
     dataRetrieval: ConfigRetrieval
-    ewsClient: EWSCalendarClient
     iCalClient: ICalClient
 
     constructor() {
         this.dataRetrieval = new ConfigRetrieval()
-        this.ewsClient = new EWSCalendarClient()
         this.iCalClient = new ICalClient()
+    }
+
+    getEWSClient(tenantID) {
+        const configRetrieval = new ConfigRetrieval()
+        const tenant = configRetrieval.getExchangeTenantByID(tenantID)
+        return new EWSCalendarClient(tenant)
     }
 
     async getAppointments(calendarDetails: Room): Promise<SimpleEvent[]> {
         if (calendarDetails.ews_info) {
-            return this.ewsClient.readUpcomingEventsToday(calendarDetails.ews_info.email)
+            const ews_client = this.getEWSClient(calendarDetails.ews_info.tenant_id)
+            return ews_client.readUpcomingEventsToday(calendarDetails.ews_info.email)
         } else if (calendarDetails.ical_info){
             return this.iCalClient.readUpcomingEventsToday(calendarDetails.ical_info)
         } else if (calendarDetails.persons) {
             let appointments: PersonalInfo[] = [];
-            let emails: string[] = []
+            let personal_appointments: PersonalInfo[][] = []
             for (const person of calendarDetails.persons as Person[]) {
-                emails.push(person.ews_info.email)
+                const ews_client = this.getEWSClient(person.ews_info.tenant_id)
+                personal_appointments.push((await ews_client.readPersonsAvailabilityToday([person.ews_info.email]))[0])
             }
-            const personal_appointments = await this.ewsClient.readPersonsAvailabilityToday(emails)
             appointments = personal_appointments.reduce((accumulator, value) => accumulator.concat(value), []); // TODO sorting so upcoming event is first
             return appointments
         } else {
@@ -71,8 +77,8 @@ export class RequestHandler {
         }
     }
 
-    async getCurrentStatusFromPerson(person: Person) {
-        const result = await this.ewsClient.readPersonsAvailabilityToday([person.ews_info.email])
+    async getCurrentStatusFromPerson(ewsClient: EWSCalendarClient, person: Person) {
+        const result = await ewsClient.readPersonsAvailabilityToday([person.ews_info.email])
         const ooOResult = this.getOoOFromPerson(result[0])
         if (!ooOResult) {
             return this.getBusyFromPerson(result[0])
@@ -92,16 +98,20 @@ export class RequestHandler {
             Logging.instance.logger.warn('Device-ID not found.', {devid: device_id});
             return image_processor.finalizeImage("new")
         }
+        let ews_client: EWSCalendarClient
+        if (calendarDetails.ews_info) {
+            ews_client = this.getEWSClient(calendarDetails.ews_info.tenant_id)
+        }
+
          if (calendarDetails.persons) {
             let freeBusyDetails: PersonalInfo[] = []
             for (const person of calendarDetails.persons as Person[]) {
-                freeBusyDetails.push(await this.getCurrentStatusFromPerson(person))
+                freeBusyDetails.push(await this.getCurrentStatusFromPerson(ews_client, person))
             }
             image_processor = new OfficeImageProcesor()
             await image_processor.buildImage(calendarDetails, freeBusyDetails, voltage)
         } else {
              if (voltage && voltage < config.global_config.low_battery_voltage_cutoff_in_mv) {
-
                  Logging.instance.logger.warn('Low Battery!', {voltage: voltage, devid: device_id});
                  image_processor = new SpecialStateImageProcessor()
                  await image_processor.buildLowBatImage(calendarDetails, voltage)

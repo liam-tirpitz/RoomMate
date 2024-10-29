@@ -12,6 +12,7 @@ import {SimpleEvent} from "../datamodels/SimpleEvent";
 import * as config from '../../config/calendars.json'
 import {PersonalInfo} from "../datamodels/PersonalInfo";
 import * as utils from "../utils"
+import {EWSTenant} from "../datamodels/EWSTenant";
 
 dotenv.config()
 
@@ -20,25 +21,16 @@ export class EWSCalendarClient {
     exch: ExchangeService;
 
 
-    constructor() {
+    constructor(tenant: EWSTenant) {
         this.exch = new ews.ExchangeService(ews.ExchangeVersion.Exchange2010);
-        if (process.env.EXC_USER && process.env.EXC_PASS) {
-            this.exch.Credentials = new ews.WebCredentials(process.env.EXC_USER, process.env.EXC_PASS);
-            this.exch.Url = new ews.Uri(config.exchange.endpoint);
+        const password = process.env[tenant.secret]
+        if (password) {
+            this.exch.Credentials = new ews.WebCredentials(tenant.user, password);
+            this.exch.Url = new ews.Uri(tenant.endpoint);
         } else {
             throw new Error('Missing Exchange Credentials!');
         }
     }
-
-    getBusyStatusString(cEvent: CalendarEvent) {
-        switch (cEvent.FreeBusyStatus) {
-            case LegacyFreeBusyStatus.OOF:
-                return "Out of Office"
-            case LegacyFreeBusyStatus.Busy:
-                return "Busy"
-        }
-    }
-
 
     async readUpcomingEventsToday(room_mail: string) {
         let now = ews.DateTime.Now
