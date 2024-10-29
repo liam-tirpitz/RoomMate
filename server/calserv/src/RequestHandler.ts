@@ -84,7 +84,7 @@ export class RequestHandler {
     async getImage(device_id: string, voltage: number): Promise<string> {
         const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
         if (!calendarDetails) return
-        Logging.instance.logger.info("Image requested for: " + device_id)
+        Logging.instance.logger.info("Image requested for: " + device_id + " with Voltage:" + voltage)
         let image_processor
          if (calendarDetails.persons) {
             let freeBusyDetails: PersonalInfo[] = []
