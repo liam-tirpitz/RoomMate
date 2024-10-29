@@ -16,6 +16,7 @@ import {Person} from "./datamodels/Person";
 import {PersonalInfo} from "./datamodels/PersonalInfo";
 import * as utils from "./utils"
 import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImageProcessor";
+const { format } = require('logform');
 
 export class RequestHandler {
     dataRetrieval: ConfigRetrieval
@@ -83,9 +84,14 @@ export class RequestHandler {
 
     async getImage(device_id: string, voltage: number): Promise<string> {
         const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
-        if (!calendarDetails) return
-        Logging.instance.logger.info("Image requested for: " + device_id + " with Voltage:" + voltage)
         let image_processor
+
+        if (!calendarDetails) {
+            image_processor = new SpecialStateImageProcessor()
+            await image_processor.buildNewDeviceImage(device_id)
+            Logging.instance.logger.warn('Device-ID not found.', {devid: device_id});
+            return image_processor.finalizeImage("new")
+        }
          if (calendarDetails.persons) {
             let freeBusyDetails: PersonalInfo[] = []
             for (const person of calendarDetails.persons as Person[]) {
@@ -95,6 +101,8 @@ export class RequestHandler {
             await image_processor.buildImage(calendarDetails, freeBusyDetails, voltage)
         } else {
              if (voltage && voltage < config.global_config.low_battery_voltage_cutoff_in_mv) {
+
+                 Logging.instance.logger.warn('Low Battery!', {voltage: voltage, devid: device_id});
                  image_processor = new SpecialStateImageProcessor()
                  await image_processor.buildLowBatImage(calendarDetails, voltage)
              } else {

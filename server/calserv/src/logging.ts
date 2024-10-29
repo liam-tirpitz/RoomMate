@@ -10,7 +10,7 @@ export class Logging {
             winston.format.timestamp({
                 format: 'YYYY-MM-DD HH:mm:ss'
             }),
-            winston.format.simple()
+            winston.format.json()
         ),
         defaultMeta: {},
         transports: [
