@@ -49,8 +49,7 @@ For details, see the [Bill of Material](./hardware/bom.xlsx)
 
 The driver HAT connects the E-Ink display to the Microcontroller.
 The Feather has built-in LiPo support and directly connects to the battery.
-
-<img src="file:/documentation/images/hardware.jpg" alt="Hardware Wiring" width="600"/>
+![Hardware Wiring](documentation/images/hardware.jpg)
 
 #### Wiring 
 The output from the e-ink HAT need to be soldered to the Feather board, according to the following pinout.
@@ -78,7 +77,8 @@ The case was designed in Fusion 360.
 We provide the [Fusion project files](./hardware/case/fusion_project_files) and exported [STEP files](./hardware/case/step-files).
 In our deployment, we print the case on a Prusa MK4 3D printer with [Prusament PLA in Galaxy Black](https://www.prusa3d.com/de/produkt/prusament-pla-prusa-galaxy-black-1kg/).
 
-<img src="file:/documentation/images/case.jpg" alt="Hardware Wiring" width="600"/>
+![Hardware Wiring](documentation/images/case.jpg)
+
 
 
 ### Software
