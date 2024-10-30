@@ -5,6 +5,7 @@ For meeting rooms, it displays the current availability (occupied / available), 
 For offices, it displays up to two names and affiliations, as well as potential out-of-office notices.
 This project was developed for the infrastructure at RWTH Aachen University, but is configurable to other scenarios.
 
+![Screens](documentation/images/screens.png)
 
 We currently support room calendars accessible through Microsoft Exchange and published as ical via RWTHOnline.
 The calendar information is accessed through a nodejs server component.
@@ -13,23 +14,73 @@ The screen content is processed on the server.
 The client regularly requests the server via WiFi and HTTP and updates the screen content.
 
 
+## Server Deployment
+For an easy deployment of the server component, we recommend using our Docker image.
+You can find an example on a possible docker-compose setup with that image in our [Deployment Example](server/calserv/deployment_example).
+You can download the example and start the server with `docker compose up -d` after you changed the configuration for your needs.
 
+Alternatively, you can clone the repository, install node and start the server with
 
+```bash
+npm i
+npm run build
+npm run start
+```
+Please make sure to pass a correct configuration and secrets, if you are using exchange.
 
-
-## Getting started
-
-
-
-
-## Deployment
-
-## Configuration
+## Server Configuration
 The configuration of all the rooms, persons, devices and endpoints can be done with the [calendars.json](server/calserv/deployment_example/config/calendars.json).
-You can find an example in our [Deployment Example](server/calserv/deployment_example).
 For development purposes, this file should be placed inside a config directory in the root of the project.
 The configuration file is loaded once when the project is started. 
 If the configuration is changed, the server needs to be restarted.
+
+### Room and Device Configuration
+Each room is configured with a `tenants` and an `id_string`, which are displayed on the screen.
+In addition the affiliation of the room can be shown by using a custom logo from the config directory, indicated via `logo`.
+The type of calendar is defined by either defining `ews_info` OR `ical_info` (see below).
+Each device consists of a `device_id` (MAC-Address) and a descriptive `location` string.
+Devices are directly associated with the room they are placed for.
+
+```json
+"calendars": [
+    {
+        "id": 200,
+        "id_string": "200a",
+        "name": "Meetingraum",
+        "logo": "institute_logo.png",
+        "ews_info": {
+            ...
+        },
+        "devices": [
+            {
+                "device_id": "aaaaaaaaaaaa",
+                "location": "Left_Door"
+            }
+        ]
+    }
+]
+```
+
+### Office Configuration
+In case of offices, at most two people can be defined with independent (Exchange) calendars.
+The definition of people can be set instead of an `ews_info` or `ical_info`.
+Each person has a `name`, a `job` and a `group`. 
+This data is displayed on the screen.
+Additionally, each person has an independent `email` and `tenant_id` to retrieve their data through EWS.
+
+```json
+"persons": [
+    {
+        "name": "Max Mustermann, M.Sc.",
+        "job": "Wissenschaftlicher Mitarbeiter",
+        "group": "DSMA",
+        "ews_info": {
+            "email": "mustermann@institute.rwth-aachen.de",
+            "tenant_id": 1
+        }
+    }
+]
+```
 
 ### Calendar Configuration
 Currently, we can retrieve data from either an Exchange Server, or via ical files.
@@ -118,8 +169,6 @@ These images should be in png format and ideally already black and white.
 If they are colored, the image processing will make them black and white, but this may be less beautiful.
 For the correct resolution, please check the [example](server/calserv/deployment_example/config/institute_logo.png).
 
-## Server
-
 ## Client
 
 ### Hardware
@@ -139,7 +188,7 @@ The Feather has built-in LiPo support and directly connects to the battery.
 ![Hardware Wiring](documentation/images/hardware.jpg)
 
 #### Wiring 
-The output from the e-ink HAT need to be soldered to the Feather board, according to the following pinout.
+The e-ink HAT connector cable need to be soldered to the Feather board, according to the following pinout.
 The used pins are defined in [DEV_Config.h](./client/room-occupancy/Room-Occupancy-Client/lib/esp32-waveshare-epd/src/DEV_Config.h)
 
 | E-Ink | Feather   |
