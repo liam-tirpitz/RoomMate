@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "node --test test/**/*.test.js",
+    "autostart": "./run.sh",
     "start": "node src/index.js",
     "start_bws": "bws run -- node src/index.js",
     "build": "tsc -p tsconfig.json",
