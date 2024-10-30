@@ -10,12 +10,13 @@ USER node
 USER node
 WORKDIR /home/node/app
 
-COPY  --chown=node:node ["package.json", "package-lock.json*", "./"]
+COPY  --chown=node:node ["package.json", "package-lock.json*", "run.sh", "./"]
+
 RUN ls .
 RUN npm install
 COPY --chown=node:node . .
 COPY --chown=node:node deployment_example/config ./config
 RUN npm run build
-
+RUN ["chmod", "+x", "./run.sh"]
 EXPOSE 3001
 CMD [ "npm", "run", "autostart" ]
