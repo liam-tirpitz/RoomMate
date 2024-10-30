@@ -25,7 +25,8 @@
       "name": "Meetingraum",
       "logo": "institute_logo.png",
       "ews_info": {
-        "email": "room@domain"
+        "email": "room@domain",
+        "tenant_id": 1
       },
       "devices": [
         {
@@ -58,7 +59,8 @@
           "email": "an@institute.rwth-aachen.de",
           "phone": "+49 241 8000000",
           "ews_info": {
-            "email": "an@institute.rwth-aachen.de"
+            "email": "an@institute.rwth-aachen.de",
+            "tenant_id": 1
           }
         }
 

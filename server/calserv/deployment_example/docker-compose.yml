@@ -5,7 +5,6 @@ services:
       - 3001:3001
     env_file: "../.env"
 #    environment:
-#      - EXC_USER=test@test.de
-#      - EXC_PASS=password
+#      - SECRET=password
     volumes:
       - ./config:/home/node/app/config

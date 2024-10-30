@@ -22,14 +22,101 @@ The client regularly requests the server via WiFi and HTTP and updates the scree
 
 
 
+## Deployment
+
+## Configuration
+The configuration of all the rooms, persons, devices and endpoints can be done with the [calendars.json](server/calserv/deployment_example/config/calendars.json).
+You can find an example in our [Deployment Example](server/calserv/deployment_example).
+For development purposes, this file should be placed inside a config directory in the root of the project.
+The configuration file is loaded once when the project is started. 
+If the configuration is changed, the server needs to be restarted.
+
+### Calendar Configuration
+Currently, we can retrieve data from either an Exchange Server, or via ical files.
+
+#### Exchange Configuration
+To access data through the Exchange Web Services API (EWS), which is required for rooms, resources and users available in Outlook,
+we need to configure access for each exchange domain.
+Specifically, we need an endpoint and credentials for a user with the necessary permissions.
+This user needs permissions to read the calendars for all entities that we want to map to a display.
+Multiple credentials can be stored for users across domains or exchange infrastructures (`tenants`).
+
+```json
+"exchange": {
+    "tenants": [
+      {
+        "id": 1,
+        "endpoint": "https://ENDPOINT/EWS/Exchange.asmx",
+        "user": "USER@DOMAIN",
+        "secret": "SECRET"
+      }
+    ]
+}
+```
+
+The users can then be mapped to each calendar.
+Each exchange tenant requires an `endpoint`, a `user` and a password.
+Through the `id`, exchange credentials can be mapped to a specific room or person.
+The username of each calendar retrieved through exchange is configured as part of the individual calendar configuration as `email`.
+```json
+"calendars": [
+  {
+    ...
+    "ews_info": {
+      "email": "room@domain",
+      "tenant_id": 1
+    }
+    
+  }
+]
+```
+
+We configure the endpoint and the username in the configuration file.
+The passwords are injected at runtime through environment variables (`secret`).
 
 
-## Installation
-
-## Usage
 
 
-### Configuration
+##### Secrets
+The configuration key `exchange.tenants.secret` defines the _name_ of the environment variable that is injected.
+
+There are 3 supported ways  to inject the secrets.
+First, if a Docker deployment is used is used, 
+the secrets can be passed directly to the container, via the [docker-compose.yml](server/calserv/deployment_example/docker-compose.yml).
+For development purposes, the variables can be defined in a .env file placed in [server/](server).
+
+Lastly, the secrets can be synchronized via [Bitwarden Secrets Manager](https://bitwarden.com/products/secrets-manager/).
+In that case, we need to configure an access token in BWS and configure the environment variable `BWS_ACCESS_TOKEN`.
+For this to work locally, you need to install the [Secrets Manager CLI](https://bitwarden.com/help/secrets-manager-cli/).
+Local injection via the Secrets Manager can be enabled by using `npm run start_bws` or `npm run dev_bws`
+The docker image already contains the CLI tool. 
+To enable it, pass the `BWS_ACCESS_TOKEN` environment variable.
+If this variable is not present, the secrets should be passed directly via environment variables.
+
+
+#### ICal Configuration
+The ical module only requires a public HTTP endpoint from which the calendar is retrieved.
+__Please note, that the current ical implementation is incomplete.__
+Calendars from RWTHOnline can be parsed, but more complex structures (especially recurrences) are not yet supported.
+
+```json
+
+"calendars": [
+  {
+    ...
+    "ical_info": {
+      "endpoint": "www.domain.de/calendar"
+    }
+    
+  }
+]
+```
+### Logos
+We can define different logos for each device.
+These logos should be placed alongside the configuration file in the config directory.
+These images should be in png format and ideally already black and white. 
+If they are colored, the image processing will make them black and white, but this may be less beautiful.
+For the correct resolution, please check the [example](server/calserv/deployment_example/config/institute_logo.png).
 
 ## Server
 
