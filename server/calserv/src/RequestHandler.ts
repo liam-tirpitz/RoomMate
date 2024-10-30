@@ -106,6 +106,7 @@ export class RequestHandler {
          if (calendarDetails.persons) {
             let freeBusyDetails: PersonalInfo[] = []
             for (const person of calendarDetails.persons as Person[]) {
+                ews_client = this.getEWSClient(person.ews_info.tenant_id)
                 freeBusyDetails.push(await this.getCurrentStatusFromPerson(ews_client, person))
             }
             image_processor = new OfficeImageProcesor()
