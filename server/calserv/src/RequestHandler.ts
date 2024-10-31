@@ -16,8 +16,7 @@ import {Person} from "./datamodels/Person";
 import {PersonalInfo} from "./datamodels/PersonalInfo";
 import * as utils from "./utils"
 import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImageProcessor";
-import {EWSTenant} from "./datamodels/EWSTenant";
-const { format } = require('logform');
+import {CustomEvent} from "./datamodels/CustomEvent";
 
 export class RequestHandler {
     dataRetrieval: ConfigRetrieval
@@ -87,6 +86,17 @@ export class RequestHandler {
         }
     }
 
+    async getCurrentCustomMessage(ewsClient: EWSCalendarClient, person: Person) : Promise<CustomEvent> {
+        const messagesToday = await ewsClient.readPersonsSpecificNotesToday(person.ews_info.email)
+        if (messagesToday) {
+            const messagesNow = messagesToday.filter((value) => value.happeningNow(ews.DateTime.Now))
+            if (messagesNow.length > 0) {
+                return messagesNow[0]
+            }
+        }
+        return undefined
+    }
+
 
     async getImage(device_id: string, voltage: number): Promise<string> {
         const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
@@ -104,10 +114,17 @@ export class RequestHandler {
         }
 
          if (calendarDetails.persons) {
-            let freeBusyDetails: PersonalInfo[] = []
+            let freeBusyDetails: (CustomEvent|PersonalInfo)[] = []
             for (const person of calendarDetails.persons as Person[]) {
                 ews_client = this.getEWSClient(person.ews_info.tenant_id)
-                freeBusyDetails.push(await this.getCurrentStatusFromPerson(ews_client, person))
+                const custom_message = this.getCurrentCustomMessage(ews_client, person)
+                if (await custom_message) {
+                    freeBusyDetails.push(await custom_message)
+                } else {
+                    const busy_status = this.getCurrentStatusFromPerson(ews_client, person)
+                    freeBusyDetails.push(await busy_status)
+                }
+
             }
             image_processor = new OfficeImageProcesor()
             await image_processor.buildImage(calendarDetails, freeBusyDetails, voltage)

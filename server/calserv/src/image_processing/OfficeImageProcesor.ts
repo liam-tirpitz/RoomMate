@@ -3,6 +3,7 @@ import {Room} from "../datamodels/Room";
 import {Person} from "../datamodels/Person";
 import {PersonalInfo} from "../datamodels/PersonalInfo";
 import * as config from "../../config/calendars.json";
+import {CustomEvent} from "../datamodels/CustomEvent";
 
 export class OfficeImageProcesor extends ImageProcessor {
     init_y = 279
@@ -61,8 +62,27 @@ export class OfficeImageProcesor extends ImageProcessor {
         this.ctx.fillText(personalInfo.byline, this.screenWidth/2, this.init_y + yoffset_factor*this.single_offset + line_spacing)
     }
 
+    drawCustomMssage(customEvent: CustomEvent, yoffset_factor: number) {
+        this.ctx.fillStyle = "rgba(255, 255, 255, 1)";
+        this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
 
-    async buildImage(room: Room, personalInfos: PersonalInfo[], voltage: number) {
+        const init_x = 46
+        const line_spacing = 24
+        const local_y_difference = -30
+
+        this.ctx.textAlign = "left"
+        this.ctx.font = '22pt "HNB"'
+        this.ctx.fillText(customEvent.summary, init_x, this.init_y + local_y_difference + yoffset_factor*this.single_offset)
+        this.ctx.font = '16pt "HNL"'
+        console.log(customEvent.lines)
+        for (const [index, line] of customEvent.lines.entries()) {
+            if (index >= 5) break
+            console.log(line)
+            this.ctx.fillText(line, init_x, this.init_y + local_y_difference + yoffset_factor*this.single_offset + (index+1) * line_spacing)
+        }
+    }
+
+    async buildImage(room: Room, personalInfos: (CustomEvent | PersonalInfo)[], voltage: number) {
         await this.drawHeader(room.name, room.id_string, room.logo)
 
         for (const [index, person] of room.persons.entries()) {
@@ -70,9 +90,13 @@ export class OfficeImageProcesor extends ImageProcessor {
             if (voltage && voltage < config.global_config.low_battery_voltage_cutoff_in_mv) {
                 await this.drawLowBattery(this.init_y + index * this.single_offset)
             } else if (personalInfos[index]) {
-                this.drawBusyMessage(personalInfos[index], index)
+                const personalInfo = personalInfos[index]
+                if (personalInfo instanceof PersonalInfo) {
+                    this.drawBusyMessage(personalInfo, index)
+                } else if (personalInfo instanceof CustomEvent) {
+                    this.drawCustomMssage(personalInfo, index)
+                }
             }
-            // this.drawOutOfOfficeNotice("30.10.2024", index)
         }
         if (room.persons.length > 1) {
             this.drawDivider()
