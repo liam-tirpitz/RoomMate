@@ -13,7 +13,7 @@ WORKDIR /home/node/app
 COPY  --chown=node:node ["package.json", "package-lock.json*", "run.sh", "./"]
 
 RUN ls .
-RUN npm install
+RUN npm install --force
 COPY --chown=node:node . .
 COPY --chown=node:node deployment_example/config ./config
 RUN npm run build
