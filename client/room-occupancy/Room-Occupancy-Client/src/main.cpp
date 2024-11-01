@@ -9,16 +9,16 @@
 #include <ArduinoJson.h>
 #include <Screen.h>
 #include "mbedtls/base64.h"
-#include <Preferences.h>
+#include <Provisioner.h>
+#include <Storage.h>
 
 #define uS_TO_S_FACTOR 1000000ull  /* Conversion factor for micro seconds to seconds */
 #define regular_wakeup_interval_in_s  900        /* Time ESP32 will go to sleep (in seconds) */
 
-#define NAMESPACE "CALENDAR"
 
-const char* ssid = "RWTH-devices";
-//const char* pass = "N9alrk2ULDSWpidF"; // Waveshare Dev-Board
-const char* pass = "wX5etl2YBZLzhpRN"; // Feather
+// const char* ssid = "RWTH-devices";
+// //const char* pass = "N9alrk2ULDSWpidF"; // Waveshare Dev-Board
+// const char* pass = "wX5etl2YBZLzhpRN"; // Feather
 
 const char* keys[] = {"h1", "h2", "h3", "h4", "h5"};
 
@@ -36,36 +36,46 @@ FooterState footerState;
 Screen screen {&footerState};
 
 WiFiMulti wifiMulti;
+Storage storage;
 
-const String endpoint = "http://your-server.example.com:3001/";
-
-Preferences preferences;
+void sleep() {
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH,   ESP_PD_OPTION_OFF);
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_OFF);
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_FAST_MEM, ESP_PD_OPTION_OFF);
+  esp_sleep_pd_config(ESP_PD_DOMAIN_XTAL,         ESP_PD_OPTION_OFF);
+  esp_deep_sleep_start();
+}
 
 
 
 void setup_wifi_connection() {
-  wifiMulti.addAP(ssid, pass);
+  wifiMulti.addAP(storage.getSSID().c_str(), storage.getPSK().c_str());
 
-  Serial.println();
-  Serial.println();
-  Serial.print("Waiting for WiFi... ");
-
-  while (wifiMulti.run() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(500);
+  // Serial.println();
+  // Serial.println();
+  // Serial.print("Waiting for WiFi... ");
+  uint8_t count = 0;
+  while (wifiMulti.run() != WL_CONNECTED && count < 5) {
+    // Serial.print(".");
+    count = count + 1;
+    delay(20000);
   }
 
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  if (count == 5) {
+      sleep();
+  } 
+
+  // Serial.println("");
+  // Serial.println("WiFi connected");
+  // Serial.println("IP address: ");
+  // Serial.println(WiFi.localIP());
 }
 
 uint8_t getImageDataFromEndpoint() {
     if(WiFi.status() == WL_CONNECTED){
       HTTPClient http;
       
-      http.begin(endpoint + "image?devid=" + devid);
+      http.begin(storage.getEndpoint() + "image?devid=" + devid);
 
       int httpResponseCode = http.GET();
       int buffer_offset = 0;
@@ -90,15 +100,15 @@ uint8_t getImageDataFromEndpoint() {
               delay(1);
             }
 
-          Serial.println();
-          Serial.print("[HTTP] connection closed or file end.\n");
+          // Serial.println();
+          // Serial.print("[HTTP] connection closed or file end.\n");
           http.end();
           return 0;
         }
       }
       else {
-        Serial.print("Error code: ");
-        Serial.println(httpResponseCode);
+        // Serial.print("Error code: ");
+        // Serial.println(httpResponseCode);
         http.end();
         return 1;
       }
@@ -115,7 +125,7 @@ void getMetaDataFromEndpoint() {
   if(WiFi.status() == WL_CONNECTED){
     HTTPClient http;
 
-    http.begin(endpoint + "data?devid=" + devid);
+    http.begin(storage.getEndpoint() + "data?devid=" + devid);
     int httpResponseCode = http.GET();
 
     if (httpResponseCode>0) {
@@ -123,10 +133,10 @@ void getMetaDataFromEndpoint() {
         String payload = http.getString();
         DeserializationError error = deserializeJson(doc, payload);
         if (error) {
-          Serial.print(F("deserializeJson() failed: "));
-          Serial.println(error.f_str());
+          // Serial.print(F("deserializeJson() failed: "));
+          // Serial.println(error.f_str());
        } else {
-          Serial.println("Updated Metadata");
+          // Serial.println("Updated Metadata");
        }
       }
     }
@@ -143,29 +153,29 @@ void handleMetadata() {
 
   // Redraw screen if metadata changed
   bool needs_update = false;
-  preferences.begin(NAMESPACE, false); 
+  storage.getPreferences().begin(NAMESPACE, false); 
   for (uint8_t i = 0; i < 5; i++) {
-    char last_hash = preferences.getChar(keys[i], 0);
+    char last_hash = storage.getPreferences().getChar(keys[i], 0);
     if(last_hash != hash[i]) {
       needs_update = true;
       break;
     }
   }
   if (needs_update) {
-    Serial.println("Update required.");
+    // Serial.println("Update required.");
     if(!getImageDataFromEndpoint()) {
         screen.setup();
         screen.drawImage(byte_buff);
         screen.sleep();
     }
     for (uint8_t i = 0; i < 5; i++) {
-      preferences.putChar(keys[i], hash[i]);
+      storage.getPreferences().putChar(keys[i], hash[i]);
     }
   } else {
-      Serial.println("Im Westen nichts neues.");
+      // Serial.println("Im Westen nichts neues.");
   }
-  preferences.end();
-  Serial.println("Configure sleep.");
+  storage.getPreferences().end();
+  // Serial.println("Configure sleep.");
   long diff = next_update_unix - current_time_unix;
   long sleep_time_in_s = 0;
   if (
@@ -181,10 +191,10 @@ void handleMetadata() {
   }
   uint64_t sleep_time_in_us = sleep_time_in_s * uS_TO_S_FACTOR;
   esp_sleep_enable_timer_wakeup(sleep_time_in_us);
-  Serial.println("Sleep configured.");
-  Serial.print("Wait for ");
-  Serial.print(sleep_time_in_s);
-  Serial.println();
+  // Serial.println("Sleep configured.");
+  // Serial.print("Wait for ");
+  // Serial.print(sleep_time_in_s);
+  // Serial.println();
 
 }
 
@@ -194,20 +204,18 @@ void updateState() {
     handleMetadata();
 }
 
-void sleep() {
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH,   ESP_PD_OPTION_OFF);
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_OFF);
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_FAST_MEM, ESP_PD_OPTION_OFF);
-  esp_sleep_pd_config(ESP_PD_DOMAIN_XTAL,         ESP_PD_OPTION_OFF);
-  esp_deep_sleep_start();
-}
+
 
 void setup() {
-  Serial.begin(115200);
-  setup_wifi_connection();
+  uint64_t sleep_time_in_us = regular_wakeup_interval_in_s * uS_TO_S_FACTOR;
+  esp_sleep_enable_timer_wakeup(sleep_time_in_us);
+
+  Provisioner p = Provisioner();
+  // Serial.begin(115200);
   devid = WiFi.macAddress();
-    Serial.println(devid);
   devid.replace(":","");  
+  // Serial.println(devid);
+  setup_wifi_connection();
   updateState();
   sleep();
 }
