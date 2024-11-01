@@ -14,6 +14,56 @@ The screen content is processed on the server.
 The client regularly requests the server via WiFi and HTTP and updates the screen content.
 
 
+## Usage
+If configured accordingly, the displays for bookable rooms will automatically display the current and upcoming room occupations.
+The end users can influence the content by booking the associated resources via Outlook (or RWTH Online).
+The displays are battery operated.
+If the battery is low and needs to be recharged, the screen will not update anymore and show a low battery warning.
+In that case, the devices needs to be charged via the USB-C port.
+
+Displays for offices can be configured by the occupants of that office via their personal calendars.
+Please find the details on the necessary configuration below.
+If configured accordingly, Out of Office notices are automatically generated if the primary calendar of the associated user in Exchange 
+contains a current appointment with  "Show as" set to "Out of Office".
+The system will automatically determine the duration and display it as well.
+
+Additionally, the occupants can configure a separate calendar "SIGN" to display custom messages.
+If a custom message is set, it overwrites a potential out of office notice from the primary calendar.
+For entries in "SIGN", users can set a title and the body of the message.
+The message is displayed for the set duration of the appointment.
+The location field is ignored.
+The first 5 lines of the message body are displayed.
+The title should only use 25 characters and each body line should not be longer than 45 characters.
+Do not use additional HTML formatting or your message may be displayed wrong.
+
+
+### Exchange Calendar Setup
+If calendars are retrieved from Exchange, the system user used to access the calendars in a domain needs the permission to do so.
+For different types of screens, different permissions need to be set.
+
+#### Bookable Room Calendar
+For rooms and resources, the system user needs read access to the "Full Calendar Details" (Reviewer).
+These permissions can be configured by the room manager via the calendar properties in Outlook.
+
+![Permissions](documentation/images/permissions_rooms.png)
+
+#### Personal Availability
+In the case of offices, each occupant can configure their access individually.
+To display Out of Office notices, the system user needs read access to the Free/Busy times.
+This is often already set as the Default permission for users in the same domain, so it may not be necessary to set this explicitly.
+
+To display custom messages, a separate calendar needs to be created and named "SIGN".
+The system user needs read access to the "Full Calendar Details" (Reviewer) of the "SIGN" calendar.
+Additionally, to find this calendar, the system user needs access to "Folder visible" __of the primary (parent) calendar__.
+
+![Permissions](documentation/images/permission_parent.png)
+
+Please note that the display of availability and out of office messages is optional. 
+If the necessary permissions are not set, the display will function as a static room sign.
+
+
+
+
 ## Server Deployment
 For an easy deployment of the server component, we recommend using our Docker image.
 You can find an example on a possible docker-compose setup with that image in our [Deployment Example](server/calserv/deployment_example).
