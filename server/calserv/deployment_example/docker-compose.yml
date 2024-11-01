@@ -9,3 +9,4 @@ services:
 #      - SECRET=password
     volumes:
       - ./config:/home/node/app/config
+      - ./logs:/home/node/app/logs
