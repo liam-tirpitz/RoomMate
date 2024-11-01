@@ -67,7 +67,13 @@ export class EWSCalendarClient {
             const input = body.Text
             const dom = new jsdom.JSDOM(input)
             for (const element of dom.window.document.getElementsByTagName("p")) {
-                result.push(element.textContent.replace("\n", ""))
+                const lines = element.textContent.split("\n")
+                if (lines.length > 0) {
+                    if (lines[lines.length -1] === "") {
+                        lines.pop()
+                    }
+                    result.push(...lines)
+                }
             }
             return result
         } else {
