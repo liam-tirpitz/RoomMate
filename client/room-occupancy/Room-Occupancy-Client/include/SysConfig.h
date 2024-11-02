@@ -2,14 +2,20 @@
 #define SYSCONF_H
 
 #include <Arduino.h>
+#include <Storage.h>
 
 #define VBATPIN A13
+#define uS_TO_S_FACTOR 1000000ull  /* Conversion factor for micro seconds to seconds */
 
 class SysConfig {
     public:
         SysConfig();
         void sleep();
+        void configDefaultSleep();
+        int readBatteryVoltage();
+
     private:
+        Storage storage;
 };
 
 #endif

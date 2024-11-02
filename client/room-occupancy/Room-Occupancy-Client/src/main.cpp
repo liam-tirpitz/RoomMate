@@ -12,7 +12,6 @@
 #include <Storage.h>
 #include <SysConfig.h>
 
-#define uS_TO_S_FACTOR 1000000ull  /* Conversion factor for micro seconds to seconds */
 
 
 unsigned char b64_buff[1000] = {0};
@@ -182,26 +181,16 @@ void updateState() {
     handleMetadata();
 }
 
-int readBatteryVoltage() {
-  float measuredvbat = analogReadMilliVolts(VBATPIN);  
-  measuredvbat *= 2;    
-  int milivolt = round(measuredvbat);
-  return milivolt;
-}
-
 
 
 
 void setup() {
-  uint64_t sleep_time_in_us = storage.getRegularSleepTimeInS() * uS_TO_S_FACTOR;
-  esp_sleep_enable_timer_wakeup(sleep_time_in_us);
-
   Provisioner p = Provisioner();
-
+  sysconfig.configDefaultSleep();
   if(storage.getEndpoint() != "" && storage.getSSID() != "" && storage.getPSK() != "")  {
       devid = WiFi.macAddress();
       devid.replace(":","");  
-      voltage = readBatteryVoltage();
+      voltage = sysconfig.readBatteryVoltage();
       // Serial.println(devid);
       setup_wifi_connection();
       updateState();
