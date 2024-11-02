@@ -76,7 +76,7 @@ int setWakeupInterval(int argc, char **argv)
 }
 
 Provisioner::Provisioner() {
-    console.setPrompt("Roomies> ");
+    console.setPrompt("RoomMate> ");
     console.begin(115200);
     console.registerSystemCommands();
     console.registerCommand(ConsoleCommand("wifi.setCredentials", &setWifiCredentials, "Set WiFi Credentials"));
@@ -84,7 +84,7 @@ Provisioner::Provisioner() {
     console.registerCommand(ConsoleCommand("config.setEndpoint", &setEndpoint, "Set HTTP-Endpoint"));
     console.registerCommand(ConsoleCommand("config.setSleepInterval", &setWakeupInterval, "Set Sleep Interval in Seconds"));
 
-    printf("\n\nWelcome to Roomies!");
+    printf("\n\nWelcome to RoomMate!");
 
 
 };

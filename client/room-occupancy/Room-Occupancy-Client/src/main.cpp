@@ -4,7 +4,6 @@
  */
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WiFiMulti.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <Screen.h>
@@ -15,10 +14,6 @@
 #define uS_TO_S_FACTOR 1000000ull  /* Conversion factor for micro seconds to seconds */
 #define regular_wakeup_interval_in_s  900        /* Time ESP32 will go to sleep (in seconds) */
 
-
-// const char* ssid = "RWTH-devices";
-// //const char* pass = "N9alrk2ULDSWpidF"; // Waveshare Dev-Board
-// const char* pass = "wX5etl2YBZLzhpRN"; // Feather
 
 const char* keys[] = {"h1", "h2", "h3", "h4", "h5"};
 
@@ -35,7 +30,6 @@ JsonDocument doc;
 FooterState footerState;
 Screen screen {&footerState};
 
-WiFiMulti wifiMulti;
 Storage storage;
 
 void sleep() {
@@ -49,16 +43,17 @@ void sleep() {
 
 
 void setup_wifi_connection() {
-  wifiMulti.addAP(storage.getSSID().c_str(), storage.getPSK().c_str());
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(storage.getSSID().c_str(), storage.getPSK().c_str());
 
   // Serial.println();
   // Serial.println();
   // Serial.print("Waiting for WiFi... ");
   uint8_t count = 0;
-  while (wifiMulti.run() != WL_CONNECTED && count < 5) {
+  while (WiFi.status() != WL_CONNECTED && count < 5) {
     // Serial.print(".");
     count = count + 1;
-    delay(20000);
+    delay(10000);
   }
 
   if (count == 5) {
@@ -211,13 +206,17 @@ void setup() {
   esp_sleep_enable_timer_wakeup(sleep_time_in_us);
 
   Provisioner p = Provisioner();
-  // Serial.begin(115200);
-  devid = WiFi.macAddress();
-  devid.replace(":","");  
-  // Serial.println(devid);
-  setup_wifi_connection();
-  updateState();
-  sleep();
+
+  if(storage.getEndpoint() != "" && storage.getSSID() != "" && storage.getPSK() != "")  {
+      devid = WiFi.macAddress();
+      devid.replace(":","");  
+      // Serial.println(devid);
+      // setup_wifi_connection();
+      // updateState();
+      // sleep();
+  } else {
+    // Stay awake for configuration if config is incomplete
+  }
 }
 
 
