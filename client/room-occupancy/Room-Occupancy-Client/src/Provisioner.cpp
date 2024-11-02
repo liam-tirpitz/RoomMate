@@ -51,7 +51,8 @@ int setEndpoint(int argc, char **argv)
     }
     Storage storage;
 
-    auto arg = String(argv[1]);
+    auto endpoint = String(argv[1]);
+    storage.setEndpoint(endpoint);
 
     printf("Endpoint saved\n");
     
@@ -59,21 +60,21 @@ int setEndpoint(int argc, char **argv)
 }
 
 
-int setWakeupInterval(int argc, char **argv)
-{
-    if (argc != 2)
-    {
-        printf("You have to give the wakeup intervall in seconds: config.setRegularWakeupInterval 900\n");
-        return EXIT_FAILURE;
-    }
-    Storage storage;
+// int setWakeupInterval(int argc, char **argv)
+// {
+//     if (argc != 2)
+//     {
+//         printf("You have to give the wakeup intervall in seconds: config.setRegularWakeupInterval 900\n");
+//         return EXIT_FAILURE;
+//     }
+//     Storage storage;
 
-    auto arg = String(argv[1]);
+//     auto arg = String(argv[1]);
 
-    printf("Wakeup Interval saved\n");
+//     printf("Wakeup Interval saved\n");
     
-    return EXIT_SUCCESS;
-}
+//     return EXIT_SUCCESS;
+// }
 
 Provisioner::Provisioner() {
     console.setPrompt("RoomMate> ");
@@ -82,7 +83,7 @@ Provisioner::Provisioner() {
     console.registerCommand(ConsoleCommand("wifi.setCredentials", &setWifiCredentials, "Set WiFi Credentials"));
     console.registerCommand(ConsoleCommand("wifi.getMAC", &getWifiMAC, "Get MAC Address"));
     console.registerCommand(ConsoleCommand("config.setEndpoint", &setEndpoint, "Set HTTP-Endpoint"));
-    console.registerCommand(ConsoleCommand("config.setSleepInterval", &setWakeupInterval, "Set Sleep Interval in Seconds"));
+    // console.registerCommand(ConsoleCommand("config.setSleepInterval", &setWakeupInterval, "Set Sleep Interval in Seconds"));
 
     printf("\n\nWelcome to RoomMate!");
 

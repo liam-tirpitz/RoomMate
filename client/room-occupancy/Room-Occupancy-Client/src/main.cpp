@@ -13,7 +13,7 @@
 
 #define uS_TO_S_FACTOR 1000000ull  /* Conversion factor for micro seconds to seconds */
 #define regular_wakeup_interval_in_s  900        /* Time ESP32 will go to sleep (in seconds) */
-
+#define VBATPIN A13
 
 const char* keys[] = {"h1", "h2", "h3", "h4", "h5"};
 
@@ -23,6 +23,7 @@ unsigned char byte_buff[48000] = {0};
 unsigned long previous_millis = 0;
 
 String devid = "";
+int voltage = 0;
 JsonDocument doc;
 //RTC_DATA_ATTR char last_hash[16];
 
@@ -70,7 +71,7 @@ uint8_t getImageDataFromEndpoint() {
     if(WiFi.status() == WL_CONNECTED){
       HTTPClient http;
       
-      http.begin(storage.getEndpoint() + "image?devid=" + devid);
+      http.begin(storage.getEndpoint() + "image?devid=" + devid + "&voltage=" + String(voltage));
 
       int httpResponseCode = http.GET();
       int buffer_offset = 0;
@@ -199,6 +200,14 @@ void updateState() {
     handleMetadata();
 }
 
+int readBatteryVoltage() {
+  float measuredvbat = analogReadMilliVolts(VBATPIN);  
+  measuredvbat *= 2;    
+  int milivolt = round(measuredvbat);
+  return milivolt;
+}
+
+
 
 
 void setup() {
@@ -210,10 +219,11 @@ void setup() {
   if(storage.getEndpoint() != "" && storage.getSSID() != "" && storage.getPSK() != "")  {
       devid = WiFi.macAddress();
       devid.replace(":","");  
+      voltage = readBatteryVoltage();
       // Serial.println(devid);
-      // setup_wifi_connection();
-      // updateState();
-      // sleep();
+      setup_wifi_connection();
+      updateState();
+      sleep();
   } else {
     // Stay awake for configuration if config is incomplete
   }
