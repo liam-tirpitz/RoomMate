@@ -8,6 +8,17 @@ export class SpecialStateImageProcessor extends ImageProcessor {
         super()
     }
 
+    async drawUnprovisionedDevice() {
+        this.ctx.textAlign = "center"
+        this.ctx.font = '26pt "HNB"'
+        this.ctx.fillText("Hey, I am new here!", this.screenWidth/2, this.screenHeight/2)
+        this.ctx.font = '18pt "HNB"'
+        this.ctx.fillText("Can you show me around?", this.screenWidth/2, this.screenHeight/2 + 30)
+        this.ctx.fillText("Please configure WiFi Credentials.", this.screenWidth/2, this.screenHeight/2 + 80)
+
+        this.ctx.fillText("Developed by DSMA@RWTH", this.screenWidth/2, this.screenHeight/2 + 300)
+
+    }
 
     async drawNewDevice() {
         this.ctx.textAlign = "center"
@@ -18,7 +29,6 @@ export class SpecialStateImageProcessor extends ImageProcessor {
         this.ctx.fillText("Please configure its purpose.", this.screenWidth/2, this.screenHeight/2 + 80)
 
         this.ctx.fillText("Developed by DSMA@RWTH", this.screenWidth/2, this.screenHeight/2 + 300)
-
     }
 
     async buildLowBatImage(room: Room, voltage: number) {
