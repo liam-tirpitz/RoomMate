@@ -56,8 +56,8 @@ async function start() {
         const port = new SerialPort({
             path: result.path,
             baudRate: 115200,
-        }).setEncoding('latin1')
-        const parser = port.pipe(new DelimiterParser({ delimiter: 'RoomMate>' })).setEncoding('latin1');
+        }).setEncoding('utf8')
+        const parser = port.pipe(new DelimiterParser({ delimiter: 'RoomMate>' })).setEncoding('utf8');
 
         port.on('open', function () {
             console.log('Port Open')

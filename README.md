@@ -268,3 +268,20 @@ In our deployment, we print the case on a Prusa MK4 3D printer with [Prusament P
 
 
 ### Software
+The client software project is developed with [PlatformIO](https://platformio.org/) as the IDE.
+The firmware of devices can be flashed via USB.
+
+### Provisioning
+To communicate with the server, each RoomMate must be provisioned with WiFi credentials and the server endpoint.
+With the Provisioner [Gordon tool](server/calserv/src/provisioner/gordon.ts) devices can be automatically provisioned, using credentials stored in the Bitwarden Secrets Manager.
+For a device with the MAC address "aa:aa:aa:aa:aa:aa", place a secret of the form `PSK_aaaaaaaaaaaa` in the store, connect the RoomMate via USB and execute Gordon.
+
+Alternatively, you can manually use the the CLI via serial at a baud rate of 115200.
+The following commands are needed to provision the device.
+
+```bash
+wifi.getMAC
+wiFi.setCredentials SSID PSK
+config.setEndpoint http://SERVER:PORT/
+restart
+```
