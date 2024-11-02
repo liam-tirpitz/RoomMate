@@ -22,13 +22,15 @@ class Storage {
         void setEndpoint(const String endpoint);
         String getEndpoint();
 
-        void setHash();
-        void getHash();
+        void setHash(const char* hash);
+        bool checkHash(const char* hash);
+
 
         Preferences getPreferences();
 
     private:
         Preferences preferences;
+        static const char* keys[];
 
 
 };

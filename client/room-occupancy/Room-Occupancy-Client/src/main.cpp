@@ -15,7 +15,6 @@
 #define regular_wakeup_interval_in_s  900        /* Time ESP32 will go to sleep (in seconds) */
 #define VBATPIN A13
 
-const char* keys[] = {"h1", "h2", "h3", "h4", "h5"};
 
 unsigned char b64_buff[1000] = {0};
 unsigned char byte_buff[48000] = {0};
@@ -25,7 +24,6 @@ unsigned long previous_millis = 0;
 String devid = "";
 int voltage = 0;
 JsonDocument doc;
-//RTC_DATA_ATTR char last_hash[16];
 
 
 FooterState footerState;
@@ -49,20 +47,21 @@ void setup_wifi_connection() {
 
   // Serial.println();
   // Serial.println();
-  // Serial.print("Waiting for WiFi... ");
+  printf("Waiting for WiFi... ");
   uint8_t count = 0;
   while (WiFi.status() != WL_CONNECTED && count < 5) {
-    // Serial.print(".");
+    printf(".");
     count = count + 1;
     delay(10000);
   }
 
   if (count == 5) {
+      printf("Could not connect to WiFi... ");
       sleep();
   } 
 
   // Serial.println("");
-  // Serial.println("WiFi connected");
+  printf("WiFi connected");
   // Serial.println("IP address: ");
   // Serial.println(WiFi.localIP());
 }
@@ -132,7 +131,7 @@ void getMetaDataFromEndpoint() {
           // Serial.print(F("deserializeJson() failed: "));
           // Serial.println(error.f_str());
        } else {
-          // Serial.println("Updated Metadata");
+          printf("Updated Metadata");
        }
       }
     }
@@ -146,29 +145,18 @@ void handleMetadata() {
   long current_time_unix = doc["current_time_unix"]; // 1728220858  
   bool is_night = doc["is_night"]; // false
   bool is_weekend = doc["is_weekend"]; // false
-
+  bool needs_update = storage.checkHash(hash);
   // Redraw screen if metadata changed
-  bool needs_update = false;
-  storage.getPreferences().begin(NAMESPACE, false); 
-  for (uint8_t i = 0; i < 5; i++) {
-    char last_hash = storage.getPreferences().getChar(keys[i], 0);
-    if(last_hash != hash[i]) {
-      needs_update = true;
-      break;
-    }
-  }
   if (needs_update) {
-    // Serial.println("Update required.");
+    printf("Update required.");
     if(!getImageDataFromEndpoint()) {
         screen.setup();
         screen.drawImage(byte_buff);
         screen.sleep();
     }
-    for (uint8_t i = 0; i < 5; i++) {
-      storage.getPreferences().putChar(keys[i], hash[i]);
-    }
+    storage.setHash(hash);
   } else {
-      // Serial.println("Im Westen nichts neues.");
+      printf("Im Westen nichts neues.");
   }
   storage.getPreferences().end();
   // Serial.println("Configure sleep.");
@@ -187,8 +175,8 @@ void handleMetadata() {
   }
   uint64_t sleep_time_in_us = sleep_time_in_s * uS_TO_S_FACTOR;
   esp_sleep_enable_timer_wakeup(sleep_time_in_us);
-  // Serial.println("Sleep configured.");
-  // Serial.print("Wait for ");
+  printf("Sleep configured.");
+  //printf("Wait for ");
   // Serial.print(sleep_time_in_s);
   // Serial.println();
 
