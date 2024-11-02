@@ -62,7 +62,7 @@ export class ImageProcessor {
         const data_arr = this.horizontal1bit(Array.from(myImageData.data), this.screenHeight)
         const base64String = btoa(String.fromCharCode.apply(null, data_arr));
         fs.mkdirSync('tmp', { recursive: true });
-        const out = fs.createWriteStream("tmp/" + room_id.replace(".", "_") + '.png')
+        const out = fs.createWriteStream("tmp/" + room_id.replace(/\./g, "_") + '.png')
         const stream = this.canvas.createPNGStream()
         stream.pipe(out)
         out.on('finish', () =>  console.log('The PNG file was created.', (new Date()).toISOString()))

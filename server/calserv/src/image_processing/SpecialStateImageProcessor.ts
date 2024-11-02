@@ -15,6 +15,9 @@ export class SpecialStateImageProcessor extends ImageProcessor {
         this.ctx.font = '18pt "HNB"'
         this.ctx.fillText("Can you show me around?", this.screenWidth/2, this.screenHeight/2 + 30)
         this.ctx.fillText("Please configure WiFi Credentials.", this.screenWidth/2, this.screenHeight/2 + 80)
+        this.ctx.font = '20pt "HNB"'
+        this.ctx.fillText("RoomMate", this.screenWidth/2, this.screenHeight/2 + 278)
+        this.ctx.font = '18pt "HNB"'
 
         this.ctx.fillText("Developed by DSMA@RWTH", this.screenWidth/2, this.screenHeight/2 + 300)
 
@@ -25,9 +28,12 @@ export class SpecialStateImageProcessor extends ImageProcessor {
         this.ctx.font = '26pt "HNB"'
         this.ctx.fillText("Hello World!", this.screenWidth/2, this.screenHeight/2)
         this.ctx.font = '18pt "HNB"'
-        this.ctx.fillText("This device talks to a server.", this.screenWidth/2, this.screenHeight/2 + 50)
-        this.ctx.fillText("Please configure its purpose.", this.screenWidth/2, this.screenHeight/2 + 80)
+        this.ctx.fillText("This RoomMate is connected.", this.screenWidth/2, this.screenHeight/2 + 50)
+        this.ctx.fillText("Please associate it with a room.", this.screenWidth/2, this.screenHeight/2 + 75)
 
+        this.ctx.font = '20pt "HNB"'
+        this.ctx.fillText("RoomMate", this.screenWidth/2, this.screenHeight/2 + 278)
+        this.ctx.font = '18pt "HNB"'
         this.ctx.fillText("Developed by DSMA@RWTH", this.screenWidth/2, this.screenHeight/2 + 300)
     }
 
@@ -37,9 +43,9 @@ export class SpecialStateImageProcessor extends ImageProcessor {
     }
 
     async buildNewDeviceImage(device_id: string) {
-        const header = await this.drawHeader("New Device", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), config.global_config.default_logo)
+        const header = await this.drawHeader("New RoomMate", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), config.global_config.default_logo)
         await this.drawNewDevice()
-
+        // await this.drawUnprovisionedDevice()
     }
 
 
