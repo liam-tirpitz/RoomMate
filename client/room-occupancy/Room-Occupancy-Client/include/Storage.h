@@ -7,6 +7,8 @@
 #define KEY_SSID "SSID"
 #define KEY_PSK "PSK"
 #define KEY_ENDPOINT "ENDPOINT"
+#define KEY_SLEEPTIME "SLEEPTIME"
+
 
 
 
@@ -24,6 +26,9 @@ class Storage {
 
         void setHash(const char* hash);
         bool checkHash(const char* hash);
+
+        void setRegularSleepTimeInS(int sleepTime);
+        int getRegularSleepTimeInS();
 
 
         Preferences getPreferences();

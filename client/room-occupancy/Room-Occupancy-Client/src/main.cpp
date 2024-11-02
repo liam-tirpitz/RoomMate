@@ -10,10 +10,9 @@
 #include "mbedtls/base64.h"
 #include <Provisioner.h>
 #include <Storage.h>
+#include <SysConfig.h>
 
 #define uS_TO_S_FACTOR 1000000ull  /* Conversion factor for micro seconds to seconds */
-#define regular_wakeup_interval_in_s  900        /* Time ESP32 will go to sleep (in seconds) */
-#define VBATPIN A13
 
 
 unsigned char b64_buff[1000] = {0};
@@ -30,14 +29,8 @@ FooterState footerState;
 Screen screen {&footerState};
 
 Storage storage;
+SysConfig sysconfig;
 
-void sleep() {
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH,   ESP_PD_OPTION_OFF);
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_OFF);
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_FAST_MEM, ESP_PD_OPTION_OFF);
-  esp_sleep_pd_config(ESP_PD_DOMAIN_XTAL,         ESP_PD_OPTION_OFF);
-  esp_deep_sleep_start();
-}
 
 
 
@@ -57,7 +50,7 @@ void setup_wifi_connection() {
 
   if (count == 5) {
       printf("Could not connect to WiFi... ");
-      sleep();
+      sysconfig.sleep();
   } 
 
   // Serial.println("");
@@ -162,6 +155,7 @@ void handleMetadata() {
   // Serial.println("Configure sleep.");
   long diff = next_update_unix - current_time_unix;
   long sleep_time_in_s = 0;
+  int regular_wakeup_interval_in_s = storage.getRegularSleepTimeInS();
   if (
       next_update_unix > 0 
       && diff > 0 
@@ -199,7 +193,7 @@ int readBatteryVoltage() {
 
 
 void setup() {
-  uint64_t sleep_time_in_us = regular_wakeup_interval_in_s * uS_TO_S_FACTOR;
+  uint64_t sleep_time_in_us = storage.getRegularSleepTimeInS() * uS_TO_S_FACTOR;
   esp_sleep_enable_timer_wakeup(sleep_time_in_us);
 
   Provisioner p = Provisioner();
@@ -211,13 +205,11 @@ void setup() {
       // Serial.println(devid);
       setup_wifi_connection();
       updateState();
-      sleep();
+      sysconfig.sleep();
   } else {
     // Stay awake for configuration if config is incomplete
   }
 }
 
 
-void loop() {
-
-}
+void loop() {}

@@ -72,3 +72,17 @@ void Storage::setHash(const char* hash) {
       }
       preferences.end();
 }
+
+void Storage::setRegularSleepTimeInS(int sleepTime) {
+      preferences.begin(NAMESPACE, false); 
+      preferences.putInt(KEY_SLEEPTIME, sleepTime);
+      preferences.end();
+}
+
+int Storage::getRegularSleepTimeInS() {
+      preferences.begin(NAMESPACE, false); 
+      int sleepTime = preferences.getInt(KEY_SLEEPTIME, 900);
+      preferences.end();
+      return sleepTime;
+}
+
