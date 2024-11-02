@@ -50,34 +50,61 @@ function restart(port, parser): Promise<string>{
 
 
 async function start() {
-    const results = await SerialPort.list()
-    console.log(results)
-    for (const result of results) {
-        const port = new SerialPort({
-            path: result.path,
-            baudRate: 115200,
-        }).setEncoding('utf8')
-        const parser = port.pipe(new DelimiterParser({ delimiter: 'RoomMate>' })).setEncoding('utf8');
+    const devices = await SerialPort.list()
+    if (devices.length == 0) {
+        console.log("No devices found!")
+        return
+    } else {
+        for (const device of devices) {
+            console.log(device)
+            const port = new SerialPort({
+                path: device.path,
+                baudRate: 115200,
+            }).setEncoding('utf8')
+            const parser = port.pipe(new DelimiterParser(
+                {delimiter: 'RoomMate>'})).setEncoding('utf8');
 
-        port.on('open', function () {
-            console.log('Port Open')
-            port.set({
-                dtr: true,
-                rts: true
-            });
-        })
+            port.on('open', function () {
+                console.log('Port Open')
+                port.set({
+                    dtr: true,
+                    rts: true
+                });
+            })
 
-        const mac = ((await getMAC(port, parser)).split('\r\n')[1]).replace(/:/g, "")
-        console.log(mac)
-        const psk = process.env["PSK_"+mac]
-        let answer = await setCredentials(port, parser, ssid, psk)
-        console.log(answer)
-        answer = await setEndpoint(port, parser, endpoint)
-        console.log(answer)
-        answer = await restart(port, parser)
-
+            const mac = ((await getMAC(port, parser)).split('\r\n')[1]).replace(/:/g, "")
+            console.log(mac)
+            const psk = process.env["PSK_" + mac]
+            if (psk == undefined) {
+                console.log("Please configure a PSK for this device first!")
+            } else {
+                console.log("Start provisioning")
+                let answer = await setCredentials(port, parser, ssid, psk)
+                console.log(answer)
+                answer = await setEndpoint(port, parser, endpoint)
+                console.log(answer)
+                answer = await restart(port, parser)
+            }
+            port.close()
+        }
     }
-
 }
 
-start()
+function sleep(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
+
+async function run() {
+    while (true) {
+        try {
+            await start()
+        } catch (e) {
+            console.log(e)
+        }
+        await sleep(5000)
+    }
+}
+
+run()
