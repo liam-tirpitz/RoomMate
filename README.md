@@ -1,8 +1,8 @@
-# Room-Occupancy
+# RoomMate
 
-Room-Occupancy provides digital e-ink signs for offices and bookable resources, such as meeting rooms.
-For meeting rooms, it displays the current availability (occupied / available), as well as a list of upcoming meetings.
-For offices, it displays up to two names and affiliations, as well as potential out-of-office notices.
+RoomMate provides digital e-ink signs for bookable resources such as meeting rooms and offices (OfficeMate).
+For meeting rooms, your RoomMate displays the current availability (occupied / available), as well as a list of upcoming meetings.
+OfficeMates display up to two names and affiliations, as well as potential out-of-office notices.
 This project was developed for the infrastructure at RWTH Aachen University, but is configurable to other scenarios.
 
 ![Screens](documentation/images/screens.png)
@@ -15,13 +15,13 @@ The client regularly requests the server via WiFi and HTTP and updates the scree
 
 
 ## Usage
-If configured accordingly, the displays for bookable rooms will automatically display the current and upcoming room occupations.
+If configured accordingly, the RoomMates for bookable rooms will automatically display the current and upcoming room occupations.
 The end users can influence the content by booking the associated resources via Outlook (or RWTH Online).
 The displays are battery operated.
 If the battery is low and needs to be recharged, the screen will not update anymore and show a low battery warning.
-In that case, the devices needs to be charged via the USB-C port.
+In that case, the RoomMate needs to be charged via the USB-C port.
 
-Displays for offices can be configured by the occupants of that office via their personal calendars.
+OfficeMates can be configured by the occupants of that office via their personal calendars.
 Please find the details on the necessary configuration below.
 If configured accordingly, Out of Office notices are automatically generated if the primary calendar of the associated user in Exchange 
 contains a current appointment with  "Show as" set to "Out of Office".
@@ -222,11 +222,11 @@ For the correct resolution, please check the [example](server/calserv/deployment
 ## Client
 
 ### Hardware
-The hardware of the client consists of a 3D printed case and the electronics.
+The hardware of the RoomMates consists of a 3D printed case and the electronics.
 
 #### Electronics
 
-The electronics of the client consist of the following components:
+The electronics of the RoomMates consist of the following components:
 For details, see the [Bill of Material](./hardware/bom.xlsx)
 
 - EInk-Display (7.5 inch, 800x400 black/white module with driver HAT [from Waveshare](https://www.waveshare.com/7.5inch-e-paper-hat.htm))
