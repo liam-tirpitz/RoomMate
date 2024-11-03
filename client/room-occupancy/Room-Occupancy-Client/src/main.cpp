@@ -3,7 +3,6 @@
  *
  */
 #include <Arduino.h>
-#include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <Screen.h>
@@ -13,11 +12,8 @@
 #include <SysConfig.h>
 
 
-
 unsigned char b64_buff[1000] = {0};
 unsigned char byte_buff[48000] = {0};
-
-unsigned long previous_millis = 0;
 
 String devid = "";
 int voltage = 0;
@@ -33,30 +29,7 @@ SysConfig sysconfig;
 
 
 
-void setup_wifi_connection() {
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(storage.getSSID().c_str(), storage.getPSK().c_str());
 
-  // Serial.println();
-  // Serial.println();
-  printf("Waiting for WiFi... ");
-  uint8_t count = 0;
-  while (WiFi.status() != WL_CONNECTED && count < 5) {
-    printf(".");
-    count = count + 1;
-    delay(10000);
-  }
-
-  if (count == 5) {
-      printf("Could not connect to WiFi... ");
-      sysconfig.sleep();
-  } 
-
-  // Serial.println("");
-  printf("WiFi connected");
-  // Serial.println("IP address: ");
-  // Serial.println(WiFi.localIP());
-}
 
 uint8_t getImageDataFromEndpoint() {
     if(WiFi.status() == WL_CONNECTED){
@@ -192,7 +165,7 @@ void setup() {
       devid.replace(":","");  
       voltage = sysconfig.readBatteryVoltage();
       // Serial.println(devid);
-      setup_wifi_connection();
+      sysconfig.setup_wifi_connection();
       updateState();
       sysconfig.sleep();
   } else {

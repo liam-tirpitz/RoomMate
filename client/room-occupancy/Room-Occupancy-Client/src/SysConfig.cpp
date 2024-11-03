@@ -22,3 +22,28 @@ int SysConfig::readBatteryVoltage() {
     int milivolt = round(measuredvbat);
     return milivolt;
 }
+
+void SysConfig::setup_wifi_connection() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(storage.getSSID().c_str(), storage.getPSK().c_str());
+
+  // Serial.println();
+  // Serial.println();
+  printf("Waiting for WiFi... ");
+  uint8_t count = 0;
+  while (WiFi.status() != WL_CONNECTED && count < 5) {
+    printf(".");
+    count = count + 1;
+    delay(10000);
+  }
+
+  if (count == 5) {
+      printf("Could not connect to WiFi... ");
+      sleep();
+  } 
+
+  // Serial.println("");
+  printf("WiFi connected");
+  // Serial.println("IP address: ");
+  // Serial.println(WiFi.localIP());
+}
