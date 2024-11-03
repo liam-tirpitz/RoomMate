@@ -104,7 +104,7 @@ export class RequestHandler {
 
         if (!calendarDetails) {
             image_processor = new SpecialStateImageProcessor()
-            await image_processor.buildNewDeviceImage(device_id)
+            await image_processor.buildNewDeviceImage(device_id, voltage)
             Logging.instance.logger.warn('Device-ID not found.', {devid: device_id});
             return image_processor.finalizeImage("new")
         }
@@ -136,7 +136,7 @@ export class RequestHandler {
              } else {
                  const appointments = this.getAppointments(calendarDetails)
                  image_processor = new BookableResourceImageProcessor()
-                 await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments)
+                 await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments, voltage)
              }
         }
         return await image_processor.finalizeImage(calendarDetails.id_string)

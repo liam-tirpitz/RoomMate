@@ -103,7 +103,7 @@ export class OfficeImageProcesor extends ImageProcessor {
 
         }
 
-
+        await this.drawFooter(voltage);
     }
 
 }

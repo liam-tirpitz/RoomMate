@@ -41,13 +41,15 @@ export class SpecialStateImageProcessor extends ImageProcessor {
     async buildLowBatImage(room: Room, voltage: number) {
         const header = await this.drawHeader(room.name, room.id_string, room.logo)
         await this.drawLowBattery(this.screenHeight/2)
+        await this.drawFooter(voltage);
     }
 
-    async buildNewDeviceImage(device_id: string) {
+    async buildNewDeviceImage(device_id: string, voltage) {
         const header = await this.drawHeader("New RoomMate", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), config.global_config.default_logo)
         // const header = await this.drawHeader("New RoomMate", "", config.global_config.default_logo)
 
         await this.drawNewDevice()
+        await this.drawFooter(voltage);
         // await this.drawUnprovisionedDevice()
     }
 

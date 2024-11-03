@@ -170,6 +170,71 @@ export class ImageProcessor {
         this.ctx.drawImage(low_bat, this.screenWidth/2 - img_width/2, y_offset, img_width, img_width * low_bat.height / low_bat.width)
     }
 
+    getPercentageFromVoltage(v: number) {
+        if (v > 4200) {
+            return 100
+        } else if (v > 4150) {
+            return 90
+        } else if (v > 4100) {
+            return 80
+        } else if (v > 4050) {
+            return 70
+        } else if (v > 4000) {
+            return 60
+        } else if (v > 3950) {
+            return 50
+        } else if (v > 3900) {
+            return 40
+        } else if (v > 3850) {
+            return 30
+        } else if (v > 3800) {
+            return 20
+        } else if (v > 3700) {
+            return 10
+        } else {
+            return 0
+        }
+    }
+
+
+    getIconFromVoltage(v: number) {
+        let bat_img;
+        const path = './src/image_processing/assets/'
+        if (v > 4150) {
+            bat_img = loadImage(path + "battery_5.png")
+        } else if (v > 4050) {
+            bat_img = loadImage(path + "battery_4.png")
+        } else if (v > 3950) {
+            bat_img = loadImage(path + "battery_3.png")
+        } else if (v > 3850) {
+            bat_img = loadImage(path + "battery_2.png")
+        } else if (v > 3800) {
+            bat_img = loadImage(path + "battery_1.png")
+        } else  {
+            bat_img = loadImage(path + "battery_0.png")
+        }
+        return bat_img
+    }
+
+    async drawFooter(voltage: number) {
+        this.ctx.textAlign = "right"
+        this.ctx.font = '16pt "HNB"'
+        const now = new Date
+        const date_str = now.toLocaleString('de-DE', {day: "2-digit", month: "2-digit", year: "numeric"})
+        const time_str = now.toLocaleString('de-DE', {hour: "2-digit", minute: "2-digit"})
+        this.ctx.fillText(date_str, this.screenWidth-20, this.screenHeight - 40)
+        this.ctx.fillText(time_str, this.screenWidth-20, this.screenHeight - 20)
+        this.ctx.textAlign = "left"
+        if(voltage) {
+            // this.ctx.fillText(String(this.getPercentageFromVoltage(voltage) + "%"), 20, this.screenHeight - 20)
+            const bat_img = await this.getIconFromVoltage(voltage)
+            const img_width = 50
+            this.ctx.drawImage(bat_img, 20, this.screenHeight - 55, img_width, img_width * bat_img.height / bat_img.width)
+        }
+
+
+    }
+
 
 
 }

@@ -121,7 +121,7 @@ export class BookableResourceImageProcessor extends ImageProcessor {
         }
     }
 
-    async buildImage(room_name: string, room_number: string, room_id: string, logo: string, data: SimpleEvent[]) {
+    async buildImage(room_name: string, room_number: string, room_id: string, logo: string, data: SimpleEvent[], voltage) {
         const header = await this.drawHeader(room_name, room_number, logo)
         if (data.length) {
             this.drawCurrentEvent(data[0])
@@ -131,7 +131,7 @@ export class BookableResourceImageProcessor extends ImageProcessor {
             }
             if (data.length) {
                 this.drawComingUp()
-                const upcoming_elements = data.slice(0, 4)
+                const upcoming_elements = data.slice(0, 3)
                 for (const [i, element] of upcoming_elements.entries()) {
                     this.drawBlock(i, element)
                 }
@@ -141,6 +141,7 @@ export class BookableResourceImageProcessor extends ImageProcessor {
         } else {
             this.drawFreeUntil("End of Day")
         }
+        await this.drawFooter(voltage);
     }
 
 
