@@ -131,7 +131,7 @@ export class BookableResourceImageProcessor extends ImageProcessor {
             }
             if (data.length) {
                 this.drawComingUp()
-                const upcoming_elements = data.slice(0, 3)
+                const upcoming_elements = data.slice(0, 4)
                 for (const [i, element] of upcoming_elements.entries()) {
                     this.drawBlock(i, element)
                 }

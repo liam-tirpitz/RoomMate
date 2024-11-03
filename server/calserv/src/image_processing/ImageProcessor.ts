@@ -222,14 +222,15 @@ export class ImageProcessor {
         const now = new Date
         const date_str = now.toLocaleString('de-DE', {day: "2-digit", month: "2-digit", year: "numeric"})
         const time_str = now.toLocaleString('de-DE', {hour: "2-digit", minute: "2-digit"})
-        this.ctx.fillText(date_str, this.screenWidth-20, this.screenHeight - 40)
-        this.ctx.fillText(time_str, this.screenWidth-20, this.screenHeight - 20)
+        this.ctx.fillText(date_str, this.screenWidth-20, this.screenHeight - 20)
+        // this.ctx.fillText(time_str, this.screenWidth-20, this.screenHeight - 20)
         this.ctx.textAlign = "left"
         if(voltage) {
             // this.ctx.fillText(String(this.getPercentageFromVoltage(voltage) + "%"), 20, this.screenHeight - 20)
             const bat_img = await this.getIconFromVoltage(voltage)
             const img_width = 50
-            this.ctx.drawImage(bat_img, 20, this.screenHeight - 55, img_width, img_width * bat_img.height / bat_img.width)
+            const img_height =  img_width * bat_img.height / bat_img.width
+            this.ctx.drawImage(bat_img, 20, this.screenHeight - img_height, img_width, img_height)
         }
 
 
