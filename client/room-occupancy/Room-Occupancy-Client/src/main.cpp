@@ -27,10 +27,6 @@ Storage storage;
 SysConfig sysconfig;
 
 
-
-
-
-
 uint8_t getImageDataFromEndpoint() {
     if(WiFi.status() == WL_CONNECTED){
       HTTPClient http;
@@ -158,10 +154,10 @@ void updateState() {
 
 
 void setup() {
+  devid = WiFi.macAddress();
   Provisioner p = Provisioner();
   sysconfig.configDefaultSleep();
   if(storage.getEndpoint() != "" && storage.getSSID() != "" && storage.getPSK() != "")  {
-      devid = WiFi.macAddress();
       devid.replace(":","");  
       voltage = sysconfig.readBatteryVoltage();
       // Serial.println(devid);
@@ -169,6 +165,9 @@ void setup() {
       updateState();
       sysconfig.sleep();
   } else {
+    screen.setup();
+    screen.drawNewDeviceImage(devid.c_str());
+    screen.sleep();
     // Stay awake for configuration if config is incomplete
   }
 }

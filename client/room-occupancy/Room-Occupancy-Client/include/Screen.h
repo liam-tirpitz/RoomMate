@@ -26,6 +26,7 @@ class Screen
 
 	void draw();
 	void drawImage(unsigned char *output);	
+    void drawNewDeviceImage(const char *device_id);
 	void sleep();
 	
 	private:

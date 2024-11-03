@@ -9,12 +9,13 @@ export class SpecialStateImageProcessor extends ImageProcessor {
     }
 
     async drawUnprovisionedDevice() {
+        const y_off = 100;
         this.ctx.textAlign = "center"
         this.ctx.font = '26pt "HNB"'
-        this.ctx.fillText("Hey, I am new here!", this.screenWidth/2, this.screenHeight/2)
+        this.ctx.fillText("Hey, I am new here!", this.screenWidth/2, this.screenHeight/2 - y_off)
         this.ctx.font = '18pt "HNB"'
-        this.ctx.fillText("Can you show me around?", this.screenWidth/2, this.screenHeight/2 + 30)
-        this.ctx.fillText("Please configure WiFi Credentials.", this.screenWidth/2, this.screenHeight/2 + 80)
+        this.ctx.fillText("Can you show me around?", this.screenWidth/2, this.screenHeight/2 - y_off + 30)
+        this.ctx.fillText("Please complete initial configuration.", this.screenWidth/2, this.screenHeight/2 - y_off + 80)
         this.ctx.font = '20pt "HNB"'
         this.ctx.fillText("RoomMate", this.screenWidth/2, this.screenHeight/2 + 278)
         this.ctx.font = '18pt "HNB"'
@@ -43,9 +44,11 @@ export class SpecialStateImageProcessor extends ImageProcessor {
     }
 
     async buildNewDeviceImage(device_id: string) {
-        const header = await this.drawHeader("New RoomMate", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), config.global_config.default_logo)
-        await this.drawNewDevice()
-        // await this.drawUnprovisionedDevice()
+        // const header = await this.drawHeader("New RoomMate", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), config.global_config.default_logo)
+        const header = await this.drawHeader("New RoomMate", "", config.global_config.default_logo)
+
+        // await this.drawNewDevice()
+        await this.drawUnprovisionedDevice()
     }
 
 

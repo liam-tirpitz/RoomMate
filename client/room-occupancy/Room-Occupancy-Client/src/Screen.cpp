@@ -1,4 +1,5 @@
 #include "Screen.h"
+#include "ImageData.h"
 
 UBYTE *BlackImage;
 
@@ -26,6 +27,13 @@ void Screen::drawImage(unsigned char *output) {
     Paint_DrawBitMap(output);
     EPD_7IN5_V2_Display(BlackImage);
       DEV_Delay_ms(2000);
+}
+
+void Screen::drawNewDeviceImage(const char *device_id) {
+    Paint_DrawBitMap(initial_image);
+    Paint_DrawString_EN(250, 70, device_id, &Font16, WHITE, BLACK);
+    EPD_7IN5_V2_Display(BlackImage);
+    DEV_Delay_ms(2000);
 }
 
 
