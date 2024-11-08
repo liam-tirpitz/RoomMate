@@ -14,7 +14,7 @@ semrel:
     - cd server/calserv
     - npm i -f
   script:
-    - npx semantic-release --branches ci-test
+    - npx semantic-release
   rules:
     - if: $CI_COMMIT_BRANCH == "production"
 
