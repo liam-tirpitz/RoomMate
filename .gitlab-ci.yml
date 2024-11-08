@@ -1,18 +1,34 @@
-default:
+stages:
+  - semrel
+  - dockerrelease
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+  NPM_TOKEN: ${CI_JOB_TOKEN}
+
+
+semrel:
+  image: node:22
+  stage: semrel
+  before_script:
+    - cd server/calserv
+    - npm i -f
+  script:
+    - npx semantic-release --branches ci-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == "ci-test"
+
+docker:
+  stage: dockerrelease
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
   before_script:
     - docker info
-
-variables:
-  DOCKER_TLS_CERTDIR: "/certs"
-
-
-build:
-  stage: build
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - cd server/calserv
-    - docker build -t $CI_REGISTRY/i5/infrastructure/room-occupancy/calserv:latest .
-    - docker push $CI_REGISTRY/i5/infrastructure/room-occupancy/calserv:latest
+    - docker build -t $CI_REGISTRY/i5/infrastructure/room-occupancy/calserv:$CI_COMMIT_TAG -t $CI_REGISTRY/i5/infrastructure/room-occupancy/calserv:latest .
+    - docker push $CI_REGISTRY/i5/infrastructure/room-occupancy/calserv --all-tags
+  only:
+    - tags
