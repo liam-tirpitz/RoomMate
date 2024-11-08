@@ -15,6 +15,7 @@ import * as fs from 'fs';
 import {DateTime} from "ews-javascript-api";
 import {dithering} from "./image2cpp/dithering";
 import {getDateStringFromDate} from "../utils";
+import {Logging} from "../logging";
 
 
 export class ImageProcessor {
@@ -63,7 +64,8 @@ export class ImageProcessor {
         const out = fs.createWriteStream("tmp/" + room_id.replace(/\./g, "_") + '.png')
         const stream = this.canvas.createPNGStream()
         stream.pipe(out)
-        out.on('finish', () =>  console.log('The PNG file was created.', (new Date()).toISOString()))
+        out.on('finish', () =>Logging.instance.logger.info('PNG output generated.'))
+
         return base64String
     }
 
