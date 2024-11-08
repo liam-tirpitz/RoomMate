@@ -8,7 +8,7 @@ export class PersonalInfo extends SimpleEvent{
 
 
     constructor(start: moment.Moment, end: moment.Moment, freeBusyStatus: LegacyFreeBusyStatus) {
-        super(start, end, "", "", false)
+        super(start, end, "", "", false, false)
         this.freeBusyStatus = freeBusyStatus;
 
     }

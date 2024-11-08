@@ -100,6 +100,7 @@ export class EWSCalendarClient {
                         appointment.Subject,
                         appointment.Organizer.Name,
                         appointment.IsCancelled,
+                        appointment.IsAllDayEvent,
                         this.disassemble_body(appointment.Body))
                     customEvents.push(customEvent)
                 }
