@@ -24,7 +24,7 @@ export class ICalClient {
             const event = data[k];
             if (event.type === "VEVENT") {
 
-                const simpleEvent = new SimpleEvent(moment(event.start), moment(event.end), this.cleanSummaryString(event.summary), event.description, false)
+                const simpleEvent = new SimpleEvent(moment(event.start), moment(event.end), this.cleanSummaryString(event.summary), event.description, false, false)
                 if (utils.isEventToday(simpleEvent.start, simpleEvent.end)) {
                     results.push(simpleEvent)
                 }

@@ -19,3 +19,10 @@ export function isEventNow(start: moment.Moment, end: moment.Moment): boolean {
     return (start.valueOf() <= now.valueOf() && end.valueOf() >= now.valueOf())
 }
 
+export function getTimeStringFromDate(date: Date): string {
+    return date.toLocaleTimeString(['de'], {hour: '2-digit', minute:'2-digit'})
+}
+
+export function getDateStringFromDate(date: Date): string {
+    return date.toLocaleString('de-DE', {day: "2-digit", month: "2-digit", year: "2-digit"})
+}

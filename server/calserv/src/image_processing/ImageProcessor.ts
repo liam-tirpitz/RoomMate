@@ -1,5 +1,6 @@
 import {SimpleEvent} from "../datamodels/SimpleEvent"
 import * as moment from "moment-timezone";
+import * as utils from '../utils'
 
 import {
     registerFont,
@@ -13,6 +14,7 @@ import {
 import * as fs from 'fs';
 import {DateTime} from "ews-javascript-api";
 import {dithering} from "./image2cpp/dithering";
+import {getDateStringFromDate} from "../utils";
 
 
 export class ImageProcessor {
@@ -48,10 +50,6 @@ export class ImageProcessor {
 
         this.ctx.font = '15pt "HNB"'
         this.ctx.fillText(room_number, 248, 83)
-    }
-
-    getTimeStringFromDate(date: moment.Moment) {
-        return date.toDate().toLocaleTimeString(['de'], {hour: '2-digit', minute:'2-digit'})
     }
 
 
@@ -220,8 +218,8 @@ export class ImageProcessor {
         this.ctx.textAlign = "right"
         this.ctx.font = '16pt "HNB"'
         const now = new Date
-        const date_str = now.toLocaleString('de-DE', {day: "2-digit", month: "2-digit", year: "numeric"})
-        const time_str = now.toLocaleString('de-DE', {hour: "2-digit", minute: "2-digit"})
+        const date_str = utils.getDateStringFromDate(now)
+        const time_str = utils.getTimeStringFromDate(now)
         this.ctx.fillText(date_str, this.screenWidth-20, this.screenHeight - 20)
         // this.ctx.fillText(time_str, this.screenWidth-20, this.screenHeight - 20)
         this.ctx.textAlign = "left"

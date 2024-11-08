@@ -3,6 +3,7 @@ import {NodeCanvasRenderingContext2DSettings} from "canvas";
 import {SimpleEvent} from "../datamodels/SimpleEvent";
 import {DateTime} from "ews-javascript-api";
 import * as config from "../../config/calendars.json";
+import * as utils from '../utils'
 
 export class BookableResourceImageProcessor extends ImageProcessor {
 
@@ -97,7 +98,7 @@ export class BookableResourceImageProcessor extends ImageProcessor {
         this.ctx.fillText(trunc_summary, 46, 375 + yoffset*105)
         this.ctx.font = '20pt "HNL"'
         this.ctx.fillText(event.byline, 46, 375 + 1 * line_spacing + yoffset*105)
-        this.ctx.fillText(this.getTimeStringFromDate(event.start) + " - " + this.getTimeStringFromDate(event.end), 46, 375 + 2 * line_spacing + yoffset*105)
+        this.ctx.fillText(event.timeline, 46, 375 + 2 * line_spacing + yoffset*105)
     }
 
     drawCurrentEvent(event: SimpleEvent) {
@@ -108,14 +109,14 @@ export class BookableResourceImageProcessor extends ImageProcessor {
                 if (trunc_summary.length > 33) {
                     trunc_summary = trunc_summary.substring(0,30)  + "...";
                 }
-                this.drawOccupied(trunc_summary, event.byline, this.getTimeStringFromDate(event.start) + " - " + this.getTimeStringFromDate(event.end))
+                this.drawOccupied(trunc_summary, event.byline, event.timeline)
             } else {
-                this.drawOccupiedUnknown(this.getTimeStringFromDate(event.end))
+                this.drawOccupiedUnknown(utils.getTimeStringFromDate(event.end.toDate()))
             }
         } else if (event.happeningSoon(now)) {
-            this.drawOpccupiedSoon(this.getTimeStringFromDate(event.start))
+            this.drawOpccupiedSoon(utils.getTimeStringFromDate(event.start.toDate()))
         } else if (now.MomentDate < event.start) {
-            this.drawFreeUntil(this.getTimeStringFromDate(event.start))
+            this.drawFreeUntil(utils.getTimeStringFromDate(event.start.toDate()))
         } else {
             console.log("No current event to draw?")
         }

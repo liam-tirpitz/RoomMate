@@ -56,7 +56,7 @@ export class EWSCalendarClient {
         const appointments = this.getUpcomingAppointmentToday(folderIdFromCalendar)
         let events: SimpleEvent[] = [];
         for (let appointment of (await appointments).Items) {
-            events.push(new SimpleEvent(appointment.Start.MomentDate, appointment.End.MomentDate, appointment.Subject, appointment.Organizer.Name, appointment.IsCancelled))
+            events.push(new SimpleEvent(appointment.Start.MomentDate, appointment.End.MomentDate, appointment.Subject, appointment.Organizer.Name, appointment.IsCancelled, appointment.IsAllDayEvent))
         }
         return events
     }
