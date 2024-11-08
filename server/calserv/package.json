@@ -12,7 +12,7 @@
   },
   "release": {
     "branches": [
-      "main"
+      "production"
     ],
     "npmPublish": false,
     "tarballDir": "dist",
