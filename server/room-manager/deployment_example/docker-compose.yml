@@ -1,6 +1,6 @@
 services:
   room-manager:
-    image: registry.git.rwth-aachen.de/i5/infrastructure/room-occupancy/room-manager
+    image: registry.git.rwth-aachen.de/i5/infrastructure/room-mate/room-manager
     restart: always
     ports:
       - 3001:3001
