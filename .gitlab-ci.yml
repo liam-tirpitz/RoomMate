@@ -14,8 +14,18 @@ test:
     - cd server/calserv
     - npm i -f
   script:
-    - npm run build
     - npm test
+
+build:
+  image: node:22
+  stage: test
+  before_script:
+    - cd server/calserv
+    - npm i -f
+    - cp deployment_example/config ./config
+  script:
+    - npm run build
+
 
 semrel:
   image: node:22
