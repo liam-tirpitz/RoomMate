@@ -11,7 +11,7 @@ test:
   image: node:22
   stage: test
   before_script:
-    - cd server/room-manager
+    - cd server/calserv
     - npm i -f
   script:
     - npm test
@@ -20,7 +20,7 @@ build:
   image: node:22
   stage: test
   before_script:
-    - cd server/room-manager
+    - cd server/calserv
     - npm i -f
     - cp -r deployment_example/config ./config
   script:
@@ -31,7 +31,7 @@ semrel:
   image: node:22
   stage: semrel
   before_script:
-    - cd server/room-manager
+    - cd server/calserv
     - npm i -f
   script:
     - npx semantic-release
@@ -47,8 +47,8 @@ docker:
     - docker info
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
-    - cd server/room-manager
-    - docker build -t $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager:$CI_COMMIT_TAG -t $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager:latest .
-    - docker push $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager --all-tags
+    - cd server/calserv
+    - docker build -t $CI_REGISTRY/i5/infrastructure/room-occupancy/calserv:$CI_COMMIT_TAG -t $CI_REGISTRY/i5/infrastructure/room-occupancy/calserv:latest .
+    - docker push $CI_REGISTRY/i5/infrastructure/room-occupancy/calserv --all-tags
   only:
     - tags

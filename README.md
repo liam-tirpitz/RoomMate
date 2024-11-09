@@ -66,7 +66,7 @@ If the necessary permissions are not set, the display will function as a static 
 
 ## Server Deployment
 For an easy deployment of the server component, we recommend using our Docker image.
-You can find an example on a possible docker-compose setup with that image in our [Deployment Example](server/room-manager/deployment_example).
+You can find an example on a possible docker-compose setup with that image in our [Deployment Example](server/calserv/deployment_example).
 You can download the example and start the server with `docker compose up -d` after you changed the configuration for your needs.
 
 Alternatively, you can clone the repository, install node and start the server with
@@ -79,7 +79,7 @@ npm run start
 Please make sure to pass a correct configuration and secrets, if you are using exchange.
 
 ## Server Configuration
-The configuration of all the rooms, persons, devices and endpoints can be done with the [calendars.json](server/room-manager/deployment_example/config/calendars.json).
+The configuration of all the rooms, persons, devices and endpoints can be done with the [calendars.json](server/calserv/deployment_example/config/calendars.json).
 For development purposes, this file should be placed inside a config directory in the root of the project.
 The configuration file is loaded once when the project is started. 
 If the configuration is changed, the server needs to be restarted.
@@ -183,7 +183,7 @@ The configuration key `exchange.tenants.secret` defines the _name_ of the enviro
 
 There are 3 supported ways  to inject the secrets.
 First, if a Docker deployment is used is used, 
-the secrets can be passed directly to the container, via the [docker-compose.yml](server/room-manager/deployment_example/docker-compose.yml).
+the secrets can be passed directly to the container, via the [docker-compose.yml](server/calserv/deployment_example/docker-compose.yml).
 For development purposes, the variables can be defined in a .env file placed in [server/](server).
 
 Lastly, the secrets can be synchronized via [Bitwarden Secrets Manager](https://bitwarden.com/products/secrets-manager/).
@@ -217,7 +217,7 @@ We can define different logos for each device.
 These logos should be placed alongside the configuration file in the config directory.
 These images should be in png format and ideally already black and white. 
 If they are colored, the image processing will make them black and white, but this may be less beautiful.
-For the correct resolution, please check the [example](server/room-manager/deployment_example/config/institute_logo.png).
+For the correct resolution, please check the [example](server/calserv/deployment_example/config/institute_logo.png).
 
 ## Client
 
@@ -273,7 +273,7 @@ The firmware of devices can be flashed via USB.
 
 ### Provisioning
 To communicate with the server, each RoomMate must be provisioned with WiFi credentials and the server endpoint.
-With the Provisioner [Gordon tool](server/room-manager/src/provisioner/gordon.ts) devices can be automatically provisioned, using credentials stored in the Bitwarden Secrets Manager.
+With the Provisioner [Gordon tool](server/calserv/src/provisioner/gordon.ts) devices can be automatically provisioned, using credentials stored in the Bitwarden Secrets Manager.
 For a device with the MAC address "aa:aa:aa:aa:aa:aa", place a secret of the form `PSK_aaaaaaaaaaaa` in the store, connect the RoomMate via USB and execute Gordon.
 
 Alternatively, you can manually use the the CLI via serial at a baud rate of 115200.
