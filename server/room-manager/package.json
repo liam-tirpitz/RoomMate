@@ -1,7 +1,7 @@
 {
-  "name": "roommate-server",
+  "name": "RoomManager",
   "version": "1.0.0",
-  "description": "Connects to calenders and draws them in images.",
+  "description": "Connects to RoomMates and provides them with room occupation information .",
   "main": "index.js",
   "directories": {
     "test": "test"

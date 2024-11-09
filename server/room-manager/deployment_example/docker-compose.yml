@@ -1,6 +1,6 @@
 services:
-  calserv:
-    image: registry.git.rwth-aachen.de/i5/infrastructure/room-occupancy/calserv
+  room-manager:
+    image: registry.git.rwth-aachen.de/i5/infrastructure/room-occupancy/room-manager
     restart: always
     ports:
       - 3001:3001
