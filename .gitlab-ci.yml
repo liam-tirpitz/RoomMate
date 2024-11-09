@@ -1,4 +1,5 @@
 stages:
+  - test
   - semrel
   - dockerrelease
 
@@ -6,6 +7,15 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
   NPM_TOKEN: ${CI_JOB_TOKEN}
 
+test:
+  image: node:22
+  stage: test
+  before_script:
+    - cd server/calserv
+    - npm i -f
+  script:
+    - npm run build
+    - npm test
 
 semrel:
   image: node:22
@@ -15,8 +25,8 @@ semrel:
     - npm i -f
   script:
     - npx semantic-release
-  rules:
-    - if: $CI_COMMIT_BRANCH == "production"
+  only:
+    - production
 
 docker:
   stage: dockerrelease
