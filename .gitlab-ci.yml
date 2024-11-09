@@ -22,7 +22,7 @@ build:
   before_script:
     - cd server/calserv
     - npm i -f
-    - cp deployment_example/config ./config
+    - cp -r deployment_example/config ./config
   script:
     - npm run build
 
