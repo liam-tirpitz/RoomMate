@@ -1,5 +1,5 @@
 import {ImageProcessor} from "./ImageProcessor";
-import {Room} from "../datamodels/Room";
+import {IRoom} from "../datamodels/IRoom";
 import * as config from "../../config/calendars.json"
 
 export class SpecialStateImageProcessor extends ImageProcessor {
@@ -38,14 +38,14 @@ export class SpecialStateImageProcessor extends ImageProcessor {
         this.ctx.fillText("Developed by DSMA@RWTH", this.screenWidth/2, this.screenHeight/2 + 300)
     }
 
-    async buildLowBatImage(room: Room, voltage: number) {
-        const header = await this.drawHeader(room.name, room.id_string, room.logo)
+    async buildLowBatImage(room: IRoom, voltage: number) {
+        await this.drawHeader(room.name, room.id_string, room.logo)
         await this.drawLowBattery(this.screenHeight/2)
         await this.drawFooter(voltage);
     }
 
     async buildNewDeviceImage(device_id: string, voltage) {
-        const header = await this.drawHeader("New RoomMate", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), config.global_config.default_logo)
+        await this.drawHeader("New RoomMate", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), config.global_config.default_logo)
         // const header = await this.drawHeader("New RoomMate", "", config.global_config.default_logo)
 
         await this.drawNewDevice()

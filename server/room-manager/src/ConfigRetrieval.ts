@@ -1,6 +1,6 @@
-import {Room} from "./datamodels/Room";
-import {Device} from "./datamodels/Device";
-import {EWSTenant} from "./datamodels/EWSTenant";
+import {IRoom} from "./datamodels/IRoom";
+import {IDevice} from "./datamodels/IDevice";
+import {IEWSTenant} from "./datamodels/IEWSTenant";
 
 export class ConfigRetrieval {
     calendars: any
@@ -10,9 +10,9 @@ export class ConfigRetrieval {
         this.calendars = require('../config/calendars.json');
     }
 
-    getRoomFromDeviceID(devid: string): Room {
-        for (const room of this.calendars.calendars as Room[]) {
-            for (const device of room.devices as Device[]) {
+    getRoomFromDeviceID(devid: string): IRoom {
+        for (const room of this.calendars.calendars as IRoom[]) {
+            for (const device of room.devices as IDevice[]) {
                 if (device.device_id == devid) {
                     return room
                 }
@@ -21,8 +21,8 @@ export class ConfigRetrieval {
         return undefined
     }
 
-    getExchangeTenantByID(tenant_id: number): EWSTenant {
-        for (const tenant of this.calendars.exchange.tenants as EWSTenant[]) {
+    getExchangeTenantByID(tenant_id: number): IEWSTenant {
+        for (const tenant of this.calendars.exchange.tenants as IEWSTenant[]) {
                 if (tenant.id == tenant_id) {
                     return tenant
                 }

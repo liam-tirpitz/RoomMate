@@ -1,7 +1,6 @@
 import {SimpleEvent} from "../datamodels/SimpleEvent";
-import {ICalCalendarInfo} from "../datamodels/ICalCalendarInfo";
+import {IICalCalendarInfo} from "../datamodels/IICalCalendarInfo";
 import moment from "moment-timezone"
-import * as ews from "ews-javascript-api";
 import * as utils from "../utils"
 
 export class ICalClient {
@@ -16,7 +15,7 @@ export class ICalClient {
     }
 
 
-    async readUpcomingEventsToday(icalInfo: ICalCalendarInfo): Promise<SimpleEvent[]> {
+    async readUpcomingEventsToday(icalInfo: IICalCalendarInfo): Promise<SimpleEvent[]> {
         const data = await this.getCalendar(icalInfo.endpoint)
         let results: SimpleEvent[] = []
 

@@ -21,8 +21,6 @@ export class SimpleEvent {
     }
 
 
-
-
     get summary(): string {
         return this._summary;
     }
