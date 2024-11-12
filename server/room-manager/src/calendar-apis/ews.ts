@@ -20,7 +20,7 @@ import {CalendarView} from "ews-javascript-api/js/Search/CalendarView";
 import {SimpleEvent} from "../datamodels/SimpleEvent";
 import {PersonalInfo} from "../datamodels/PersonalInfo";
 import * as utils from "../utils"
-import {EWSTenant} from "../datamodels/EWSTenant";
+import {IEWSTenant} from "../datamodels/IEWSTenant";
 import {Logging} from "../logging";
 import {CustomEvent} from "../datamodels/CustomEvent";
 
@@ -31,7 +31,7 @@ export class EWSCalendarClient {
     exch: ExchangeService;
 
 
-    constructor(tenant: EWSTenant) {
+    constructor(tenant: IEWSTenant) {
         this.exch = new ews.ExchangeService(ews.ExchangeVersion.Exchange2010);
         const password = process.env[tenant.secret]
         if (password) {

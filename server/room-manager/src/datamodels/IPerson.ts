@@ -1,10 +1,10 @@
-import {EWSCalendarInfo} from "./EWSCalendarInfo";
+import {IEWSCalendarInfo} from "./IEWSCalendarInfo";
 
-export class Person {
+export interface IPerson {
     name: string
     job: string
     group: string
-    ews_info: EWSCalendarInfo
+    ews_info: IEWSCalendarInfo
     phone: string | undefined
     email: string | undefined
 }

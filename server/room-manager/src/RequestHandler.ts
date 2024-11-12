@@ -7,12 +7,12 @@ import {LegacyFreeBusyStatus} from "ews-javascript-api";
 import * as config from "../config/calendars.json";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
-import {InfoPacket} from "./datamodels/InfoPacket";
+import {IInfoPacket} from "./datamodels/IInfoPacket";
 import {SimpleEvent} from "./datamodels/SimpleEvent";
-import {Room} from "./datamodels/Room";
+import {IRoom} from "./datamodels/IRoom";
 import {ICalClient} from "./calendar-apis/ical";
 import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
-import {Person} from "./datamodels/Person";
+import {IPerson} from "./datamodels/IPerson";
 import {PersonalInfo} from "./datamodels/PersonalInfo";
 import * as utils from "./utils"
 import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImageProcessor";
@@ -33,16 +33,16 @@ export class RequestHandler {
         return new EWSCalendarClient(tenant)
     }
 
-    async getAppointments(calendarDetails: Room): Promise<SimpleEvent[]> {
+    async getAppointments(calendarDetails: IRoom): Promise<SimpleEvent[]> {
         if (calendarDetails.ews_info) {
             const ews_client = this.getEWSClient(calendarDetails.ews_info.tenant_id)
             return ews_client.readUpcomingEventsToday(calendarDetails.ews_info.email)
         } else if (calendarDetails.ical_info){
             return this.iCalClient.readUpcomingEventsToday(calendarDetails.ical_info)
         } else if (calendarDetails.persons) {
-            let appointments: PersonalInfo[] = [];
+            let appointments: PersonalInfo[];
             let personal_appointments: PersonalInfo[][] = []
-            for (const person of calendarDetails.persons as Person[]) {
+            for (const person of calendarDetails.persons as IPerson[]) {
                 const ews_client = this.getEWSClient(person.ews_info.tenant_id)
                 personal_appointments.push((await ews_client.readPersonsAvailabilityToday([person.ews_info.email]))[0])
             }
@@ -76,7 +76,7 @@ export class RequestHandler {
         }
     }
 
-    async getCurrentStatusFromPerson(ewsClient: EWSCalendarClient, person: Person) {
+    async getCurrentStatusFromPerson(ewsClient: EWSCalendarClient, person: IPerson) {
         const result = await ewsClient.readPersonsAvailabilityToday([person.ews_info.email])
         const ooOResult = this.getOoOFromPerson(result[0])
         if (!ooOResult) {
@@ -86,7 +86,7 @@ export class RequestHandler {
         }
     }
 
-    async getCurrentCustomMessage(ewsClient: EWSCalendarClient, person: Person) : Promise<CustomEvent> {
+    async getCurrentCustomMessage(ewsClient: EWSCalendarClient, person: IPerson) : Promise<CustomEvent> {
         const messagesToday = await ewsClient.readPersonsSpecificNotesToday(person.ews_info.email)
         if (messagesToday) {
             const messagesNow = messagesToday.filter((value) => value.happeningNow(ews.DateTime.Now))
@@ -105,7 +105,7 @@ export class RequestHandler {
         if (!calendarDetails) {
             image_processor = new SpecialStateImageProcessor()
             await image_processor.buildNewDeviceImage(device_id, voltage)
-            Logging.instance.logger.warn('Device-ID not found.', {devid: device_id});
+            Logging.instance.logger.warn('IDevice-ID not found.', {devid: device_id});
             return image_processor.finalizeImage("new")
         }
         let ews_client: EWSCalendarClient
@@ -115,7 +115,7 @@ export class RequestHandler {
 
          if (calendarDetails.persons) {
             let freeBusyDetails: (CustomEvent|PersonalInfo)[] = []
-            for (const person of calendarDetails.persons as Person[]) {
+            for (const person of calendarDetails.persons as IPerson[]) {
                 ews_client = this.getEWSClient(person.ews_info.tenant_id)
                 const custom_message = this.getCurrentCustomMessage(ews_client, person)
                 if (await custom_message) {
@@ -143,15 +143,23 @@ export class RequestHandler {
     }
 
     async getData(device_id: string): Promise<string> {
-        let calendarData: InfoPacket = new InfoPacket();
+
         const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
         if (!calendarDetails) return
         const appointments = await this.getAppointments(calendarDetails)
 
         const now = ews.DateTime.Now
-        calendarData.next_appointments = appointments
-        calendarData.room_number = calendarDetails.id_string
-        calendarData.room_name = calendarDetails.name
+        let calendarData: IInfoPacket = {
+            current_time_string: now.MomentDate.toISOString(),
+            current_time_unix: now.MomentDate.unix(),
+            hash: "",
+            is_night: false,
+            is_weekend: false,
+            next_appointments: appointments,
+            next_update_unix: 0,
+            room_name: calendarDetails.name,
+            room_number: calendarDetails.id_string
+        };
 
         let next_update: moment.Moment = undefined
         if (appointments.length > 0) {
@@ -186,12 +194,9 @@ export class RequestHandler {
             }
         }
 
-
         const hash_string = JSON.stringify(calendarData)
         calendarData.next_appointments = undefined
         calendarData.hash = crypto.createHash('md5').update(hash_string).digest('hex');
-        calendarData.current_time_string = now.MomentDate.toISOString()
-        calendarData.current_time_unix = now.MomentDate.unix()
 
         Logging.instance.logger.info("Data requested for: " + device_id)
         return JSON.stringify(calendarData)
