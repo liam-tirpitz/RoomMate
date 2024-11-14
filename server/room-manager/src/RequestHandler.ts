@@ -1,7 +1,6 @@
 import {EWSCalendarClient} from "./calendar-apis/ews";
 import {Logging} from "./logging";
 import {BookableResourceImageProcessor} from "./image_processing/BookableResourceImageProcessor";
-import {ConfigRetrieval} from "./ConfigRetrieval";
 import * as ews from "ews-javascript-api";
 import {LegacyFreeBusyStatus} from "ews-javascript-api";
 import * as config from "../config/calendars.json";
@@ -17,25 +16,26 @@ import {PersonalInfo} from "./datamodels/events/PersonalInfo";
 import * as utils from "./utils"
 import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImageProcessor";
 import {CustomEvent} from "./datamodels/events/CustomEvent";
+import {FileDBClient} from "./db/FileDBClient";
 
 export class RequestHandler {
-    dataRetrieval: ConfigRetrieval
+    dataRetrieval: FileDBClient
     iCalClient: ICalClient
 
     constructor() {
-        this.dataRetrieval = new ConfigRetrieval()
+        this.dataRetrieval = new FileDBClient()
         this.iCalClient = new ICalClient()
     }
 
-    getEWSClient(tenantID) {
-        const configRetrieval = new ConfigRetrieval()
-        const tenant = configRetrieval.getExchangeTenantByID(tenantID)
-        return new EWSCalendarClient(tenant)
+    async getEWSClient(tenantID) {
+        const configRetrieval = new FileDBClient()
+        const tenant = configRetrieval.getEWSUser(tenantID)
+        return new EWSCalendarClient(await tenant)
     }
 
     async getAppointments(calendarDetails: IRoom): Promise<SimpleEvent[]> {
         if (calendarDetails.ews_info) {
-            const ews_client = this.getEWSClient(calendarDetails.ews_info.tenant_id)
+            const ews_client = await this.getEWSClient(calendarDetails.ews_info.tenant_id)
             return ews_client.readUpcomingEventsToday(calendarDetails.ews_info.email)
         } else if (calendarDetails.ical_info){
             return this.iCalClient.readUpcomingEventsToday(calendarDetails.ical_info)
@@ -43,7 +43,7 @@ export class RequestHandler {
             let appointments: PersonalInfo[];
             let personal_appointments: PersonalInfo[][] = []
             for (const person of calendarDetails.persons as IPerson[]) {
-                const ews_client = this.getEWSClient(person.ews_info.tenant_id)
+                const ews_client = await this.getEWSClient(person.ews_info.tenant_id)
                 personal_appointments.push((await ews_client.readPersonsAvailabilityToday([person.ews_info.email]))[0])
             }
             appointments = personal_appointments.reduce((accumulator, value) => accumulator.concat(value), []); // TODO sorting so upcoming event is first
@@ -99,7 +99,7 @@ export class RequestHandler {
 
 
     async getImage(device_id: string, voltage: number): Promise<string> {
-        const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
+        const calendarDetails = await this.dataRetrieval.getRoomForDevice(device_id)
         let image_processor
 
         if (!calendarDetails) {
@@ -110,13 +110,13 @@ export class RequestHandler {
         }
         let ews_client: EWSCalendarClient
         if (calendarDetails.ews_info) {
-            ews_client = this.getEWSClient(calendarDetails.ews_info.tenant_id)
+            ews_client = await this.getEWSClient(calendarDetails.ews_info.tenant_id)
         }
 
          if (calendarDetails.persons) {
             let freeBusyDetails: (CustomEvent|PersonalInfo)[] = []
             for (const person of calendarDetails.persons as IPerson[]) {
-                ews_client = this.getEWSClient(person.ews_info.tenant_id)
+                ews_client = await this.getEWSClient(person.ews_info.tenant_id)
                 const custom_message = this.getCurrentCustomMessage(ews_client, person)
                 if (await custom_message) {
                     freeBusyDetails.push(await custom_message)
@@ -144,7 +144,7 @@ export class RequestHandler {
 
     async getData(device_id: string): Promise<string> {
 
-        const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
+        const calendarDetails = await this.dataRetrieval.getRoomForDevice(device_id)
         if (!calendarDetails) return
         const appointments = await this.getAppointments(calendarDetails)
 

@@ -4,13 +4,13 @@ import {IRoom} from "../datamodels/IRoom";
 import {IOrganization} from "../datamodels/IOrganization";
 import {IEWSTenant} from "../datamodels/IEWSTenant";
 import {IPerson} from "../datamodels/IPerson";
+import {IDBClient} from "./IDBClient";
 
-export class MongoDBClient {
+export class MongoDBClient implements IDBClient {
     db_endpoint = 'mongodb://root:example@localhost:27017'
     db_name = 'roommate'
     db_collection_rooms = 'rooms'
     db_collection_orgs = 'orgs'
-
     db_collection_devices = 'devices'
 
     client: Db
@@ -29,7 +29,7 @@ export class MongoDBClient {
     }
 
 
-    async getDb(): Promise<Db> {
+    private async getDb(): Promise<Db> {
         if (this.client) {
             return this.client
         } else {
@@ -99,25 +99,23 @@ export class MongoDBClient {
 
     async getOrganizationById(id: String): Promise<IOrganization> {
         const db = await this.getDb()
-        const _id = new ObjectId(id)
-        return db.collection<IOrganization>(this.db_collection_orgs).findOne({"_id": _id})
+        return db.collection<IOrganization>(this.db_collection_orgs).findOne({"_id": id})
     }
 
     async addOrganization(organization: IOrganization) {
         const db = await this.getDb()
-        return db.collection<IOrganization>(this.db_collection_orgs).insertOne(organization)
+        const result =  db.collection<IOrganization>(this.db_collection_orgs).insertOne(organization)
     }
 
 
     async addEWSUser(user: IEWSTenant) {
         const db = await this.getDb()
-        return db.collection<IEWSTenant>(this.db_collection_orgs).insertOne(user);
+        const result = db.collection<IEWSTenant>(this.db_collection_orgs).insertOne(user);
     }
 
     async getEWSUser(id: String) {
         const db = await this.getDb()
-        const _id = new ObjectId(id)
-        return db.collection<IEWSTenant>(this.db_collection_orgs).findOne({"_id": _id})
+        return db.collection<IEWSTenant>(this.db_collection_orgs).findOne({"_id": id})
     }
 
 }
