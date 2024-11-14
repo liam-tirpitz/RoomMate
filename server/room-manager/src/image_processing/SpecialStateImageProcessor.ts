@@ -1,6 +1,5 @@
 import {ImageProcessor} from "./ImageProcessor";
 import {IRoom} from "../datamodels/IRoom";
-import * as config from "../../config/calendars.json"
 
 export class SpecialStateImageProcessor extends ImageProcessor {
 
@@ -45,7 +44,7 @@ export class SpecialStateImageProcessor extends ImageProcessor {
     }
 
     async buildNewDeviceImage(device_id: string, voltage) {
-        await this.drawHeader("New RoomMate", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), config.global_config.default_logo)
+        await this.drawHeader("New RoomMate", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), (await this.dataRetrieval.getOrganizationById("")).default_logo)
         // const header = await this.drawHeader("New RoomMate", "", config.global_config.default_logo)
 
         await this.drawNewDevice()

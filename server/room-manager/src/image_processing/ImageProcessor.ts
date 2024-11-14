@@ -10,10 +10,9 @@ import {
     NodeCanvasRenderingContext2DSettings, createImageData
 } from 'canvas'
 import * as fs from 'fs';
-import {DateTime} from "ews-javascript-api";
 import {dithering} from "./image2cpp/dithering";
-import {getDateStringFromDate} from "../utils";
 import {Logging} from "../logging";
+import {FileDBClient} from "../db/FileDBClient";
 
 
 export class ImageProcessor {
@@ -24,11 +23,14 @@ export class ImageProcessor {
     _bitswap: boolean = false
     screenWidth = 480
     screenHeight = 800
+    dataRetrieval: FileDBClient
 
     constructor() {
         this.canvas = this.setupCanvas();
         const settings: NodeCanvasRenderingContext2DSettings = {}
         this.ctx = this.canvas.getContext( '2d',  settings)
+        this.dataRetrieval = FileDBClient.instance
+
     }
 
     setupCanvas(): Canvas {

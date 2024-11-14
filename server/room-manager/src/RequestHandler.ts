@@ -3,7 +3,6 @@ import {Logging} from "./logging";
 import {BookableResourceImageProcessor} from "./image_processing/BookableResourceImageProcessor";
 import * as ews from "ews-javascript-api";
 import {LegacyFreeBusyStatus} from "ews-javascript-api";
-import * as config from "../config/calendars.json";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
 import {IInfoPacket} from "./datamodels/IInfoPacket";
@@ -23,13 +22,12 @@ export class RequestHandler {
     iCalClient: ICalClient
 
     constructor() {
-        this.dataRetrieval = new FileDBClient()
+        this.dataRetrieval = FileDBClient.instance
         this.iCalClient = new ICalClient()
     }
 
     async getEWSClient(tenantID) {
-        const configRetrieval = new FileDBClient()
-        const tenant = configRetrieval.getEWSUser(tenantID)
+        const tenant = this.dataRetrieval.getEWSUser(tenantID)
         return new EWSCalendarClient(await tenant)
     }
 
@@ -129,7 +127,7 @@ export class RequestHandler {
             image_processor = new OfficeImageProcesor()
             await image_processor.buildImage(calendarDetails, freeBusyDetails, voltage)
         } else {
-             if (voltage && voltage < config.global_config.low_battery_voltage_cutoff_in_mv) {
+             if (voltage && voltage < (await this.dataRetrieval.getOrganizationById("")).low_battery_voltage_cutoff_in_mv) {
                  Logging.instance.logger.warn('Low Battery!', {voltage: voltage, devid: device_id});
                  image_processor = new SpecialStateImageProcessor()
                  await image_processor.buildLowBatImage(calendarDetails, voltage)
@@ -143,6 +141,7 @@ export class RequestHandler {
     }
 
     async getData(device_id: string): Promise<string> {
+        const organization = await this.dataRetrieval.getOrganizationById("")
 
         const calendarDetails = await this.dataRetrieval.getRoomForDevice(device_id)
         if (!calendarDetails) return
@@ -173,23 +172,23 @@ export class RequestHandler {
             calendarData.next_update_unix = next_update.unix()
         }
         const hours_of_day = now.Hour
-        if (hours_of_day >= config.global_config.night_start_hour  || hours_of_day < (config.global_config.night_end_hour-1)) {
+        if (hours_of_day >= organization.night_start_hour  || hours_of_day < (organization.night_end_hour-1)) {
             calendarData.is_night = true
         }
         const day_of_week = now.DayOfWeek
-        if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday || (day_of_week == DayOfWeek.Friday && hours_of_day >= config.global_config.night_start_hour)) {
+        if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday || (day_of_week == DayOfWeek.Friday && hours_of_day >= organization.night_start_hour)) {
             calendarData.is_weekend = true
         }
         if (calendarData.is_night) {
             let next_day = 0
-            if (now.Hour >= config.global_config.night_start_hour) next_day = 1 // Only move to next day if the request was sent before midnight, otherwise stay on the current day
+            if (now.Hour >= organization.night_start_hour) next_day = 1 // Only move to next day if the request was sent before midnight, otherwise stay on the current day
             let updateTime = now.AddDays(next_day).MomentDate.startOf("day")
-            updateTime.set("hour", config.global_config.night_end_hour)
+            updateTime.set("hour", organization.night_end_hour)
             calendarData.next_update_unix = updateTime.unix()
         } else if (calendarData.is_weekend) { // Its the weekend, but not the night
             if (appointments.length == 0) {
                 let updateTime = now.AddDays(1).MomentDate.startOf("day")
-                updateTime.set("hour", config.global_config.night_end_hour)
+                updateTime.set("hour", organization.night_end_hour)
                 calendarData.next_update_unix = updateTime.unix()
             }
         }

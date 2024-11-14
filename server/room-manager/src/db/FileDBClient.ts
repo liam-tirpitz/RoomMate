@@ -8,8 +8,18 @@ import {IRoom} from "../datamodels/IRoom";
 export class FileDBClient implements IDBClient {
     calendars: any
 
-    constructor() {
+    static #instance: FileDBClient;
+
+    private constructor() {
         this.calendars = require('../../config/calendars.json');
+    }
+
+    public static get instance(): FileDBClient {
+        if (!FileDBClient.#instance) {
+            FileDBClient.#instance = new FileDBClient();
+        }
+
+        return FileDBClient.#instance;
     }
 
 
@@ -63,7 +73,7 @@ export class FileDBClient implements IDBClient {
     }
 
     getOrganizationById(id: String): Promise<IOrganization> {
-        return Promise.resolve(undefined);
+        return Promise.resolve(this.calendars.global_config);
     }
 
     getOrganizations(): Promise<IOrganization[]> {
