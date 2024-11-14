@@ -1,56 +1,18 @@
 import fastify from 'fastify'
-import * as config from "../config/calendars.json"
-import {RequestHandler} from "./RequestHandler";
-import {Logging} from "./logging";
+import {FileDBClient} from "./db/FileDBClient";
+import {data, getData, getImage, image} from "./routes/device-requests";
 
 const server = fastify()
-const requestHandler: RequestHandler = new RequestHandler()
 
-process.env.TZ = config.global_config.timezoe;
+const dbClient: FileDBClient = FileDBClient.instance
 
-
-['/occupancy', '/image'].forEach(path => {
-    server.get(path, async (request, reply) => {
-        const devid = request.query['devid']
-        const voltage = request.query['voltage']
-        const test = { devid: devid, voltage: voltage};
-        Logging.instance.logger.info('Image requested', test);
-        const result = await requestHandler.getImage(devid, voltage)
-        if (result) {
-            Logging.instance.logger.verbose('Image sent', test);
-            reply
-                .code(200)
-                //.header('Content-Type', 'image/example')
-                .send(result)
-        } else {
-            Logging.instance.logger.warn('Device-ID not found.', test);
-
-            reply.statusCode = 404
-            reply
-                .code(200)
-                .send("Device-ID not found.")
-        }
-    })
+dbClient.getOrganizationById("").then(org => {
+    process.env.TZ = org.timezone;
 })
 
-server.get("/data", async (request, reply) => {
-    const devid = request.query['devid']
 
-    const result = await requestHandler.getData(devid)
-    if (result) {
-        reply
-            .code(200)
-            .header('Content-Type', 'application/json')
-            .send(result)
-    } else {
-        reply.statusCode = 404
-        Logging.instance.logger.warn('Device-ID not found.', { devid: devid});
-        reply
-            .code(200)
-            .send("Device-ID not found.")
-    }
-})
-
+server.register(data, { prefix: "/data" })
+server.register(image, { prefix: "/image" })
 
 server.listen({ port: 3001, host:'0.0.0.0' }, (err, address) => {
     if (err) {
