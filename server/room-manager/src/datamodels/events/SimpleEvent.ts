@@ -1,7 +1,7 @@
 import * as moment from "moment-timezone";
 import {DateTime} from "ews-javascript-api";
-import * as config from '../../config/calendars.json'
-import * as utils from '../utils'
+import * as config from '../../../config/calendars.json'
+import * as utils from '../../utils'
 
 export class SimpleEvent {
     start: moment.Moment;

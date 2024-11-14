@@ -8,15 +8,15 @@ import * as config from "../config/calendars.json";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
 import {IInfoPacket} from "./datamodels/IInfoPacket";
-import {SimpleEvent} from "./datamodels/SimpleEvent";
+import {SimpleEvent} from "./datamodels/events/SimpleEvent";
 import {IRoom} from "./datamodels/IRoom";
 import {ICalClient} from "./calendar-apis/ical";
 import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
 import {IPerson} from "./datamodels/IPerson";
-import {PersonalInfo} from "./datamodels/PersonalInfo";
+import {PersonalInfo} from "./datamodels/events/PersonalInfo";
 import * as utils from "./utils"
 import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImageProcessor";
-import {CustomEvent} from "./datamodels/CustomEvent";
+import {CustomEvent} from "./datamodels/events/CustomEvent";
 
 export class RequestHandler {
     dataRetrieval: ConfigRetrieval

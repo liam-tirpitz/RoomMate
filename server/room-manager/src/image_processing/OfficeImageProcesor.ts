@@ -1,9 +1,9 @@
 import {ImageProcessor} from "./ImageProcessor";
 import {IRoom} from "../datamodels/IRoom";
 import {IPerson} from "../datamodels/IPerson";
-import {PersonalInfo} from "../datamodels/PersonalInfo";
+import {PersonalInfo} from "../datamodels/events/PersonalInfo";
 import * as config from "../../config/calendars.json";
-import {CustomEvent} from "../datamodels/CustomEvent";
+import {CustomEvent} from "../datamodels/events/CustomEvent";
 
 export class OfficeImageProcesor extends ImageProcessor {
     init_y = 279

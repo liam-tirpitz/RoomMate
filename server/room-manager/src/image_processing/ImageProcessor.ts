@@ -1,5 +1,3 @@
-import {SimpleEvent} from "../datamodels/SimpleEvent"
-import * as moment from "moment-timezone";
 import * as utils from '../utils'
 
 import {

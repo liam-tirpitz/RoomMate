@@ -1,4 +1,4 @@
-import {SimpleEvent} from "./SimpleEvent";
+import {SimpleEvent} from "./events/SimpleEvent";
 
 export interface IInfoPacket {
     current_time_string: string;
