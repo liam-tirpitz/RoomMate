@@ -4,6 +4,7 @@ import {IPerson} from "./IPerson";
 import {IDevice} from "./IDevice";
 
 export interface IRoom {
+    _id: string
     id: number
     id_string: string
     name: string
@@ -12,4 +13,5 @@ export interface IRoom {
     ical_info : IICalCalendarInfo | undefined
     persons: IPerson[] | undefined
     devices: IDevice[]
+    device_ids: string[]
 }

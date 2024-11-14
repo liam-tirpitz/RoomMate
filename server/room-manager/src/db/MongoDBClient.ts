@@ -3,6 +3,7 @@ import {IDevice} from "../datamodels/IDevice";
 import {IRoom} from "../datamodels/IRoom";
 import {IOrganization} from "../datamodels/IOrganization";
 import {IEWSTenant} from "../datamodels/IEWSTenant";
+import {IPerson} from "../datamodels/IPerson";
 
 export class MongoDBClient {
     db_endpoint = 'mongodb://root:example@localhost:27017'
@@ -10,7 +11,7 @@ export class MongoDBClient {
     db_collection_rooms = 'rooms'
     db_collection_orgs = 'orgs'
 
-    // db_collection_devices = 'devices'
+    db_collection_devices = 'devices'
 
     client: Db
 
@@ -37,46 +38,56 @@ export class MongoDBClient {
         }
     }
 
-    // async addDevice(device: IDevice): Promise<void> {
-    //     const db = await this.getDb()
-    //     const result = db.collection<IDevice>(this.db_collection_devices).insertOne(device);
-    // }
-    //
-    // async deleteDevice(device_id: string): Promise<void> {
-    //     const db = await this.getDb()
-    //     const result = db.collection<IDevice>(this.db_collection_devices).deleteMany({ device_id: device_id });
-    // }
-    //
+    async addDevice(device: IDevice): Promise<void> {
+        const db = await this.getDb()
+        const result = db.collection<IDevice>(this.db_collection_devices).insertOne(device);
+    }
+
+    async deleteDevice(device_id: string): Promise<void> {
+        const db = await this.getDb()
+        const result = db.collection<IDevice>(this.db_collection_devices)
+            .deleteMany({ device_id: device_id });
+    }
 
     async getDevice(device_id: string): Promise<IDevice> {
         const db = await this.getDb()
-        return db.collection<IDevice>(this.db_collection_rooms).findOne({ "device.device_id": device_id })
+        return db.collection<IDevice>(this.db_collection_devices).findOne({ "device.device_id": device_id })
     }
 
     async getDevices(): Promise<IDevice[]> {
         const db = await this.getDb()
-        return db.collection<IDevice>(this.db_collection_rooms).aggregate([
-            {
-                $unwind: '$devices'
-            },
-            {
-                $project:
-                    {
-                        location:'$devices.location',
-                        device_id:'$devices.device_id'
-                    }
-            }
-        ]).toArray()
+        return db.collection<IDevice>(this.db_collection_devices).find().toArray()
     }
-
-
 
     async getRoomForDevice(device_id: string): Promise<IRoom> {
         const db = await this.getDb()
-        return db.collection<IRoom>(this.db_collection_rooms).findOne({"devices.device_id": device_id})
+        return db.collection<IRoom>(this.db_collection_rooms).findOne({device_ids: device_id})
     }
 
-    async getRoomList(): Promise<IRoom[]> {
+    async associateRoomWithDevice(device_id: string, room_id: string) {
+        const db = await this.getDb()
+        const result = db.collection<IRoom>(this.db_collection_rooms)
+            .updateOne({_id: room_id}, { $push: { "device_ids": device_id} })
+    }
+
+    async addPersonToRoom(person: IPerson, room_id: string) {
+        const db = await this.getDb()
+        const result = db.collection<IRoom>(this.db_collection_rooms)
+            .updateOne({_id: room_id}, { $push: { "persons": person} })
+    }
+
+    async addRoom(room: IRoom) {
+        const db = await this.getDb()
+        const result = db.collection<IRoom>(this.db_collection_rooms).insertOne(room);
+    }
+
+    async deleteRoom(id: string) {
+        const db = await this.getDb()
+        const result = db.collection<IRoom>(this.db_collection_devices)
+            .deleteMany({ _id: id});
+    }
+
+    async getRooms(): Promise<IRoom[]> {
         const db = await this.getDb()
         return db.collection<IRoom>(this.db_collection_rooms).find().toArray()
     }
