@@ -3,14 +3,14 @@
  *
  */
 #include <Arduino.h>
-#include <HTTPClient.h>
+#include <HttpClient.h>
 #include <ArduinoJson.h>
 #include <Screen.h>
 #include "mbedtls/base64.h"
 #include <Provisioner.h>
 #include <Storage.h>
 #include <SysConfig.h>
-
+#include <ETH.h>
 
 unsigned char b64_buff[1000] = {0};
 unsigned char byte_buff[48000] = {0};
@@ -28,7 +28,11 @@ SysConfig sysconfig;
 
 
 uint8_t getImageDataFromEndpoint() {
-    if(WiFi.status() == WL_CONNECTED){
+    #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
+      if(WiFi.status() == WL_CONNECTED){
+    #else
+      if(true) {
+    #endif
       HTTPClient http;
       
       http.begin(storage.getEndpoint() + "image?devid=" + devid + "&voltage=" + String(voltage));
@@ -78,12 +82,15 @@ uint8_t getImageDataFromEndpoint() {
 }
 
 void getMetaDataFromEndpoint() {
+  #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
   if(WiFi.status() == WL_CONNECTED){
+  #else
+  if(true) {
+  #endif
     HTTPClient http;
-
     http.begin(storage.getEndpoint() + "data?devid=" + devid);
+    Serial.println("BEGIN");
     int httpResponseCode = http.GET();
-
     if (httpResponseCode>0) {
       if (httpResponseCode == HTTP_CODE_OK) {
         String payload = http.getString();
@@ -91,11 +98,16 @@ void getMetaDataFromEndpoint() {
         if (error) {
           // Serial.print(F("deserializeJson() failed: "));
           // Serial.println(error.f_str());
+          Serial.println(payload.c_str());
+
        } else {
-          printf("Updated Metadata");
+          Serial.println("Updated Metadata");
        }
+      } else {
+        Serial.println("Connection failed:" + httpResponseCode);
       }
     }
+    Serial.println("Close connection");
     http.end();
   }
 }
@@ -151,25 +163,86 @@ void updateState() {
 }
 
 
+void WiFiEvent(WiFiEvent_t event)
+{
+
+  switch (event) {
+
+    case ARDUINO_EVENT_ETH_START:
+      // This will happen during setup, when the Ethernet service starts
+      Serial.println("ETH Started");
+      //set eth hostname here
+      ETH.setHostname("esp32-ethernet");
+      break;
+
+    case ARDUINO_EVENT_ETH_CONNECTED:
+      // This will happen when the Ethernet cable is plugged 
+      Serial.println("ETH Connected");
+      break;
+
+    case ARDUINO_EVENT_ETH_GOT_IP:
+    // This will happen when we obtain an IP address through DHCP:
+      devid = ETH.macAddress();
+      devid.replace(":","");  
+      Serial.print("Got an IP Address for ETH MAC: ");
+      Serial.print(ETH.macAddress());
+      Serial.print(", IPv4: ");
+      Serial.print(ETH.localIP());
+      if (ETH.fullDuplex()) {
+        Serial.print(", FULL_DUPLEX");
+      }
+      Serial.print(", ");
+      Serial.print(ETH.linkSpeed());
+      Serial.println("Mbps");
+      getMetaDataFromEndpoint();
+
+      break;
+
+    case ARDUINO_EVENT_ETH_DISCONNECTED:
+      // This will happen when the Ethernet cable is unplugged 
+      Serial.println("ETH Disconnected");
+      break;
+
+    case ARDUINO_EVENT_ETH_STOP:
+      // This will happen when the ETH interface is stopped but this never happens
+      Serial.println("ETH Stopped");
+      break;
+
+    default:
+      break;
+  }
+}
+
 
 
 void setup() {
-  devid = WiFi.macAddress();
-  Provisioner p = Provisioner();
-  sysconfig.configDefaultSleep();
-  if(storage.getEndpoint() != "" && storage.getSSID() != "" && storage.getPSK() != "")  {
-      devid.replace(":","");  
-      voltage = sysconfig.readBatteryVoltage();
-      // Serial.println(devid);
-      sysconfig.setup_wifi_connection();
+    Provisioner p = Provisioner();
+
+    #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
+      devid = WiFi.macAddress();
+      sysconfig.configDefaultSleep();
+      if(storage.getEndpoint() != "" && storage.getSSID() != "" && storage.getPSK() != "")  {
+          devid.replace(":","");  
+          voltage = sysconfig.readBatteryVoltage();
+          // Serial.println(devid);
+          sysconfig.setup_wifi_connection();
+          updateState();
+          sysconfig.sleep();
+      } else {
+        screen.setup();
+        screen.drawNewDeviceImage(devid.c_str());
+        screen.sleep();
+        // Stay awake for configuration if config is incomplete
+      }
+
+    #else
+      Serial.begin(115200); 
+      WiFi.onEvent(WiFiEvent);
+      ETH.begin();
       updateState();
-      sysconfig.sleep();
-  } else {
-    screen.setup();
-    screen.drawNewDeviceImage(devid.c_str());
-    screen.sleep();
-    // Stay awake for configuration if config is incomplete
-  }
+
+    #endif 
+
 }
 
 
