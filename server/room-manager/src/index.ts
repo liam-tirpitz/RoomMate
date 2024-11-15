@@ -1,6 +1,7 @@
 import fastify from 'fastify'
 import {FileDBClient} from "./db/FileDBClient";
-import {data, getData, getImage, image} from "./routes/device-requests";
+import {dataEndpoint, imageEndpoint} from "./routes/device-requests";
+import {roomEndpoint} from "./routes/room-endpoint";
 
 const server = fastify()
 
@@ -11,8 +12,11 @@ dbClient.getOrganizationById("").then(org => {
 })
 
 
-server.register(data, { prefix: "/data" })
-server.register(image, { prefix: "/image" })
+server.register(dataEndpoint, { prefix: "/data" })
+server.register(imageEndpoint, { prefix: "/image" })
+server.register(roomEndpoint, { prefix: "/rooms" })
+
+
 
 server.listen({ port: 3001, host:'0.0.0.0' }, (err, address) => {
     if (err) {

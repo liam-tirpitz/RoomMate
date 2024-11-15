@@ -2,7 +2,6 @@ import {Logging} from "../logging";
 import {RequestHandler} from "../RequestHandler";
 import {MongoDBClient} from "../db/MongoDBClient";
 import {FastifyReply, FastifyRequest} from "fastify";
-import {R} from "tsx/dist/types-Cxp8y2TL";
 
 const requestHandler: RequestHandler = new RequestHandler()
 
@@ -15,14 +14,14 @@ async function things() {
     console.log(await client.getDevice("abc"))
 }
 
-export function image(fastify, _, done) {
+export function imageEndpoint(fastify, _, done) {
 
     fastify.get("/", getImage);
 
     done();
 }
 
-export async function getImage(request: FastifyRequest, reply: FastifyReply)  {
+async function getImage(request: FastifyRequest, reply: FastifyReply)  {
     things().then()
     const devid = request.query['devid']
     const voltage = request.query['voltage']
@@ -45,13 +44,13 @@ export async function getImage(request: FastifyRequest, reply: FastifyReply)  {
     }
 }
 
-export function data(fastify, _, done) {
+export function dataEndpoint(fastify, _, done) {
     fastify.get("/", getData);
 
     done();
 }
 
-export async function getData(request, reply) {
+async function getData(request: FastifyRequest, reply: FastifyReply) {
     const devid = request.query['devid']
 
     const result = await requestHandler.getData(devid)
@@ -68,3 +67,4 @@ export async function getData(request, reply) {
             .send("Device-ID not found.")
     }
 }
+
