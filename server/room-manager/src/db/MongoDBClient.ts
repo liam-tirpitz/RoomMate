@@ -67,13 +67,13 @@ export class MongoDBClient implements IDBClient {
     async associateRoomWithDevice(device_id: string, room_id: string) {
         const db = await this.getDb()
         const result = db.collection<IRoom>(this.db_collection_rooms)
-            .updateOne({_id: room_id}, { $push: { "device_ids": device_id} })
+            .updateOne({_id: new ObjectId(room_id)}, { $push: { "device_ids": device_id} })
     }
 
     async addPersonToRoom(person: IPerson, room_id: string) {
         const db = await this.getDb()
         const result = db.collection<IRoom>(this.db_collection_rooms)
-            .updateOne({_id: room_id}, { $push: { "persons": person} })
+            .updateOne({_id: new ObjectId(room_id)}, { $push: { "persons": person} })
     }
 
     async addRoom(room: IRoom) {
@@ -83,13 +83,19 @@ export class MongoDBClient implements IDBClient {
 
     async deleteRoom(id: string) {
         const db = await this.getDb()
-        const result = db.collection<IRoom>(this.db_collection_devices)
-            .deleteMany({ _id: id});
+        const result = db.collection<IRoom>(this.db_collection_rooms)
+            .deleteMany({ _id: new ObjectId(id)});
     }
 
     async getRooms(): Promise<IRoom[]> {
         const db = await this.getDb()
         return db.collection<IRoom>(this.db_collection_rooms).find().toArray()
+    }
+
+    async getRoom(id: string): Promise<IRoom> {
+        const db = await this.getDb()
+        const obID = new ObjectId(id)
+        return db.collection<IRoom>(this.db_collection_rooms).findOne({"_id": obID})
     }
 
     async getOrganizations(): Promise<IOrganization[]> {

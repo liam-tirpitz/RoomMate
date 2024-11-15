@@ -2,9 +2,10 @@ import {IEWSCalendarInfo} from "./IEWSCalendarInfo";
 import {IICalCalendarInfo} from "./IICalCalendarInfo";
 import {IPerson} from "./IPerson";
 import {IDevice} from "./IDevice";
+import {ObjectId} from "mongodb";
 
 export interface IRoom {
-    _id: string
+    _id: ObjectId
     id: number
     id_string: string
     name: string
