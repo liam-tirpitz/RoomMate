@@ -37,7 +37,13 @@ uint8_t getImageDataFromEndpoint() {
     #endif
       HTTPClient http;
       
-      http.begin(storage.getEndpoint() + "image?devid=" + devid + "&voltage=" + String(voltage));
+      String endpoint = storage.getEndpoint() + "image?devid=" + devid;
+      #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
+      endpoint += "&voltage=" + String(voltage);
+      #endif
+
+
+      http.begin(endpoint);
 
       int httpResponseCode = http.GET();
       int buffer_offset = 0;
@@ -77,7 +83,7 @@ uint8_t getImageDataFromEndpoint() {
       // Free resources
     }
     else {
-      Serial.println("WiFi Disconnected");
+      printf("WiFi Disconnected");
       return 2;
     }
     return 3;
@@ -91,7 +97,7 @@ void getMetaDataFromEndpoint() {
   #endif
     HTTPClient http;
     http.begin(storage.getEndpoint() + "data?devid=" + devid);
-    Serial.println("BEGIN");
+    printf("BEGIN");
     int httpResponseCode = http.GET();
     if (httpResponseCode>0) {
       if (httpResponseCode == HTTP_CODE_OK) {
@@ -100,16 +106,16 @@ void getMetaDataFromEndpoint() {
         if (error) {
           // Serial.print(F("deserializeJson() failed: "));
           // Serial.println(error.f_str());
-          Serial.println(payload.c_str());
+          printf(payload.c_str());
 
        } else {
-          Serial.println("Updated Metadata");
+          printf("Retrieved Metadata");
        }
       } else {
-        Serial.println("Connection failed:" + httpResponseCode);
+        printf("Connection failed:" + httpResponseCode);
       }
     }
-    Serial.println("Close connection");
+    printf("Close connection");
     http.end();
   }
 }
@@ -135,23 +141,27 @@ void handleMetadata() {
   }
   storage.getPreferences().end();
   // Serial.println("Configure sleep.");
-  long diff = next_update_unix - current_time_unix;
-  long sleep_time_in_s = 0;
-  int regular_wakeup_interval_in_s = storage.getRegularSleepTimeInS();
-  if (
-      next_update_unix > 0 
-      && diff > 0 
-      // Skip next regular update if next event is less than 10 minutes in the future
-      && ((diff < regular_wakeup_interval_in_s) || (diff - regular_wakeup_interval_in_s) < 600)) { 
-    sleep_time_in_s = diff + 30;
-  } else if (is_night || is_weekend) {
-    sleep_time_in_s = diff + 30;
-  } else {
-    sleep_time_in_s = regular_wakeup_interval_in_s;
-  }
-  uint64_t sleep_time_in_us = sleep_time_in_s * uS_TO_S_FACTOR;
-  esp_sleep_enable_timer_wakeup(sleep_time_in_us);
-  printf("Sleep configured.");
+
+  #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
+
+    long diff = next_update_unix - current_time_unix;
+    long sleep_time_in_s = 0;
+    int regular_wakeup_interval_in_s = storage.getRegularSleepTimeInS();
+    if (
+        next_update_unix > 0 
+        && diff > 0 
+        // Skip next regular update if next event is less than 10 minutes in the future
+        && ((diff < regular_wakeup_interval_in_s) || (diff - regular_wakeup_interval_in_s) < 600)) { 
+      sleep_time_in_s = diff + 30;
+    } else if (is_night || is_weekend) {
+      sleep_time_in_s = diff + 30;
+    } else {
+      sleep_time_in_s = regular_wakeup_interval_in_s;
+    }
+    uint64_t sleep_time_in_us = sleep_time_in_s * uS_TO_S_FACTOR;
+    esp_sleep_enable_timer_wakeup(sleep_time_in_us);
+    printf("Sleep configured.");
+  #endif
   //printf("Wait for ");
   // Serial.print(sleep_time_in_s);
   // Serial.println();
@@ -173,7 +183,7 @@ void ETHEvent(WiFiEvent_t event)
 
     case ARDUINO_EVENT_ETH_START:
       // This will happen during setup, when the Ethernet service starts
-      Serial.println("ETH Started");
+      printf("ETH Started");
       //set eth hostname here
       // ETH.setHostname("esp32-ethernet");
       eth_connection_established = false;
@@ -182,36 +192,36 @@ void ETHEvent(WiFiEvent_t event)
 
     case ARDUINO_EVENT_ETH_CONNECTED:
       // This will happen when the Ethernet cable is plugged 
-      Serial.println("ETH Connected");
+      printf("ETH Connected");
       break;
 
     case ARDUINO_EVENT_ETH_GOT_IP:
     // This will happen when we obtain an IP address through DHCP:
       devid = ETH.macAddress();
       devid.replace(":","");  
-      Serial.print("Got an IP Address for ETH MAC: ");
-      Serial.print(ETH.macAddress());
-      Serial.print(", IPv4: ");
-      Serial.print(ETH.localIP());
-      if (ETH.fullDuplex()) {
-        Serial.print(", FULL_DUPLEX");
-      }
-      Serial.print(", ");
-      Serial.print(ETH.linkSpeed());
-      Serial.println("Mbps");
+      printf("Got an IP Address for ETH MAC: ");
+      // Serial.print(ETH.macAddress());
+      // Serial.print(", IPv4: ");
+      // Serial.print(ETH.localIP());
+      // if (ETH.fullDuplex()) {
+      //   Serial.print(", FULL_DUPLEX");
+      // }
+      // Serial.print(", ");
+      // Serial.print(ETH.linkSpeed());
+      // Serial.println("Mbps");
       eth_connection_established = true;
       break;
 
     case ARDUINO_EVENT_ETH_DISCONNECTED:
       // This will happen when the Ethernet cable is unplugged 
-      Serial.println("ETH Disconnected");
+      printf("ETH Disconnected");
       eth_connection_established = false;
 
       break;
 
     case ARDUINO_EVENT_ETH_STOP:
       // This will happen when the ETH interface is stopped but this never happens
-      Serial.println("ETH Stopped");
+      printf("ETH Stopped");
       break;
 
     default:
@@ -242,7 +252,6 @@ void setup() {
       }
 
     #else
-      Serial.begin(115200); 
       WiFi.onEvent(ETHEvent);
       ETH.begin();
 
