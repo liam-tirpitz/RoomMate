@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {MatTableModule} from '@angular/material/table';
+import {RoomService} from '../room.service';
 
 export interface PeriodicElement {
   name: string;
@@ -19,8 +20,19 @@ const ELEMENT_DATA: PeriodicElement[] = [
   templateUrl: './devices.component.html',
   styleUrl: './devices.component.css'
 })
-export class DevicesComponent {
+export class DevicesComponent implements OnInit{
   displayedColumns: string[] = ['name', 'mac', 'battery', 'last_connection'];
   dataSource = ELEMENT_DATA;
+  rooms: any[] = [];
+
+  constructor(private roomService: RoomService) {
+
+  }
+
+  ngOnInit() {
+    this.roomService.getRooms().subscribe((data: any[])=> {
+      this.rooms = data;
+    })
+  }
 
 }
