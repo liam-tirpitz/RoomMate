@@ -83,7 +83,7 @@ uint8_t getImageDataFromEndpoint() {
       // Free resources
     }
     else {
-      printf("WiFi Disconnected");
+      printf("WiFi Disconnected\n");
       return 2;
     }
     return 3;
@@ -97,7 +97,7 @@ void getMetaDataFromEndpoint() {
   #endif
     HTTPClient http;
     http.begin(storage.getEndpoint() + "data?devid=" + devid);
-    printf("BEGIN");
+    printf("BEGIN\n");
     int httpResponseCode = http.GET();
     if (httpResponseCode>0) {
       if (httpResponseCode == HTTP_CODE_OK) {
@@ -106,16 +106,16 @@ void getMetaDataFromEndpoint() {
         if (error) {
           // Serial.print(F("deserializeJson() failed: "));
           // Serial.println(error.f_str());
-          printf(payload.c_str());
+          printf("%s \n", payload.c_str());
 
        } else {
-          printf("Retrieved Metadata");
+          printf("Retrieved Metadata\n");
        }
       } else {
-        printf("Connection failed:" + httpResponseCode);
+        printf("Connection failed: %d\n", httpResponseCode);
       }
     }
-    printf("Close connection");
+    printf("Close connection\n");
     http.end();
   }
 }
@@ -129,7 +129,7 @@ void handleMetadata() {
   bool needs_update = storage.checkHash(hash);
   // Redraw screen if metadata changed
   if (needs_update) {
-    printf("Update required.");
+    printf("Update required.\n");
     if(!getImageDataFromEndpoint()) {
         screen.setup();
         screen.drawImage(byte_buff);
@@ -137,7 +137,7 @@ void handleMetadata() {
     }
     storage.setHash(hash);
   } else {
-      printf("Im Westen nichts neues.");
+      printf("Im Westen nichts neues.\n");
   }
   storage.getPreferences().end();
   // Serial.println("Configure sleep.");
@@ -160,7 +160,7 @@ void handleMetadata() {
     }
     uint64_t sleep_time_in_us = sleep_time_in_s * uS_TO_S_FACTOR;
     esp_sleep_enable_timer_wakeup(sleep_time_in_us);
-    printf("Sleep configured.");
+    printf("Sleep configured.\n");
   #endif
   //printf("Wait for ");
   // Serial.print(sleep_time_in_s);
@@ -183,7 +183,7 @@ void ETHEvent(WiFiEvent_t event)
 
     case ARDUINO_EVENT_ETH_START:
       // This will happen during setup, when the Ethernet service starts
-      printf("ETH Started");
+      printf("ETH Started\n");
       //set eth hostname here
       // ETH.setHostname("esp32-ethernet");
       eth_connection_established = false;
@@ -192,14 +192,14 @@ void ETHEvent(WiFiEvent_t event)
 
     case ARDUINO_EVENT_ETH_CONNECTED:
       // This will happen when the Ethernet cable is plugged 
-      printf("ETH Connected");
+      printf("ETH Connected\n");
       break;
 
     case ARDUINO_EVENT_ETH_GOT_IP:
     // This will happen when we obtain an IP address through DHCP:
       devid = ETH.macAddress();
       devid.replace(":","");  
-      printf("Got an IP Address for ETH MAC: ");
+      printf("Got an IP Address for ETH MAC. \n");
       // Serial.print(ETH.macAddress());
       // Serial.print(", IPv4: ");
       // Serial.print(ETH.localIP());
@@ -214,14 +214,14 @@ void ETHEvent(WiFiEvent_t event)
 
     case ARDUINO_EVENT_ETH_DISCONNECTED:
       // This will happen when the Ethernet cable is unplugged 
-      printf("ETH Disconnected");
+      printf("ETH Disconnected\n");
       eth_connection_established = false;
 
       break;
 
     case ARDUINO_EVENT_ETH_STOP:
       // This will happen when the ETH interface is stopped but this never happens
-      printf("ETH Stopped");
+      printf("ETH Stopped\n");
       break;
 
     default:
@@ -233,7 +233,6 @@ void ETHEvent(WiFiEvent_t event)
 
 void setup() {
     Provisioner p = Provisioner();
-
     #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
       devid = WiFi.macAddress();
       sysconfig.configDefaultSleep();
