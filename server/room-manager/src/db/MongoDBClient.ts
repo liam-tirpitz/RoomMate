@@ -1,9 +1,9 @@
 import {Db, MongoClient, ObjectId} from 'mongodb'
-import {IDevice} from "../datamodels/IDevice";
-import {IRoom} from "../datamodels/IRoom";
-import {IOrganization} from "../datamodels/IOrganization";
-import {IEWSTenant} from "../datamodels/IEWSTenant";
-import {IPerson} from "../datamodels/IPerson";
+import {IDevice} from "../../../datamodels/IDevice";
+import {IRoom} from "../../../datamodels/IRoom";
+import {IOrganization} from "../../../datamodels/IOrganization";
+import {IEWSTenant} from "../../../datamodels/IEWSTenant";
+import {IPerson} from "../../../datamodels/IPerson";
 import {IDBClient} from "./IDBClient";
 
 export class MongoDBClient implements IDBClient {

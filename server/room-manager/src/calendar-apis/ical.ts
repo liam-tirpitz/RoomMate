@@ -1,5 +1,5 @@
 import {SimpleEvent} from "../datamodels/events/SimpleEvent";
-import {IICalCalendarInfo} from "../datamodels/IICalCalendarInfo";
+import {IICalCalendarInfo} from "../../../datamodels/IICalCalendarInfo";
 import moment from "moment-timezone"
 import * as utils from "../utils"
 

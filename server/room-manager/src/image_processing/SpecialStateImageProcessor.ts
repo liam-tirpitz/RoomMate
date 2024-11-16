@@ -1,5 +1,5 @@
 import {ImageProcessor} from "./ImageProcessor";
-import {IRoom} from "../datamodels/IRoom";
+import {IRoom} from "../../../datamodels/IRoom";
 
 export class SpecialStateImageProcessor extends ImageProcessor {
 

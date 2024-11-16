@@ -5,12 +5,12 @@ import * as ews from "ews-javascript-api";
 import {LegacyFreeBusyStatus} from "ews-javascript-api";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
-import {IInfoPacket} from "./datamodels/IInfoPacket";
+import {IInfoPacket} from "../../datamodels/IInfoPacket";
 import {SimpleEvent} from "./datamodels/events/SimpleEvent";
-import {IRoom} from "./datamodels/IRoom";
+import {IRoom} from "../../datamodels/IRoom";
 import {ICalClient} from "./calendar-apis/ical";
 import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
-import {IPerson} from "./datamodels/IPerson";
+import {IPerson} from "../../datamodels/IPerson";
 import {PersonalInfo} from "./datamodels/events/PersonalInfo";
 import * as utils from "./utils"
 import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImageProcessor";

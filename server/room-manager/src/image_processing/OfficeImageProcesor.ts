@@ -1,6 +1,6 @@
 import {ImageProcessor} from "./ImageProcessor";
-import {IRoom} from "../datamodels/IRoom";
-import {IPerson} from "../datamodels/IPerson";
+import {IRoom} from "../../../datamodels/IRoom";
+import {IPerson} from "../../../datamodels/IPerson";
 import {PersonalInfo} from "../datamodels/events/PersonalInfo";
 import {CustomEvent} from "../datamodels/events/CustomEvent";
 

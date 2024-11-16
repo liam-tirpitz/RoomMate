@@ -1,4 +1,4 @@
-import {SimpleEvent} from "./events/SimpleEvent";
+import {SimpleEvent} from "../room-manager/src/datamodels/events/SimpleEvent";
 
 export interface IInfoPacket {
     current_time_string: string;

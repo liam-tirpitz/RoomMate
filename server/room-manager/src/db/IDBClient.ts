@@ -1,8 +1,8 @@
-import {IEWSTenant} from "../datamodels/IEWSTenant";
-import {IOrganization} from "../datamodels/IOrganization";
-import {IRoom} from "../datamodels/IRoom";
-import {IPerson} from "../datamodels/IPerson";
-import {IDevice} from "../datamodels/IDevice";
+import {IEWSTenant} from "../../../datamodels/IEWSTenant";
+import {IOrganization} from "../../../datamodels/IOrganization";
+import {IRoom} from "../../../datamodels/IRoom";
+import {IPerson} from "../../../datamodels/IPerson";
+import {IDevice} from "../../../datamodels/IDevice";
 
 export interface IDBClient {
     addOrganization(organization: IOrganization): Promise<void>

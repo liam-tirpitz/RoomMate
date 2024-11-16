@@ -1,9 +1,9 @@
 import {IDBClient} from "./IDBClient";
-import {IEWSTenant} from "../datamodels/IEWSTenant";
-import {IDevice} from "../datamodels/IDevice";
-import {IOrganization} from "../datamodels/IOrganization";
-import {IPerson} from "../datamodels/IPerson";
-import {IRoom} from "../datamodels/IRoom";
+import {IEWSTenant} from "../../../datamodels/IEWSTenant";
+import {IDevice} from "../../../datamodels/IDevice";
+import {IOrganization} from "../../../datamodels/IOrganization";
+import {IPerson} from "../../../datamodels/IPerson";
+import {IRoom} from "../../../datamodels/IRoom";
 
 export class FileDBClient implements IDBClient {
     calendars: any
