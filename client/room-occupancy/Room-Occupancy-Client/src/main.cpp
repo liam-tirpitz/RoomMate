@@ -15,6 +15,8 @@
 unsigned char b64_buff[1000] = {0};
 unsigned char byte_buff[48000] = {0};
 
+bool eth_connection_established = false;
+
 String devid = "";
 int voltage = 0;
 JsonDocument doc;
@@ -163,7 +165,8 @@ void updateState() {
 }
 
 
-void WiFiEvent(WiFiEvent_t event)
+// Actually, those are Ethernet Events.
+void ETHEvent(WiFiEvent_t event)
 {
 
   switch (event) {
@@ -172,7 +175,9 @@ void WiFiEvent(WiFiEvent_t event)
       // This will happen during setup, when the Ethernet service starts
       Serial.println("ETH Started");
       //set eth hostname here
-      ETH.setHostname("esp32-ethernet");
+      // ETH.setHostname("esp32-ethernet");
+      eth_connection_established = false;
+
       break;
 
     case ARDUINO_EVENT_ETH_CONNECTED:
@@ -194,13 +199,14 @@ void WiFiEvent(WiFiEvent_t event)
       Serial.print(", ");
       Serial.print(ETH.linkSpeed());
       Serial.println("Mbps");
-      getMetaDataFromEndpoint();
-
+      eth_connection_established = true;
       break;
 
     case ARDUINO_EVENT_ETH_DISCONNECTED:
       // This will happen when the Ethernet cable is unplugged 
       Serial.println("ETH Disconnected");
+      eth_connection_established = false;
+
       break;
 
     case ARDUINO_EVENT_ETH_STOP:
@@ -237,13 +243,19 @@ void setup() {
 
     #else
       Serial.begin(115200); 
-      WiFi.onEvent(WiFiEvent);
+      WiFi.onEvent(ETHEvent);
       ETH.begin();
-      updateState();
 
     #endif 
 
 }
 
 
-void loop() {}
+void loop() {
+  #ifndef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
+      if(eth_connection_established) {
+        updateState();
+        delay(60000);
+      }
+  #endif 
+}
