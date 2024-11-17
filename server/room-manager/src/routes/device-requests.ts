@@ -5,14 +5,6 @@ import {FastifyReply, FastifyRequest} from "fastify";
 
 const requestHandler: RequestHandler = new RequestHandler()
 
-async function things() {
-    const client = new MongoDBClient()
-    // await client.deleteDevice("abc")
-    // await client.addDevice({device_id: "abc", location: "sdfas"})
-    console.log(await client.getDevices())
-    console.log(await client.getRoomForDevice("aaaaaaaaaaaa"))
-    console.log(await client.getDevice("abc"))
-}
 
 export function imageEndpoint(fastify, _, done) {
 
@@ -22,7 +14,6 @@ export function imageEndpoint(fastify, _, done) {
 }
 
 async function getImage(request: FastifyRequest, reply: FastifyReply)  {
-    things().then()
     const devid = request.query['devid']
     const voltage = request.query['voltage']
     const test = { devid: devid, voltage: voltage};

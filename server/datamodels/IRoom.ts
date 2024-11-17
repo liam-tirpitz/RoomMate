@@ -5,8 +5,7 @@ import {IDevice} from "./IDevice";
 import {ObjectId} from "mongodb";
 
 export interface IRoom {
-    _id: ObjectId
-    id: number
+    room_number: number
     id_string: string
     name: string
     logo: string

@@ -4,6 +4,7 @@ import {IDevice} from "../../../datamodels/IDevice";
 import {IOrganization} from "../../../datamodels/IOrganization";
 import {IPerson} from "../../../datamodels/IPerson";
 import {IRoom} from "../../../datamodels/IRoom";
+import {WithId} from "mongodb";
 
 export class FileDBClient implements IDBClient {
     calendars: any
@@ -23,7 +24,7 @@ export class FileDBClient implements IDBClient {
     }
 
 
-    addDevice(device: IDevice): Promise<void> {
+    addDevice(device: IDevice): Promise<string> {
         return Promise.resolve(undefined);
     }
 
@@ -55,11 +56,11 @@ export class FileDBClient implements IDBClient {
         return Promise.resolve(undefined);
     }
 
-    getDevice(device_id: string): Promise<IDevice> {
+    getDevice(device_id: string): Promise<WithId<IDevice> | null> {
         return Promise.resolve(undefined);
     }
 
-    getDevices(): Promise<IDevice[]> {
+    getDevices(): Promise<WithId<IDevice>[]> {
         return Promise.resolve([]);
     }
 
@@ -76,11 +77,11 @@ export class FileDBClient implements IDBClient {
         return Promise.resolve(this.calendars.global_config);
     }
 
-    getOrganizations(): Promise<IOrganization[]> {
+    getOrganizations(): Promise<WithId<IOrganization>[]> {
         return Promise.resolve([]);
     }
 
-    getRoomForDevice(device_id: string): Promise<IRoom> {
+    getRoomForDevice(device_id: string): Promise<IRoom | null> {
         for (const room of this.calendars.calendars as IRoom[]) {
             for (const device of room.devices as IDevice[]) {
                 if (device.device_id == device_id) {

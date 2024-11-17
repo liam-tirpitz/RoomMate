@@ -14,9 +14,9 @@ export interface IDBClient {
     addRoom(room: IRoom): Promise<void>
 
     getDevices(): Promise<IDevice[]>
-    getDevice(device_id: string): Promise<IDevice>
+    getDevice(device_id: string): Promise<IDevice | null>
     deleteDevice(device_id: string): Promise<void>
-    addDevice(device: IDevice): Promise<void>
+    addDevice(device: IDevice): Promise<string>
 
     getEWSUser(id: String): Promise<IEWSTenant>
     addEWSUser(user: IEWSTenant): Promise<void>
@@ -24,7 +24,7 @@ export interface IDBClient {
 
     addPersonToRoom(person: IPerson, room_id: string): Promise<void>
     associateRoomWithDevice(device_id: string, room_id: string): Promise<void>
-    getRoomForDevice(device_id: string): Promise<IRoom>
+    getRoomForDevice(device_id: string): Promise<IRoom | null>
 
 
 

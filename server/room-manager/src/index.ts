@@ -14,10 +14,7 @@ dbClient.getOrganizationById("").then(org => {
 
 server.register(dataEndpoint, { prefix: "/data" })
 server.register(imageEndpoint, { prefix: "/image" })
-server.register(RoomRoute, { prefix: "/rooms" })
-
-
-
+server.register(RoomRoute)
 
 
 

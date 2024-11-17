@@ -14,8 +14,7 @@ interface roomParams {
 }
 
 const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: FastifyPluginOptions) => {
-
-    server.get('/', {}, async (request, reply) => {
+    server.get('/rooms', {}, async (request, reply) => {
         try {
             const rooms = MongoDBClient.instance.getRooms()
             reply
@@ -23,12 +22,12 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
                 .header('Content-Type', 'application/json')
                 .send(JSON.stringify(await rooms))
         } catch (error) {
-            request.log.error(error);
-            return reply.send(500);
+            console.log(error);
+            return reply.code(500).send();
         }
     });
 
-    server.post<{ Body: IRoom }>('/', {}, async (request, reply) => {
+    server.post<{ Body: IRoom }>('/rooms', {}, async (request, reply) => {
         try {
             await MongoDBClient.instance.addRoom((await request).body)
             reply
@@ -41,7 +40,22 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
         }
     });
 
-    server.get<{ Params: roomParams }>('/:id', {}, async (request, reply) => {
+    server.put<{ Params: roomParams, Body: IRoom }>('/rooms/:roomId', {}, async (request, reply) => {
+        try {
+            const ID = request.params.roomId;
+            await MongoDBClient.instance.updateRoom(ID, (await request).body)
+            reply
+                .code(201)
+                .header('Content-Type', 'application/json')
+                .send()
+        } catch (error) {
+            request.log.error(error);
+            return reply.send(400);
+        }
+    });
+
+
+    server.get<{ Params: roomParams }>('/rooms/:roomId', {}, async (request, reply) => {
         try {
             const ID = request.params.roomId;
             const room = await MongoDBClient.instance.getRoom(ID)
@@ -58,7 +72,7 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
         }
     });
 
-    server.delete<{ Params: roomParams }>('/:id', {}, async (request, reply) => {
+    server.delete<{ Params: roomParams }>('/rooms/:roomId', {}, async (request, reply) => {
         try {
             const ID = request.params.roomId;
             await MongoDBClient.instance.deleteRoom(ID)
