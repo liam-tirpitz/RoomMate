@@ -66,7 +66,7 @@ export class FileDBClient implements IDBClient {
 
     getEWSUser(id: String): Promise<IEWSTenant> {
         for (const tenant of this.calendars.exchange.tenants as IEWSTenant[]) {
-            if (tenant.id == id) {
+            if (tenant.identifier == id) {
                 return Promise.resolve(tenant)
             }
         }

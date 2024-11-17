@@ -1,5 +1,4 @@
 import {MongoDBClient} from "../db/MongoDBClient";
-import {IRoom} from "../../../datamodels/IRoom";
 import {
     FastifyInstance,
     FastifyPluginOptions,
@@ -7,15 +6,16 @@ import {
 } from 'fastify';
 
 import fp from 'fastify-plugin';
+import {IDevice} from "../../../datamodels/IDevice";
 
-interface roomParams {
-    roomId: string;
+interface deviceParams {
+    deviceId: string;
 }
 
-const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: FastifyPluginOptions) => {
-    server.get('/rooms', {}, async (request, reply) => {
+const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options: FastifyPluginOptions) => {
+    server.get('/devices', {}, async (request, reply) => {
         try {
-            const rooms = MongoDBClient.instance.getRooms()
+            const rooms = MongoDBClient.instance.getDevices()
             reply
                 .code(200)
                 .header('Content-Type', 'application/json')
@@ -26,9 +26,9 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
         }
     });
 
-    server.post<{ Body: IRoom }>('/rooms', {}, async (request, reply) => {
+    server.post<{ Body: IDevice }>('/devices', {}, async (request, reply) => {
         try {
-            await MongoDBClient.instance.addRoom((await request).body)
+            await MongoDBClient.instance.addDevice((await request).body)
             reply
                 .code(201)
                 .header('Content-Type', 'application/json')
@@ -39,10 +39,10 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
         }
     });
 
-    server.put<{ Params: roomParams, Body: IRoom }>('/rooms/:roomId', {}, async (request, reply) => {
+    server.put<{ Params: deviceParams, Body: IDevice }>('/devices/:deviceId', {}, async (request, reply) => {
         try {
-            const ID = request.params.roomId;
-            await MongoDBClient.instance.updateRoom(ID, (await request).body)
+            const ID = request.params.deviceId;
+            await MongoDBClient.instance.updateDevice(ID, (await request).body)
             reply
                 .code(201)
                 .header('Content-Type', 'application/json')
@@ -54,10 +54,10 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
     });
 
 
-    server.get<{ Params: roomParams }>('/rooms/:roomId', {}, async (request, reply) => {
+    server.get<{ Params: deviceParams }>('/devices/:deviceId', {}, async (request, reply) => {
         try {
-            const ID = request.params.roomId;
-            const room = await MongoDBClient.instance.getRoom(ID)
+            const ID = request.params.deviceId;
+            const room = await MongoDBClient.instance.getDevice(ID)
             if (!room) {
                 return reply.send(404);
             }
@@ -71,10 +71,10 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
         }
     });
 
-    server.delete<{ Params: roomParams }>('/rooms/:roomId', {}, async (request, reply) => {
+    server.delete<{ Params: deviceParams }>('/devices/:deviceId', {}, async (request, reply) => {
         try {
-            const ID = request.params.roomId;
-            await MongoDBClient.instance.deleteRoom(ID)
+            const ID = request.params.deviceId;
+            await MongoDBClient.instance.deleteDevice(ID)
             reply
                 .code(204)
                 .header('Content-Type', 'application/json')
@@ -85,4 +85,4 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
         }
     });
 };
-export default fp(RoomRoute);
+export default fp(DeviceRoute);

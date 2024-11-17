@@ -1,5 +1,5 @@
 export interface IEWSTenant {
-    id: string
+    identifier: string
     endpoint: string
     user: string
     secret: string

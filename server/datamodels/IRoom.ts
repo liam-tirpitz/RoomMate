@@ -11,5 +11,4 @@ export interface IRoom {
     ical_info : IICalCalendarInfo | undefined
     persons: IPerson[] | undefined
     devices: IDevice[]
-    device_ids: string[]
 }

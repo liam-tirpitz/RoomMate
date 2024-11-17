@@ -2,6 +2,7 @@ import fastify from 'fastify'
 import {FileDBClient} from "./db/FileDBClient";
 import {dataEndpoint, imageEndpoint} from "./routes/device-requests";
 import RoomRoute from "./routes/room-endpoint";
+import DeviceRoute from "./routes/device-endpoint";
 
 const server = fastify()
 
@@ -15,6 +16,7 @@ dbClient.getOrganizationById("").then(org => {
 server.register(dataEndpoint, { prefix: "/data" })
 server.register(imageEndpoint, { prefix: "/image" })
 server.register(RoomRoute)
+server.register(DeviceRoute)
 
 
 
