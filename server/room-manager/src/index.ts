@@ -3,6 +3,7 @@ import {FileDBClient} from "./db/FileDBClient";
 import {dataEndpoint, imageEndpoint} from "./routes/device-requests";
 import RoomRoute from "./routes/room-endpoint";
 import DeviceRoute from "./routes/device-endpoint";
+import EWSUserRoute from "./routes/ewsuser-endpoint";
 
 const server = fastify()
 
@@ -17,6 +18,7 @@ server.register(dataEndpoint, { prefix: "/data" })
 server.register(imageEndpoint, { prefix: "/image" })
 server.register(RoomRoute)
 server.register(DeviceRoute)
+server.register(EWSUserRoute)
 
 
 

@@ -1,4 +1,4 @@
-import mongoose, {Schema, Model, Document, Mongoose, Connection, createConnection, mongo, ObjectId} from "mongoose"
+import mongoose, {Schema, Model, Document, Mongoose, ObjectId} from "mongoose"
 import {IDevice} from "../../../datamodels/IDevice";
 import {IRoom} from "../../../datamodels/IRoom";
 import {IEWSTenant} from "../../../datamodels/IEWSTenant";
@@ -27,7 +27,7 @@ export class MongoDBClient {
     static #instance: MongoDBClient;
     roomModel: Model<IRoomDocument>
     deviceModel: Model<IDeviceDocument>
-    ewsUserModel: Model<IEWSTenantModel>
+    ewsUserModel: Model<IEWSTenantDocument>
 
     roomSchema: Schema = new Schema<IRoom>({
         room_number: { type: Number, required: true },
@@ -36,7 +36,7 @@ export class MongoDBClient {
         logo: { type: String, required: false },
         ews_info: {
             email: {type: String},
-            tenant_id: {type: 'ObjectId', ref: 'EWSUser', required: false }
+            tenant_id: {type: 'ObjectId', ref: 'EWSUser', required: false, autopopulate: true }
         },
     });
 
@@ -45,7 +45,7 @@ export class MongoDBClient {
         location: { type: String, required: false },
         last_contact: { type: String, required: false },
         battery: { type: String, required: false },
-        room_id: {type: 'ObjectId', ref: 'Room', autopopulate: true, required: false }
+        room_id: {type: 'ObjectId', ref: 'Room', required: false, autopopulate: true }
     });
 
 
@@ -59,12 +59,11 @@ export class MongoDBClient {
 
     constructor() {
         this.initDB().then(client => {
-            this.roomModel = mongoose.model<IRoomDocument>('Room', this.roomSchema);
+            this.roomSchema.plugin(require('mongoose-autopopulate'));
             this.deviceSchema.plugin(require('mongoose-autopopulate'));
-
+            this.roomModel = mongoose.model<IRoomDocument>('Room', this.roomSchema);
             this.deviceModel = mongoose.model<IDeviceDocument>('Device', this.deviceSchema);
-
-            this.ewsUserModel = mongoose.model<IEWSTenantModel>('EwsUser', this.ewsUserSchema);
+            this.ewsUserModel = mongoose.model<IEWSTenantDocument>('EWSUser', this.ewsUserSchema);
         })
     }
 
@@ -91,24 +90,7 @@ export class MongoDBClient {
         return this.db
     }
 
-    // async getRoomForDevice(device_id: string): Promise<WithId<IRoom> | null> {
-    //     const db = await this.getDb()
-    //     return db.collection<IRoom>(this.db_collection_rooms).findOne({device_ids: device_id})
-    // }
-    //
-    // async associateRoomWithDevice(device_id: string, room_id: string) {
-    //     const db = await this.getDb()
-    //     const result = db.collection<IRoom>(this.db_collection_rooms)
-    //         .updateOne({_id: new ObjectId(room_id)}, { $push: { "device_ids": device_id} })
-    // }
-    //
-    // async addPersonToRoom(person: IPerson, room_id: string) {
-    //     const db = await this.getDb()
-    //     const result = db.collection<IRoom>(this.db_collection_rooms)
-    //         .updateOne({_id: new ObjectId(room_id)}, { $push: { "persons": person} })
-    // }
-
-    async updateRoom(id: string, room: IRoom) {
+      async updateRoom(id: string, room: IRoom) {
         await this.getDb()
         const result = this.roomModel.findByIdAndUpdate(id, room).exec()
     }
@@ -159,30 +141,29 @@ export class MongoDBClient {
         return this.deviceModel.findById(id).exec();
     }
 
-    // async getOrganizations(): Promise<WithId<IOrganization>[]> {
-    //     const db = await this.getDb()
-    //     return db.collection<IOrganization>(this.db_collection_orgs).find().toArray()
-    // }
-    //
-    // async getOrganizationById(id: String): Promise<WithId<IOrganization>> {
-    //     const db = await this.getDb()
-    //     return db.collection<IOrganization>(this.db_collection_orgs).findOne({"_id": id})
-    // }
-    //
-    // async addOrganization(organization: IOrganization) {
-    //     const db = await this.getDb()
-    //     const result =  db.collection<IOrganization>(this.db_collection_orgs).insertOne(organization)
-    // }
-    //
-    //
-    // async addEWSUser(user: IEWSTenant) {
-    //     const db = await this.getDb()
-    //     const result = db.collection<IEWSTenant>(this.db_collection_orgs).insertOne(user);
-    // }
-    //
-    // async getEWSUser(id: String) {
-    //     const db = await this.getDb()
-    //     return db.collection<IEWSTenant>(this.db_collection_orgs).findOne({"_id": id})
-    // }
+    async updateEwsUser(id: string, user: IEWSTenant) {
+        await this.getDb()
+        const result = this.ewsUserModel.findByIdAndUpdate(id, user).exec()
+    }
+
+    async addEwsUser(user: IEWSTenant) {
+        await this.getDb()
+        const result = this.ewsUserModel.create(user);
+    }
+
+    async deleteEwsUser(id: string) {
+        await this.getDb()
+        const result = this.ewsUserModel.findByIdAndDelete(id).exec();
+    }
+
+    async getEwsUsers(): Promise<Array<IEWSTenant>> {
+        await this.getDb()
+        return this.ewsUserModel.find({}).exec()
+    }
+
+    async getEwsUser(id: string): Promise<IEWSTenant> {
+        await this.getDb()
+        return this.ewsUserModel.findById(id).exec();
+    }
 
 }
