@@ -2,7 +2,7 @@
   "exchange": {
     "tenants": [
       {
-        "id": 1,
+        "identifier": 1,
         "endpoint": "https://ENDPOINT/EWS/Exchange.asmx",
         "user": "USER@DOMAIN",
         "secret": "SECRET"

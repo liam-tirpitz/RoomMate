@@ -23,12 +23,11 @@ async function getImage(request: FastifyRequest, reply: FastifyReply)  {
         Logging.instance.logger.verbose('Image sent', test);
         reply
             .code(200)
-            //.header('Content-Type', 'image/example')
+            .header('Content-Type', 'text/plain')
             .send(result)
     } else {
         Logging.instance.logger.warn('Device-ID not found.', test);
 
-        reply.statusCode = 404
         reply
             .code(200)
             .send("Device-ID not found.")
@@ -43,12 +42,10 @@ export function dataEndpoint(fastify, _, done) {
 
 async function getData(request: FastifyRequest, reply: FastifyReply) {
     const devid = request.query['devid']
-
     const result = await requestHandler.getData(devid)
     if (result) {
         reply
             .code(200)
-            .header('Content-Type', 'application/json')
             .send(result)
     } else {
         reply.statusCode = 404

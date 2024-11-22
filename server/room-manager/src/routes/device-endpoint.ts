@@ -7,6 +7,7 @@ import {
 
 import fp from 'fastify-plugin';
 import {IDevice} from "../../../datamodels/IDevice";
+import {AppError} from "../datamodels/AppError";
 
 interface deviceParams {
     deviceId: string;
@@ -14,75 +15,42 @@ interface deviceParams {
 
 const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options: FastifyPluginOptions) => {
     server.get('/devices', {}, async (request, reply) => {
-        try {
-            const rooms = MongoDBClient.instance.getDevices()
-            reply
-                .code(200)
-                .header('Content-Type', 'application/json')
-                .send(JSON.stringify(await rooms))
-        } catch (error) {
-            console.log(error);
-            return reply.code(500).send();
-        }
+        const rooms = MongoDBClient.instance.getDevices()
+        return JSON.stringify(await rooms)
     });
 
     server.post<{ Body: IDevice }>('/devices', {}, async (request, reply) => {
-        try {
-            await MongoDBClient.instance.addDevice((await request).body)
+            const result = await MongoDBClient.instance.addDevice((await request).body)
             reply
                 .code(201)
-                .header('Content-Type', 'application/json')
-                .send()
-        } catch (error) {
-            request.log.error(error);
-            return reply.send(500);
-        }
+                .send(result)
     });
 
     server.put<{ Params: deviceParams, Body: IDevice }>('/devices/:deviceId', {}, async (request, reply) => {
-        try {
-            const ID = request.params.deviceId;
-            await MongoDBClient.instance.updateDevice(ID, (await request).body)
-            reply
-                .code(201)
-                .header('Content-Type', 'application/json')
-                .send()
-        } catch (error) {
-            request.log.error(error);
-            return reply.send(400);
-        }
+        const ID = request.params.deviceId;
+        const result = await MongoDBClient.instance.updateDevice(ID, (await request).body)
+        reply
+            .code(201)
+            .send(result)
     });
 
 
     server.get<{ Params: deviceParams }>('/devices/:deviceId', {}, async (request, reply) => {
-        try {
-            const ID = request.params.deviceId;
-            const room = await MongoDBClient.instance.getDevice(ID)
-            if (!room) {
-                return reply.send(404);
-            }
-            reply
-                .code(200)
-                .header('Content-Type', 'application/json')
-                .send(JSON.stringify(await room))
-        } catch (error) {
-            request.log.error(error);
-            return reply.send(400);
+        const ID = request.params.deviceId;
+        const room = await MongoDBClient.instance.getDevice(ID)
+        if (!room) {
+            throw new AppError("Not Found",404);
         }
+        return JSON.stringify(await room)
     });
 
     server.delete<{ Params: deviceParams }>('/devices/:deviceId', {}, async (request, reply) => {
-        try {
-            const ID = request.params.deviceId;
-            await MongoDBClient.instance.deleteDevice(ID)
-            reply
-                .code(204)
-                .header('Content-Type', 'application/json')
-                .send()
-        } catch (error) {
-            request.log.error(error);
-            return reply.send(400);
-        }
+        const ID = request.params.deviceId;
+        await MongoDBClient.instance.deleteDevice(ID)
+        reply
+            .code(204)
+            .send()
+
     });
 };
 export default fp(DeviceRoute);

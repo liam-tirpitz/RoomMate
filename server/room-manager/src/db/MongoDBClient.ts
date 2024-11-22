@@ -2,6 +2,7 @@ import mongoose, {Schema, Model, Document, Mongoose, ObjectId} from "mongoose"
 import {IDevice} from "../../../datamodels/IDevice";
 import {IRoom} from "../../../datamodels/IRoom";
 import {IEWSTenant} from "../../../datamodels/IEWSTenant";
+import {AppError} from "../datamodels/AppError";
 
 interface IRoomDocument extends IRoom, Document {}
 interface IRoomModel extends Model<IRoomDocument> {
@@ -92,17 +93,17 @@ export class MongoDBClient {
 
       async updateRoom(id: string, room: IRoom) {
         await this.getDb()
-        const result = this.roomModel.findByIdAndUpdate(id, room).exec()
+        return this.roomModel.findByIdAndUpdate(id, room).exec()
     }
 
     async addRoom(room: IRoom) {
         await this.getDb()
-        const result = this.roomModel.create(room);
+        return this.roomModel.create(room);
     }
 
     async deleteRoom(id: string) {
         await this.getDb()
-        const result = this.roomModel.findByIdAndDelete(id).exec();
+        return this.roomModel.findByIdAndDelete(id).exec();
     }
 
     async getRooms(): Promise<Array<IRoom>> {
@@ -118,17 +119,17 @@ export class MongoDBClient {
 
     async updateDevice(id: string, device: IDevice) {
         await this.getDb()
-        const result = this.deviceModel.findByIdAndUpdate(id, device).exec()
+        return this.deviceModel.findByIdAndUpdate(id, device).exec()
     }
 
     async addDevice(device: IDevice) {
         await this.getDb()
-        const result = this.deviceModel.create(device);
+        return this.deviceModel.create(device);
     }
 
     async deleteDevice(id: string) {
         await this.getDb()
-        const result = this.deviceModel.findByIdAndDelete(id).exec();
+        return this.deviceModel.findByIdAndDelete(id).exec();
     }
 
     async getDevices(): Promise<Array<IDevice>> {
@@ -143,17 +144,17 @@ export class MongoDBClient {
 
     async updateEwsUser(id: string, user: IEWSTenant) {
         await this.getDb()
-        const result = this.ewsUserModel.findByIdAndUpdate(id, user).exec()
+        return this.ewsUserModel.findByIdAndUpdate(id, user).exec()
     }
 
     async addEwsUser(user: IEWSTenant) {
         await this.getDb()
-        const result = this.ewsUserModel.create(user);
+        return this.ewsUserModel.create(user);
     }
 
     async deleteEwsUser(id: string) {
         await this.getDb()
-        const result = this.ewsUserModel.findByIdAndDelete(id).exec();
+        return this.ewsUserModel.findByIdAndDelete(id).exec();
     }
 
     async getEwsUsers(): Promise<Array<IEWSTenant>> {
