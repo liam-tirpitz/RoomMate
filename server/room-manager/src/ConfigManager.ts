@@ -1,17 +1,21 @@
 import {FileDBClient} from "./db/FileDBClient";
 import {MongoDBClient} from "./db/MongoDBClient";
 import {IDBClient} from "./db/IDBClient";
+import {Logging} from "./logging";
 
 export class ConfigManager {
-    fileClient: FileDBClient
-    mongoClient: MongoDBClient
+    client: IDBClient
 
     static #instance: ConfigManager;
 
     constructor() {
-        this.fileClient = FileDBClient.instance
-        this.mongoClient = MongoDBClient.instance
-
+        if (process.env.STORAGE == "MONGO") {
+            Logging.instance.logger.info("Starting with MongoDB Backend")
+            this.client = MongoDBClient.instance
+        } else {
+            Logging.instance.logger.info("Starting with File Backend")
+            this.client = FileDBClient.instance
+        }
     }
 
     public static get instance(): ConfigManager {
@@ -23,7 +27,7 @@ export class ConfigManager {
     }
 
     public getDBClient(): IDBClient {
-        return this.fileClient
+        return this.client
     }
 
 
