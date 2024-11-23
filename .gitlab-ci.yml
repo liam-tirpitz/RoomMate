@@ -12,6 +12,7 @@ test:
   stage: test
   before_script:
     - cd server/room-manager
+    - rm -rf node_modules/
     - npm ci -f
   script:
     - npm test
@@ -21,6 +22,7 @@ build:
   stage: test
   before_script:
     - cd server/room-manager
+    - rm -rf node_modules/
     - npm ci -f
     - cp -r deployment_example/config ./config
   script:
