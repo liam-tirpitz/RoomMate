@@ -10,13 +10,15 @@ USER node
 USER node
 WORKDIR /home/node/app
 
-COPY  --chown=node:node ["package.json", "package-lock.json*", "run.sh", "./"]
+COPY  --chown=node:node ["room-manager/package.json", "room-manager/package-lock.json*", "room-manager/run.sh", "./room-manager/"]
 
 RUN ls .
-RUN npm install --force
-COPY --chown=node:node . .
-COPY --chown=node:node deployment_example/config ./config
-RUN npm run build
-RUN ["chmod", "+x", "./run.sh"]
+RUN npm --prefix ./room-manager/ install --force
+COPY --chown=node:node room-manager ./room-manager
+COPY --chown=node:node datamodels ./datamodels
+COPY --chown=node:node room-manager/deployment_example/config ./config
+RUN ls .
+RUN npm --prefix ./room-manager/ run build
+RUN ["chmod", "+x", "./room-manager/run.sh"]
 EXPOSE 3001
-CMD [ "npm", "run", "autostart" ]
+CMD [ "npm", "--prefix", "./room-manager/" ,"run", "autostart" ]
