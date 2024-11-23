@@ -45,6 +45,8 @@ docker:
     - docker:24.0.5-dind
   before_script:
     - docker info
+  tags:
+    - did
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - cd server/room-manager
@@ -52,3 +54,4 @@ docker:
     - docker push $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager --all-tags
   only:
     - tags
+
