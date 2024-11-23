@@ -17,10 +17,14 @@ void SysConfig::configDefaultSleep() {
 }
 
 int SysConfig::readBatteryVoltage() {
+    #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
     float measuredvbat = analogReadMilliVolts(VBATPIN);  
     measuredvbat *= 2;    
     int milivolt = round(measuredvbat);
     return milivolt;
+    #else
+    return 0;
+    #endif 
 }
 
 void SysConfig::setup_wifi_connection() {

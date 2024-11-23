@@ -1,9 +1,8 @@
 import {ImageProcessor} from "./ImageProcessor";
-import {IRoom} from "../datamodels/IRoom";
-import {IPerson} from "../datamodels/IPerson";
-import {PersonalInfo} from "../datamodels/PersonalInfo";
-import * as config from "../../config/calendars.json";
-import {CustomEvent} from "../datamodels/CustomEvent";
+import {IRoom} from "../../../datamodels/IRoom";
+import {IPerson} from "../../../datamodels/IPerson";
+import {PersonalInfo} from "../datamodels/events/PersonalInfo";
+import {CustomEvent} from "../datamodels/events/CustomEvent";
 
 export class OfficeImageProcesor extends ImageProcessor {
     init_y = 279
@@ -86,7 +85,7 @@ export class OfficeImageProcesor extends ImageProcessor {
 
         for (const [index, person] of room.persons.entries()) {
             this.drawPersonInformation(person, index)
-            if (voltage && voltage < config.global_config.low_battery_voltage_cutoff_in_mv) {
+            if (voltage && voltage < (await this.dataRetrieval.getOrganization()).low_battery_voltage_cutoff_in_mv) {
                 await this.drawLowBattery(this.init_y + index * this.single_offset)
             } else if (personalInfos[index]) {
                 const personalInfo = personalInfos[index]

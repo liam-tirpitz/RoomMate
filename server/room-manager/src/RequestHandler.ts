@@ -1,41 +1,40 @@
 import {EWSCalendarClient} from "./calendar-apis/ews";
 import {Logging} from "./logging";
 import {BookableResourceImageProcessor} from "./image_processing/BookableResourceImageProcessor";
-import {ConfigRetrieval} from "./ConfigRetrieval";
 import * as ews from "ews-javascript-api";
 import {LegacyFreeBusyStatus} from "ews-javascript-api";
-import * as config from "../config/calendars.json";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
-import {IInfoPacket} from "./datamodels/IInfoPacket";
-import {SimpleEvent} from "./datamodels/SimpleEvent";
-import {IRoom} from "./datamodels/IRoom";
+import {IInfoPacket} from "../../datamodels/IInfoPacket";
+import {SimpleEvent} from "./datamodels/events/SimpleEvent";
+import {IRoom, isRoom} from "../../datamodels/IRoom";
 import {ICalClient} from "./calendar-apis/ical";
 import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
-import {IPerson} from "./datamodels/IPerson";
-import {PersonalInfo} from "./datamodels/PersonalInfo";
+import {IPerson} from "../../datamodels/IPerson";
+import {PersonalInfo} from "./datamodels/events/PersonalInfo";
 import * as utils from "./utils"
 import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImageProcessor";
-import {CustomEvent} from "./datamodels/CustomEvent";
+import {CustomEvent} from "./datamodels/events/CustomEvent";
+import {IDBClient} from "./db/IDBClient";
+import {ConfigManager} from "./ConfigManager";
 
 export class RequestHandler {
-    dataRetrieval: ConfigRetrieval
+    dataRetrieval: IDBClient
     iCalClient: ICalClient
 
     constructor() {
-        this.dataRetrieval = new ConfigRetrieval()
+        this.dataRetrieval = ConfigManager.instance.getDBClient()
         this.iCalClient = new ICalClient()
     }
 
-    getEWSClient(tenantID) {
-        const configRetrieval = new ConfigRetrieval()
-        const tenant = configRetrieval.getExchangeTenantByID(tenantID)
-        return new EWSCalendarClient(tenant)
+    async getEWSClient(tenantID) {
+        const tenant = this.dataRetrieval.getEwsUser(tenantID)
+        return new EWSCalendarClient(await tenant)
     }
 
     async getAppointments(calendarDetails: IRoom): Promise<SimpleEvent[]> {
         if (calendarDetails.ews_info) {
-            const ews_client = this.getEWSClient(calendarDetails.ews_info.tenant_id)
+            const ews_client = await this.getEWSClient(calendarDetails.ews_info.tenant_id)
             return ews_client.readUpcomingEventsToday(calendarDetails.ews_info.email)
         } else if (calendarDetails.ical_info){
             return this.iCalClient.readUpcomingEventsToday(calendarDetails.ical_info)
@@ -43,7 +42,7 @@ export class RequestHandler {
             let appointments: PersonalInfo[];
             let personal_appointments: PersonalInfo[][] = []
             for (const person of calendarDetails.persons as IPerson[]) {
-                const ews_client = this.getEWSClient(person.ews_info.tenant_id)
+                const ews_client = await this.getEWSClient(person.ews_info.tenant_id)
                 personal_appointments.push((await ews_client.readPersonsAvailabilityToday([person.ews_info.email]))[0])
             }
             appointments = personal_appointments.reduce((accumulator, value) => accumulator.concat(value), []); // TODO sorting so upcoming event is first
@@ -99,7 +98,7 @@ export class RequestHandler {
 
 
     async getImage(device_id: string, voltage: number): Promise<string> {
-        const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
+        const calendarDetails = await this.dataRetrieval.getRoomForDevice(device_id)
         let image_processor
 
         if (!calendarDetails) {
@@ -110,13 +109,13 @@ export class RequestHandler {
         }
         let ews_client: EWSCalendarClient
         if (calendarDetails.ews_info) {
-            ews_client = this.getEWSClient(calendarDetails.ews_info.tenant_id)
+            ews_client = await this.getEWSClient(calendarDetails.ews_info.tenant_id)
         }
 
          if (calendarDetails.persons) {
             let freeBusyDetails: (CustomEvent|PersonalInfo)[] = []
             for (const person of calendarDetails.persons as IPerson[]) {
-                ews_client = this.getEWSClient(person.ews_info.tenant_id)
+                ews_client = await this.getEWSClient(person.ews_info.tenant_id)
                 const custom_message = this.getCurrentCustomMessage(ews_client, person)
                 if (await custom_message) {
                     freeBusyDetails.push(await custom_message)
@@ -129,7 +128,7 @@ export class RequestHandler {
             image_processor = new OfficeImageProcesor()
             await image_processor.buildImage(calendarDetails, freeBusyDetails, voltage)
         } else {
-             if (voltage && voltage < config.global_config.low_battery_voltage_cutoff_in_mv) {
+             if (voltage && voltage < (await this.dataRetrieval.getOrganization()).low_battery_voltage_cutoff_in_mv) {
                  Logging.instance.logger.warn('Low Battery!', {voltage: voltage, devid: device_id});
                  image_processor = new SpecialStateImageProcessor()
                  await image_processor.buildLowBatImage(calendarDetails, voltage)
@@ -142,9 +141,19 @@ export class RequestHandler {
         return await image_processor.finalizeImage(calendarDetails.id_string)
     }
 
-    async getData(device_id: string): Promise<string> {
 
-        const calendarDetails = this.dataRetrieval.getRoomFromDeviceID(device_id)
+    async getData(device_id: string): Promise<string> {
+        const organization = await this.dataRetrieval.getOrganization()
+        const device = await this.dataRetrieval.getDeviceFromHardwareID(device_id)
+        let calendarDetails;
+        if (isRoom(device.room_id)) {
+            calendarDetails  = device.room_id
+
+        } else {
+            calendarDetails = await this.dataRetrieval.getRoomForDevice(device.room_id.toString())
+
+        }
+
         if (!calendarDetails) return
         const appointments = await this.getAppointments(calendarDetails)
 
@@ -173,23 +182,23 @@ export class RequestHandler {
             calendarData.next_update_unix = next_update.unix()
         }
         const hours_of_day = now.Hour
-        if (hours_of_day >= config.global_config.night_start_hour  || hours_of_day < (config.global_config.night_end_hour-1)) {
+        if (hours_of_day >= organization.night_start_hour  || hours_of_day < (organization.night_end_hour-1)) {
             calendarData.is_night = true
         }
         const day_of_week = now.DayOfWeek
-        if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday || (day_of_week == DayOfWeek.Friday && hours_of_day >= config.global_config.night_start_hour)) {
+        if (day_of_week == DayOfWeek.Sunday || day_of_week == DayOfWeek.Saturday || (day_of_week == DayOfWeek.Friday && hours_of_day >= organization.night_start_hour)) {
             calendarData.is_weekend = true
         }
         if (calendarData.is_night) {
             let next_day = 0
-            if (now.Hour >= config.global_config.night_start_hour) next_day = 1 // Only move to next day if the request was sent before midnight, otherwise stay on the current day
+            if (now.Hour >= organization.night_start_hour) next_day = 1 // Only move to next day if the request was sent before midnight, otherwise stay on the current day
             let updateTime = now.AddDays(next_day).MomentDate.startOf("day")
-            updateTime.set("hour", config.global_config.night_end_hour)
+            updateTime.set("hour", organization.night_end_hour)
             calendarData.next_update_unix = updateTime.unix()
         } else if (calendarData.is_weekend) { // Its the weekend, but not the night
             if (appointments.length == 0) {
                 let updateTime = now.AddDays(1).MomentDate.startOf("day")
-                updateTime.set("hour", config.global_config.night_end_hour)
+                updateTime.set("hour", organization.night_end_hour)
                 calendarData.next_update_unix = updateTime.unix()
             }
         }

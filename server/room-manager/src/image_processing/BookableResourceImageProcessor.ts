@@ -1,8 +1,7 @@
 import {ImageProcessor} from "./ImageProcessor";
 import {NodeCanvasRenderingContext2DSettings} from "canvas";
-import {SimpleEvent} from "../datamodels/SimpleEvent";
+import {SimpleEvent} from "../datamodels/events/SimpleEvent";
 import {DateTime} from "ews-javascript-api";
-import * as config from "../../config/calendars.json";
 import * as utils from '../utils'
 
 export class BookableResourceImageProcessor extends ImageProcessor {

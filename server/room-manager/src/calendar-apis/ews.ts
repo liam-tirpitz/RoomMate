@@ -17,12 +17,12 @@ import {
 } from "ews-javascript-api";
 import * as dotenv from 'dotenv'
 import {CalendarView} from "ews-javascript-api/js/Search/CalendarView";
-import {SimpleEvent} from "../datamodels/SimpleEvent";
-import {PersonalInfo} from "../datamodels/PersonalInfo";
+import {SimpleEvent} from "../datamodels/events/SimpleEvent";
+import {PersonalInfo} from "../datamodels/events/PersonalInfo";
 import * as utils from "../utils"
-import {IEWSTenant} from "../datamodels/IEWSTenant";
+import {IEWSTenant} from "../../../datamodels/IEWSTenant";
 import {Logging} from "../logging";
-import {CustomEvent} from "../datamodels/CustomEvent";
+import {CustomEvent} from "../datamodels/events/CustomEvent";
 
 dotenv.config()
 

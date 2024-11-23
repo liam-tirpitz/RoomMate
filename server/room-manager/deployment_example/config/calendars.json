@@ -2,7 +2,7 @@
   "exchange": {
     "tenants": [
       {
-        "id": 1,
+        "identifier": 1,
         "endpoint": "https://ENDPOINT/EWS/Exchange.asmx",
         "user": "USER@DOMAIN",
         "secret": "SECRET"
@@ -18,54 +18,57 @@
     "default_logo": "institute_logo.png"
 
   },
-  "calendars": [
+
+  "devices": [
     {
-      "id": 200,
-      "id_string": "200a",
-      "name": "Meetingraum",
-      "logo": "institute_logo.png",
-      "ews_info": {
-        "email": "room@domain",
-        "tenant_id": 1
-      },
-      "devices": [
-        {
-          "device_id": "aaaaaaaaaaaa",
-          "location": "Left_Door"
+      "device_id": "aaaaaaaaaaaa",
+      "location": "Left_Door",
+      "room_id": {
+        "room_number": 200,
+        "id_string": "200a",
+        "name": "Meetingraum",
+        "logo": "institute_logo.png",
+        "ews_info": {
+          "email": "room@domain",
+          "tenant_id": 1
         }
-      ]
+      }
     },
     {
-      "id": 201,
-      "id_string": "201",
-      "name": "Meetingraum 2",
-      "logo": "institute_logo.png",
-      "ical_info": {
-        "endpoint": "www.domain.de/calendar"
-      },
-      "devices": []
+      "device_id": "bbbbbbbbbbbb",
+      "location": "Right",
+      "room_id": {
+        "room_number": 201,
+        "id_string": "201",
+        "name": "Meetingraum 2",
+        "logo": "institute_logo.png",
+        "ical_info": {
+          "endpoint": "www.domain.de/calendar"
+        }
+      }
     },
     {
-      "id": 202,
-      "id_string": "202",
-      "name": "Büro",
-      "logo": "institute_logo.png",
-      "devices": [],
-      "persons": [
-        {
-          "name": "He-Ran An, M.Sc.",
-          "job": "Wissenschaftliche Mitarbeiterin",
-          "group": "DSMA",
-          "email": "an@institute.rwth-aachen.de",
-          "phone": "+49 241 8000000",
-          "ews_info": {
+      "device_id": "cccccccccccc",
+      "location": "Right",
+      "room_id": {
+        "id": 202,
+        "id_string": "202",
+        "name": "Büro",
+        "logo": "institute_logo.png",
+        "persons": [
+          {
+            "name": "He-Ran An, M.Sc.",
+            "job": "Wissenschaftliche Mitarbeiterin",
+            "group": "DSMA",
             "email": "an@institute.rwth-aachen.de",
-            "tenant_id": 1
+            "phone": "+49 241 8000000",
+            "ews_info": {
+              "email": "an@institute.rwth-aachen.de",
+              "tenant_id": 1
+            }
           }
-        }
-
-      ]
+        ]
+      }
     }
-
   ]
 }

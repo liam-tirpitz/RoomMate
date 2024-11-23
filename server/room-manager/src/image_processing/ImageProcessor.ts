@@ -1,5 +1,3 @@
-import {SimpleEvent} from "../datamodels/SimpleEvent"
-import * as moment from "moment-timezone";
 import * as utils from '../utils'
 
 import {
@@ -12,10 +10,10 @@ import {
     NodeCanvasRenderingContext2DSettings, createImageData
 } from 'canvas'
 import * as fs from 'fs';
-import {DateTime} from "ews-javascript-api";
 import {dithering} from "./image2cpp/dithering";
-import {getDateStringFromDate} from "../utils";
 import {Logging} from "../logging";
+import {IDBClient} from "../db/IDBClient";
+import {ConfigManager} from "../ConfigManager";
 
 
 export class ImageProcessor {
@@ -26,11 +24,14 @@ export class ImageProcessor {
     _bitswap: boolean = false
     screenWidth = 480
     screenHeight = 800
+    dataRetrieval: IDBClient
 
     constructor() {
         this.canvas = this.setupCanvas();
         const settings: NodeCanvasRenderingContext2DSettings = {}
         this.ctx = this.canvas.getContext( '2d',  settings)
+        this.dataRetrieval = ConfigManager.instance.getDBClient()
+
     }
 
     setupCanvas(): Canvas {

@@ -66,7 +66,7 @@ If the necessary permissions are not set, the display will function as a static 
 
 ## Server Deployment
 For an easy deployment of the server component, we recommend using our Docker image.
-You can find an example on a possible docker-compose setup with that image in our [Deployment Example](server/room-manager/deployment_example).
+You can find an example on a possible docker-compose setup with that image in our [Deployment Examples](server/room-manager/deployment_example).
 You can download the example and start the server with `docker compose up -d` after you changed the configuration for your needs.
 
 Alternatively, you can clone the repository, install node and start the server with
@@ -76,10 +76,16 @@ npm i
 npm run build
 npm run start
 ```
-Please make sure to pass a correct configuration and secrets, if you are using exchange.
+Make sure to pass a correct configuration and secrets.
+The following environment variables are recognized:
+```STORAGE``` can either be set to ```MONGO``` or ```FILE``` (default).
+This determines if a MongoDB instance is expected as the storage backend or if a JSON configuration file is used.
+Please note, that we currently do not support changing data via the API for the File-Backend.
+For details, please check out the [Deployment Examples](server/room-manager/deployment_example).
+
 
 ## Server Configuration
-The configuration of all the rooms, persons, devices and endpoints can be done with the [calendars.json](server/room-manager/deployment_example/config/calendars.json).
+If a file backend is chosen, the configuration of all the rooms, persons, devices and endpoints can be done with the [calendars.json](server/room-manager/deployment_example/config/calendars.json).
 For development purposes, this file should be placed inside a config directory in the root of the project.
 The configuration file is loaded once when the project is started. 
 If the configuration is changed, the server needs to be restarted.
@@ -89,24 +95,24 @@ Each room is configured with a `tenants` and an `id_string`, which are displayed
 In addition the affiliation of the room can be shown by using a custom logo from the config directory, indicated via `logo`.
 The type of calendar is defined by either defining `ews_info` OR `ical_info` (see below).
 Each device consists of a `device_id` (MAC-Address) and a descriptive `location` string.
-Devices are directly associated with the room they are placed for.
+Rooms are directly associated with the device they are configured for.
+If the same room has multiple displays, the room configuration needs to be duplicated.
 
 ```json
-"calendars": [
+"devices": [
     {
-        "id": 200,
-        "id_string": "200a",
-        "name": "Meetingraum",
-        "logo": "institute_logo.png",
-        "ews_info": {
-            ...
-        },
-        "devices": [
-            {
-                "device_id": "aaaaaaaaaaaa",
-                "location": "Left_Door"
+        "device_id": "aaaaaaaaaaaa",
+        "location": "Left_Door",
+        "room_id": {
+            "room_number": 200,
+            "id_string": "200a",
+            "name": "Meetingraum",
+            "logo": "institute_logo.png",
+            "ews_info": {
+                "email": "room@domain",
+                "tenant_id": 1
             }
-        ]
+        }
     }
 ]
 ```

@@ -5,8 +5,10 @@ services:
     ports:
       - 3001:3001
     env_file: "../.env"
-#    environment:
+    environment:
 #      - SECRET=password
+      - STORAGE=FILE
+
     volumes:
-      - ./config:/home/node/app/config
+      - ./calendars.json:/home/node/app/config/calendars.json
       - ./logs:/home/node/app/logs
