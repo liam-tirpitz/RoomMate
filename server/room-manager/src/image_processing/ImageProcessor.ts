@@ -12,7 +12,8 @@ import {
 import * as fs from 'fs';
 import {dithering} from "./image2cpp/dithering";
 import {Logging} from "../logging";
-import {FileDBClient} from "../db/FileDBClient";
+import {IDBClient} from "../db/IDBClient";
+import {ConfigManager} from "../ConfigManager";
 
 
 export class ImageProcessor {
@@ -23,13 +24,13 @@ export class ImageProcessor {
     _bitswap: boolean = false
     screenWidth = 480
     screenHeight = 800
-    dataRetrieval: FileDBClient
+    dataRetrieval: IDBClient
 
     constructor() {
         this.canvas = this.setupCanvas();
         const settings: NodeCanvasRenderingContext2DSettings = {}
         this.ctx = this.canvas.getContext( '2d',  settings)
-        this.dataRetrieval = FileDBClient.instance
+        this.dataRetrieval = ConfigManager.instance.getDBClient()
 
     }
 

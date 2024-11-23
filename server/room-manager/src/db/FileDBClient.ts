@@ -2,7 +2,7 @@ import {IDBClient} from "./IDBClient";
 import {IEWSTenant} from "../../../datamodels/IEWSTenant";
 import {IDevice} from "../../../datamodels/IDevice";
 import {IOrganization} from "../../../datamodels/IOrganization";
-import {IRoom} from "../../../datamodels/IRoom";
+import {IRoom, isRoom} from "../../../datamodels/IRoom";
 import {WithId} from "mongodb";
 
 export class FileDBClient implements IDBClient {
@@ -20,6 +20,10 @@ export class FileDBClient implements IDBClient {
         }
 
         return FileDBClient.#instance;
+    }
+
+    setOrganization(org: IOrganization): Promise<IOrganization> {
+        return Promise.resolve(undefined);
     }
 
 
@@ -52,6 +56,16 @@ export class FileDBClient implements IDBClient {
         return Promise.resolve(undefined);
     }
 
+    getDeviceFromHardwareID(id: string): Promise<IDevice> {
+        for (const device of this.calendars.devices as IDevice[]) {
+            if (device.device_id == id) {
+                return Promise.resolve(device)
+            }
+        }
+        return undefined
+    }
+
+
     getDevices(): Promise<WithId<IDevice>[]> {
         return Promise.resolve([]);
     }
@@ -62,7 +76,7 @@ export class FileDBClient implements IDBClient {
                 return Promise.resolve(tenant)
             }
         }
-        return undefined
+        return Promise.resolve(undefined)
     }
 
     getEwsUsers(): Promise<Array<IEWSTenant>> {
@@ -70,19 +84,15 @@ export class FileDBClient implements IDBClient {
     }
 
 
-    getOrganizationById(id: String): Promise<IOrganization> {
+    getOrganization(): Promise<IOrganization> {
         return Promise.resolve(this.calendars.global_config);
     }
 
-    getOrganizations(): Promise<WithId<IOrganization>[]> {
-        return Promise.resolve([]);
-    }
-
     getRoomForDevice(device_id: string): Promise<IRoom | null> {
-        for (const room of this.calendars.calendars as IRoom[]) {
-            for (const device of room.devices as IDevice[]) {
-                if (device.device_id == device_id) {
-                    return Promise.resolve(room)
+        for (const device of this.calendars.devices as IDevice[]) {
+            if (device.device_id == device_id) {
+                if (isRoom(device.room_id)) {
+                    return Promise.resolve(device.room_id)
                 }
             }
         }

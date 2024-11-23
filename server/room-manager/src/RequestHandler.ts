@@ -7,7 +7,7 @@ import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
 import {IInfoPacket} from "../../datamodels/IInfoPacket";
 import {SimpleEvent} from "./datamodels/events/SimpleEvent";
-import {IRoom} from "../../datamodels/IRoom";
+import {IRoom, isRoom} from "../../datamodels/IRoom";
 import {ICalClient} from "./calendar-apis/ical";
 import {OfficeImageProcesor} from "./image_processing/OfficeImageProcesor";
 import {IPerson} from "../../datamodels/IPerson";
@@ -15,14 +15,15 @@ import {PersonalInfo} from "./datamodels/events/PersonalInfo";
 import * as utils from "./utils"
 import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImageProcessor";
 import {CustomEvent} from "./datamodels/events/CustomEvent";
-import {FileDBClient} from "./db/FileDBClient";
+import {IDBClient} from "./db/IDBClient";
+import {ConfigManager} from "./ConfigManager";
 
 export class RequestHandler {
-    dataRetrieval: FileDBClient
+    dataRetrieval: IDBClient
     iCalClient: ICalClient
 
     constructor() {
-        this.dataRetrieval = FileDBClient.instance
+        this.dataRetrieval = ConfigManager.instance.getDBClient()
         this.iCalClient = new ICalClient()
     }
 
@@ -127,7 +128,7 @@ export class RequestHandler {
             image_processor = new OfficeImageProcesor()
             await image_processor.buildImage(calendarDetails, freeBusyDetails, voltage)
         } else {
-             if (voltage && voltage < (await this.dataRetrieval.getOrganizationById("")).low_battery_voltage_cutoff_in_mv) {
+             if (voltage && voltage < (await this.dataRetrieval.getOrganization()).low_battery_voltage_cutoff_in_mv) {
                  Logging.instance.logger.warn('Low Battery!', {voltage: voltage, devid: device_id});
                  image_processor = new SpecialStateImageProcessor()
                  await image_processor.buildLowBatImage(calendarDetails, voltage)
@@ -140,10 +141,19 @@ export class RequestHandler {
         return await image_processor.finalizeImage(calendarDetails.id_string)
     }
 
-    async getData(device_id: string): Promise<string> {
-        const organization = await this.dataRetrieval.getOrganizationById("")
 
-        const calendarDetails = await this.dataRetrieval.getRoomForDevice(device_id)
+    async getData(device_id: string): Promise<string> {
+        const organization = await this.dataRetrieval.getOrganization()
+        const device = await this.dataRetrieval.getDeviceFromHardwareID(device_id)
+        let calendarDetails;
+        if (isRoom(device.room_id)) {
+            calendarDetails  = device.room_id
+
+        } else {
+            calendarDetails = await this.dataRetrieval.getRoomForDevice(device.room_id.toString())
+
+        }
+
         if (!calendarDetails) return
         const appointments = await this.getAppointments(calendarDetails)
 

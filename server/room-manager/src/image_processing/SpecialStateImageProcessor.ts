@@ -44,7 +44,7 @@ export class SpecialStateImageProcessor extends ImageProcessor {
     }
 
     async buildNewDeviceImage(device_id: string, voltage) {
-        await this.drawHeader("New RoomMate", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), (await this.dataRetrieval.getOrganizationById("")).default_logo)
+        await this.drawHeader("New RoomMate", device_id.replace(new RegExp(`.{${2}}`, 'g'), '$&' + ":"), (await this.dataRetrieval.getOrganization()).default_logo)
         // const header = await this.drawHeader("New RoomMate", "", config.global_config.default_logo)
 
         await this.drawNewDevice()

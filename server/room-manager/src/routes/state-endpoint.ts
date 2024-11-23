@@ -1,6 +1,5 @@
 import {Logging} from "../logging";
 import {RequestHandler} from "../RequestHandler";
-import {MongoDBClient} from "../db/MongoDBClient";
 import {FastifyReply, FastifyRequest} from "fastify";
 
 const requestHandler: RequestHandler = new RequestHandler()

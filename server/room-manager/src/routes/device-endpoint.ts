@@ -1,4 +1,3 @@
-import {MongoDBClient} from "../db/MongoDBClient";
 import {
     FastifyInstance,
     FastifyPluginOptions,
@@ -8,6 +7,7 @@ import {
 import fp from 'fastify-plugin';
 import {IDevice} from "../../../datamodels/IDevice";
 import {AppError} from "../datamodels/AppError";
+import {ConfigManager} from "../ConfigManager";
 
 interface deviceParams {
     deviceId: string;
@@ -15,12 +15,12 @@ interface deviceParams {
 
 const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options: FastifyPluginOptions) => {
     server.get('/devices', {}, async (request, reply) => {
-        const rooms = MongoDBClient.instance.getDevices()
+        const rooms = ConfigManager.instance.getDBClient().getDevices()
         return JSON.stringify(await rooms)
     });
 
     server.post<{ Body: IDevice }>('/devices', {}, async (request, reply) => {
-            const result = await MongoDBClient.instance.addDevice((await request).body)
+            const result = await ConfigManager.instance.getDBClient().addDevice((await request).body)
             reply
                 .code(201)
                 .send(result)
@@ -28,7 +28,7 @@ const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options:
 
     server.put<{ Params: deviceParams, Body: IDevice }>('/devices/:deviceId', {}, async (request, reply) => {
         const ID = request.params.deviceId;
-        const result = await MongoDBClient.instance.updateDevice(ID, (await request).body)
+        const result = await ConfigManager.instance.getDBClient().updateDevice(ID, (await request).body)
         reply
             .code(201)
             .send(result)
@@ -37,7 +37,7 @@ const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options:
 
     server.get<{ Params: deviceParams }>('/devices/:deviceId', {}, async (request, reply) => {
         const ID = request.params.deviceId;
-        const room = await MongoDBClient.instance.getDevice(ID)
+        const room = await ConfigManager.instance.getDBClient().getDevice(ID)
         if (!room) {
             throw new AppError("Not Found",404);
         }
@@ -46,7 +46,7 @@ const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options:
 
     server.delete<{ Params: deviceParams }>('/devices/:deviceId', {}, async (request, reply) => {
         const ID = request.params.deviceId;
-        await MongoDBClient.instance.deleteDevice(ID)
+        await ConfigManager.instance.getDBClient().deleteDevice(ID)
         reply
             .code(204)
             .send()

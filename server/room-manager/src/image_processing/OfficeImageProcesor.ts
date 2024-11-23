@@ -85,7 +85,7 @@ export class OfficeImageProcesor extends ImageProcessor {
 
         for (const [index, person] of room.persons.entries()) {
             this.drawPersonInformation(person, index)
-            if (voltage && voltage < (await this.dataRetrieval.getOrganizationById("")).low_battery_voltage_cutoff_in_mv) {
+            if (voltage && voltage < (await this.dataRetrieval.getOrganization()).low_battery_voltage_cutoff_in_mv) {
                 await this.drawLowBattery(this.init_y + index * this.single_offset)
             } else if (personalInfos[index]) {
                 const personalInfo = personalInfos[index]

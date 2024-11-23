@@ -1,19 +1,23 @@
 import fastify from 'fastify'
-import {FileDBClient} from "./db/FileDBClient";
 import {dataEndpoint, imageEndpoint} from "./routes/state-endpoint";
 import RoomRoute from "./routes/room-endpoint";
 import DeviceRoute from "./routes/device-endpoint";
 import EWSUserRoute from "./routes/ewsuser-endpoint";
 import {Logging} from "./logging";
-import {AppError} from "./datamodels/AppError";
+import {IDBClient} from "./db/IDBClient";
+import {ConfigManager} from "./ConfigManager";
+import OrganizationRoute from "./routes/organization-endpoint";
 
 const server = fastify()
 
-const dbClient: FileDBClient = FileDBClient.instance
+const dbClient: IDBClient = ConfigManager.instance.getDBClient()
 
-dbClient.getOrganizationById("").then(org => {
-    process.env.TZ = org.timezone;
+dbClient.getOrganization().then(org => {
+    if (org) {
+        process.env.TZ = org.timezone;
+    }
 })
+
 
 
 server.register(dataEndpoint, { prefix: "/data" })
@@ -21,6 +25,8 @@ server.register(imageEndpoint, { prefix: "/image" })
 server.register(RoomRoute)
 server.register(DeviceRoute)
 server.register(EWSUserRoute)
+server.register(OrganizationRoute)
+
 
 
 server.addHook('preHandler', async (request, reply) => {

@@ -1,9 +1,10 @@
-import mongoose, {Schema, Model, Document, Mongoose, ObjectId} from "mongoose"
+import mongoose, {Schema, Model, Document, Mongoose, ObjectId, Promise} from "mongoose"
 import {IDevice} from "../../../datamodels/IDevice";
 import {IRoom} from "../../../datamodels/IRoom";
 import {IEWSTenant} from "../../../datamodels/IEWSTenant";
-import {AppError} from "../datamodels/AppError";
 import {IDBClient} from "./IDBClient";
+import {IOrganization} from "../../../datamodels/IOrganization";
+
 
 interface IRoomDocument extends IRoom, Document {}
 interface IRoomModel extends Model<IRoomDocument> {
@@ -20,6 +21,11 @@ interface IEWSTenantModel extends Model<IEWSTenantDocument> {
     buildDevice(args:IEWSTenant): IEWSTenantDocument;
 }
 
+interface IOrganizationDocument extends IOrganization, Document {}
+interface IorganizationModel extends Model<IOrganizationDocument> {
+    buildDevice(args:IOrganization): IOrganizationDocument;
+}
+
 
 
 export class MongoDBClient implements IDBClient {
@@ -30,6 +36,8 @@ export class MongoDBClient implements IDBClient {
     roomModel: Model<IRoomDocument>
     deviceModel: Model<IDeviceDocument>
     ewsUserModel: Model<IEWSTenantDocument>
+    orgModel: Model<IOrganizationDocument>
+
 
     roomSchema: Schema = new Schema<IRoom>({
         room_number: { type: Number, required: true },
@@ -57,6 +65,16 @@ export class MongoDBClient implements IDBClient {
         secret: { type: String, required: true },
     });
 
+    orgSchema: Schema = new Schema<IOrganization>({
+        name: { type: String, required: true },
+        external_identifier: { type: String, required: true },
+        soon_threshold_in_min: { type: Number, required: true },
+        night_start_hour: { type: Number, required: true },
+        night_end_hour: { type: Number, required: true },
+        timezone: { type: String, required: true },
+        low_battery_voltage_cutoff_in_mv: { type: Number, required: true },
+        default_logo: { type: String, required: true },
+    });
 
 
     constructor() {
@@ -118,6 +136,13 @@ export class MongoDBClient implements IDBClient {
         return this.roomModel.findById(id).exec();
     }
 
+    async getRoomForDevice(device_id: string): Promise<IRoom | null> {
+        const device = await this.getDeviceFromHardwareID(device_id)
+        console.log(device)
+        return undefined
+    }
+
+
     async updateDevice(id: string, device: IDevice) {
         await this.getDb()
         return this.deviceModel.findByIdAndUpdate(id, device).exec()
@@ -143,6 +168,12 @@ export class MongoDBClient implements IDBClient {
         return this.deviceModel.findById(id).exec();
     }
 
+    async getDeviceFromHardwareID(id: string): Promise<IDevice> {
+        await this.getDb()
+        return this.deviceModel.findOne({device_id: id}).exec();
+    }
+
+
     async updateEwsUser(id: string, user: IEWSTenant) {
         await this.getDb()
         return this.ewsUserModel.findByIdAndUpdate(id, user).exec()
@@ -166,6 +197,15 @@ export class MongoDBClient implements IDBClient {
     async getEwsUser(id: string): Promise<IEWSTenant> {
         await this.getDb()
         return this.ewsUserModel.findById(id).exec();
+    }
+
+    async getOrganization(): Promise<IOrganization> {
+        await this.getDb()
+        return undefined;
+    }
+
+    async setOrganization(org: IOrganization): Promise<IOrganization> {
+        return undefined;
     }
 
 }

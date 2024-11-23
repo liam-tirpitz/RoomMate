@@ -8,6 +8,7 @@ import {
 
 import fp from 'fastify-plugin';
 import {AppError} from "../datamodels/AppError";
+import {ConfigManager} from "../ConfigManager";
 
 interface roomParams {
     roomId: string;
@@ -16,12 +17,12 @@ interface roomParams {
 
 const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: FastifyPluginOptions) => {
     server.get('/rooms', {}, async (request, reply) => {
-        const rooms = await MongoDBClient.instance.getRooms()
+        const rooms = await ConfigManager.instance.getDBClient().getRooms()
         return JSON.stringify(rooms)
     });
 
     server.post<{ Body: IRoom }>('/rooms', {}, async (request, reply) => {
-        const result = await MongoDBClient.instance.addRoom((await request).body)
+        const result = await ConfigManager.instance.getDBClient().addRoom((await request).body)
         reply
             .code(201)
             .send(result)
@@ -29,7 +30,7 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
 
     server.put<{ Params: roomParams, Body: IRoom }>('/rooms/:roomId', {}, async (request, reply) => {
         const ID = request.params.roomId;
-        const result = await MongoDBClient.instance.updateRoom(ID, (await request).body)
+        const result = await ConfigManager.instance.getDBClient().updateRoom(ID, (await request).body)
         reply
             .code(201)
             .send(result)
@@ -38,7 +39,7 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
 
     server.get<{ Params: roomParams }>('/rooms/:roomId', {}, async (request, reply) => {
         const ID = request.params.roomId;
-        const room = await MongoDBClient.instance.getRoom(ID)
+        const room = await ConfigManager.instance.getDBClient().getRoom(ID)
         if (!room) {
             throw new AppError("Not Found",404);
         }
@@ -48,7 +49,7 @@ const RoomRoute: FastifyPluginAsync = async (server: FastifyInstance, options: F
 
     server.delete<{ Params: roomParams }>('/rooms/:roomId', {}, async (request, reply) => {
         const ID = request.params.roomId;
-        await MongoDBClient.instance.deleteRoom(ID)
+        await ConfigManager.instance.getDBClient().deleteRoom(ID)
         reply
             .code(204)
             .send()

@@ -6,5 +6,5 @@ export interface IDevice {
     location: string
     last_contact: string
     battery: string
-    room_id: Types.ObjectId | string | undefined
+    room_id: Types.ObjectId | string | undefined | IRoom
 }

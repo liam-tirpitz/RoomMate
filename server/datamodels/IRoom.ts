@@ -12,3 +12,7 @@ export interface IRoom {
     persons: IPerson[] | undefined
     devices: IDevice[]
 }
+
+export function isRoom(object: any): object is IRoom {
+    return 'room_number' in object;
+}
