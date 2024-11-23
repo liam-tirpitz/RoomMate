@@ -8,8 +8,7 @@ services:
     environment:
 #      - SECRET=password
       - STORAGE=FILE
-#      - STORAGE=MONGO
 
     volumes:
-      - ./config:/home/node/app/config
+      - ./calendars.json:/home/node/app/config/calendars.json
       - ./logs:/home/node/app/logs
