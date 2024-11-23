@@ -1,7 +1,7 @@
 stages:
   - test
-  - semrel
-  - dockerrelease
+  - versioning
+  - release
 
 variables:
   DOCKER_TLS_CERTDIR: "/certs"
@@ -31,7 +31,7 @@ build:
 
 semrel:
   image: node:22
-  stage: semrel
+  stage: versioning
   before_script:
     - cd server/room-manager
     - npm i -f
@@ -41,12 +41,10 @@ semrel:
     - production
 
 docker:
-  stage: dockerrelease
+  stage: release
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
-  before_script:
-    - docker info
   tags:
     - did
   script:
@@ -56,4 +54,20 @@ docker:
     - docker push $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager --all-tags
   only:
     - tags
+
+nightly:
+  stage: release
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  tags:
+    - did
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - cd server
+    - docker build -t $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager:nightly .
+    - docker push $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager --all-tags
+  only:
+    - main
+
 
