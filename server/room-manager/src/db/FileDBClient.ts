@@ -2,7 +2,6 @@ import {IDBClient} from "./IDBClient";
 import {IEWSTenant} from "../../../datamodels/IEWSTenant";
 import {IDevice} from "../../../datamodels/IDevice";
 import {IOrganization} from "../../../datamodels/IOrganization";
-import {IPerson} from "../../../datamodels/IPerson";
 import {IRoom} from "../../../datamodels/IRoom";
 import {WithId} from "mongodb";
 
@@ -24,29 +23,18 @@ export class FileDBClient implements IDBClient {
     }
 
 
-    addDevice(device: IDevice): Promise<string> {
+    addDevice(device: IDevice): Promise<IDevice> {
         return Promise.resolve(undefined);
     }
 
-    addEWSUser(user: IEWSTenant): Promise<void> {
+    addEwsUser(user: IEWSTenant): Promise<IEWSTenant> {
         return Promise.resolve(undefined);
     }
 
-    addOrganization(organization: IOrganization): Promise<void> {
+    addRoom(room: IRoom): Promise<IRoom> {
         return Promise.resolve(undefined);
     }
 
-    addPersonToRoom(person: IPerson, room_id: string): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    addRoom(room: IRoom): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    associateRoomWithDevice(device_id: string, room_id: string): Promise<void> {
-        return Promise.resolve(undefined);
-    }
 
     deleteDevice(device_id: string): Promise<void> {
         return Promise.resolve(undefined);
@@ -56,6 +44,10 @@ export class FileDBClient implements IDBClient {
         return Promise.resolve(undefined);
     }
 
+    deleteEwsUser(id: string) {
+    }
+
+
     getDevice(device_id: string): Promise<WithId<IDevice> | null> {
         return Promise.resolve(undefined);
     }
@@ -64,7 +56,7 @@ export class FileDBClient implements IDBClient {
         return Promise.resolve([]);
     }
 
-    getEWSUser(id: String): Promise<IEWSTenant> {
+    getEwsUser(id: String): Promise<IEWSTenant> {
         for (const tenant of this.calendars.exchange.tenants as IEWSTenant[]) {
             if (tenant.identifier == id) {
                 return Promise.resolve(tenant)
@@ -72,6 +64,11 @@ export class FileDBClient implements IDBClient {
         }
         return undefined
     }
+
+    getEwsUsers(): Promise<Array<IEWSTenant>> {
+        return Promise.resolve(this.calendars.exchange.tenants);
+    }
+
 
     getOrganizationById(id: String): Promise<IOrganization> {
         return Promise.resolve(this.calendars.global_config);
@@ -96,5 +93,26 @@ export class FileDBClient implements IDBClient {
     getRooms(): Promise<IRoom[]> {
         return Promise.resolve([]);
     }
+
+    getRoom(id: string): Promise<IRoom> {
+        return Promise.resolve(undefined);
+    }
+
+    updateDevice(id: string, device: IDevice): Promise<IDevice> {
+        return Promise.resolve(undefined);
+    }
+
+    updateEwsUser(id: string, user: IEWSTenant): Promise<IEWSTenant> {
+        return Promise.resolve(undefined);
+    }
+
+    updateRoom(id: string, room: IRoom): Promise<IRoom> {
+        return Promise.resolve(undefined);
+    }
+
+
+
+
+
 
 }

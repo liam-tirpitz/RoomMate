@@ -3,6 +3,7 @@ import {IDevice} from "../../../datamodels/IDevice";
 import {IRoom} from "../../../datamodels/IRoom";
 import {IEWSTenant} from "../../../datamodels/IEWSTenant";
 import {AppError} from "../datamodels/AppError";
+import {IDBClient} from "./IDBClient";
 
 interface IRoomDocument extends IRoom, Document {}
 interface IRoomModel extends Model<IRoomDocument> {
@@ -21,7 +22,7 @@ interface IEWSTenantModel extends Model<IEWSTenantDocument> {
 
 
 
-export class MongoDBClient {
+export class MongoDBClient implements IDBClient {
     db_endpoint = 'mongodb://localhost:27017/roommate'
     private db: Promise<mongoose.Mongoose>;
 

@@ -27,7 +27,7 @@ export class RequestHandler {
     }
 
     async getEWSClient(tenantID) {
-        const tenant = this.dataRetrieval.getEWSUser(tenantID)
+        const tenant = this.dataRetrieval.getEwsUser(tenantID)
         return new EWSCalendarClient(await tenant)
     }
 

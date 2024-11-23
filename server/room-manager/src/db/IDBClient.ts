@@ -5,27 +5,21 @@ import {IPerson} from "../../../datamodels/IPerson";
 import {IDevice} from "../../../datamodels/IDevice";
 
 export interface IDBClient {
-    addOrganization(organization: IOrganization): Promise<void>
-    getOrganizationById(id: String): Promise<IOrganization>
-    getOrganizations(): Promise<IOrganization[]>
+    updateRoom(id: string, room: IRoom): Promise<IRoom>
+    addRoom(room: IRoom): Promise<IRoom>
+    deleteRoom(id: string)
+    getRooms(): Promise<Array<IRoom>>
+    getRoom(id: string): Promise<IRoom>
 
-    getRooms(): Promise<IRoom[]>
-    deleteRoom(id: string): Promise<void>
-    addRoom(room: IRoom): Promise<void>
+    updateDevice(id: string, device: IDevice): Promise<IDevice>
+    addDevice(device: IDevice): Promise<IDevice>
+    deleteDevice(id: string)
+    getDevices(): Promise<Array<IDevice>>
+    getDevice(id: string): Promise<IDevice>
 
-    getDevices(): Promise<IDevice[]>
-    getDevice(device_id: string): Promise<IDevice | null>
-    deleteDevice(device_id: string): Promise<void>
-    addDevice(device: IDevice): Promise<string>
-
-    getEWSUser(id: String): Promise<IEWSTenant>
-    addEWSUser(user: IEWSTenant): Promise<void>
-
-
-    addPersonToRoom(person: IPerson, room_id: string): Promise<void>
-    associateRoomWithDevice(device_id: string, room_id: string): Promise<void>
-    getRoomForDevice(device_id: string): Promise<IRoom | null>
-
-
-
+    updateEwsUser(id: string, user: IEWSTenant): Promise<IEWSTenant>
+    addEwsUser(user: IEWSTenant): Promise<IEWSTenant>
+    deleteEwsUser(id: string)
+    getEwsUsers(): Promise<Array<IEWSTenant>>
+    getEwsUser(id: string): Promise<IEWSTenant>
 }
