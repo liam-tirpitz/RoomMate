@@ -50,8 +50,8 @@ docker:
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - cd server
-    - docker build -t $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager:$CI_COMMIT_TAG -t $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager:latest .
-    - docker push $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager --all-tags
+    - docker build -t $CI_REGISTRY/i5/infrastructure/room-mate/room-manager:$CI_COMMIT_TAG -t $CI_REGISTRY/i5/infrastructure/room-mate/room-manager:latest .
+    - docker push $CI_REGISTRY/i5/infrastructure/room-mate/room-manager --all-tags
   only:
     - tags
 
@@ -65,8 +65,8 @@ nightly:
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - cd server
-    - docker build -t $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager:nightly .
-    - docker push $CI_REGISTRY/i5/infrastructure/room-occupancy/room-manager --all-tags
+    - docker build -t $CI_REGISTRY/i5/infrastructure/room-mate/room-manager:nightly .
+    - docker push $CI_REGISTRY/i5/infrastructure/room-mate/room-manager --all-tags
   only:
     - main
 
