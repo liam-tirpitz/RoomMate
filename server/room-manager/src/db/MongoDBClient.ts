@@ -29,7 +29,7 @@ interface IorganizationModel extends Model<IOrganizationDocument> {
 
 
 export class MongoDBClient implements IDBClient {
-    db_endpoint = 'mongodb://localhost:27017/roommate'
+    db_endpoint = process.env.MONGO_CONNECTION
     private db: Promise<mongoose.Mongoose>;
 
     static #instance: MongoDBClient;
