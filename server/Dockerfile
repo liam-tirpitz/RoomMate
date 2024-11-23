@@ -16,7 +16,7 @@ RUN ls .
 RUN npm --prefix ./room-manager/ install --force
 COPY --chown=node:node room-manager ./room-manager
 COPY --chown=node:node datamodels ./datamodels
-COPY --chown=node:node room-manager/deployment_example/config ./config
+COPY --chown=node:node room-manager/deployment_example/config ./room-manager/config
 RUN ls .
 RUN npm --prefix ./room-manager/ run build
 RUN ["chmod", "+x", "./room-manager/run.sh"]
