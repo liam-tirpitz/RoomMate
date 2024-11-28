@@ -1,2 +1,5 @@
 <p>rooms works!</p>
-<app-room></app-room>
+<app-room
+  *ngFor="let room of rooms"
+  [room]="room"
+sig></app-room>

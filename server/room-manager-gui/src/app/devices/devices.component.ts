@@ -1,6 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {MatTableModule} from '@angular/material/table';
 import {RoomService} from '../room.service';
+import {DeviceService} from '@app/device.service';
+import {IDevice} from '@interfaces/IDevice';
 
 export interface PeriodicElement {
   name: string;
@@ -9,10 +11,7 @@ export interface PeriodicElement {
   last_connection: Date;
 }
 
-const ELEMENT_DATA: PeriodicElement[] = [
-  {name: "Küche Links", mac: 'ab:as:ae:ad:ad:ad', battery: "4.2 V", last_connection: new Date()},
 
-];
 @Component({
   selector: 'app-devices',
   standalone: true,
@@ -21,17 +20,16 @@ const ELEMENT_DATA: PeriodicElement[] = [
   styleUrl: './devices.component.css'
 })
 export class DevicesComponent implements OnInit{
-  displayedColumns: string[] = ['name', 'mac', 'battery', 'last_connection'];
-  dataSource = ELEMENT_DATA;
-  rooms: any[] = [];
+  displayedColumns: string[] = ['name', 'mac', 'battery', 'last_connection', 'room'];
+  devices: IDevice[] = [];
 
-  constructor(private roomService: RoomService) {
+  constructor(private deviceService: DeviceService) {
 
   }
 
   ngOnInit() {
-    this.roomService.getRooms().subscribe((data: any[])=> {
-      this.rooms = data;
+    this.deviceService.fetchDevices().subscribe((data: any[])=> {
+      this.devices = data;
     })
   }
 

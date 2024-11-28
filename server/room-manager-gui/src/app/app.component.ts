@@ -18,7 +18,8 @@ import {NgIf} from '@angular/common';
     MatButtonModule,
     MatToolbarModule,
     MatSidenavModule,
-    MatListModule, NgIf],
+    MatListModule, NgIf
+],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

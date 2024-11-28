@@ -3,57 +3,36 @@
 <!--    <div mat-card-avatar class="example-header-image">-->
 <!--      <mat-icon class="icon-display">meeting_room</mat-icon>-->
 <!--    </div>-->
-    <mat-card-title>Meetingraum</mat-card-title>
-    <mat-card-subtitle>6243.2</mat-card-subtitle>
+    <mat-card-title>{{room.name}}</mat-card-title>
+    <mat-card-subtitle>{{room.id_string}}</mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    <h3>Devices</h3>
-    <mat-list>
-      <mat-list-item>
-        <span matListItemTitle>Device 1</span>
-        <span matListItemLine>ab:ab:ab:ab:ad:ab</span>
-      </mat-list-item>
-      <mat-list-item>
-        <span matListItemTitle>Title</span>
-        <span>Second line</span>
-      </mat-list-item>
-      <mat-list-item>
-        <span matListItemTitle>Title</span>
-        Second line
-      </mat-list-item>
-    </mat-list>
-<!--    <div cdkDropListGroup>-->
-<!--      <div class="example-container">-->
-<!--        <h2>Devices</h2>-->
-<!--        <div-->
-<!--          cdkDropList-->
-<!--          [cdkDropListData]="devices"-->
-<!--          class="example-list"-->
-<!--          (cdkDropListDropped)="drop($event)">-->
-<!--          @for (item of devices; track item) {-->
-<!--            <div class="example-box" cdkDrag>{{item}}</div>-->
-<!--          }-->
-<!--        </div>-->
-<!--      </div>-->
+    <div *ngIf="room.ews_info">
+      EWS Connection<br/>
+      {{room.ews_info.email}}<br/>
+      {{room.ews_info.tenant_id}}
+    </div>
+    <div *ngIf="room.ical_info">
+      ICal Connection<br/>
+      {{room.ical_info.endpoint}}
+    </div>
+    <div *ngIf="room.persons">
+      Office<br/>
+      <mat-list>
+        <mat-list-item *ngFor="let person of room.persons">
+          <span matListItemTitle>{{person.name}} ({{person.job}})</span>
+          <span matListItemLine>{{person.email}}</span>
+          <div *ngIf="person.ews_info">
+            EWS Connection<br/>
+            {{person.ews_info.email}}<br/>
+            {{person.ews_info.tenant_id}}
+          </div>
 
-<!--      <div class="example-container">-->
-<!--        <h2>Calendars</h2>-->
+        </mat-list-item>
+      </mat-list>
+    </div>
 
-<!--        <div-->
-<!--          cdkDropList-->
-<!--          [cdkDropListData]="done"-->
-<!--          class="example-list"-->
-<!--          (cdkDropListDropped)="drop($event)">-->
-<!--          @for (item of done; track item) {-->
-<!--            <div class="example-box" cdkDrag>{{item}}</div>-->
-<!--          }-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-  </mat-card-content>
+ </mat-card-content>
   <mat-card-actions>
-<!--    <button mat-icon-button>-->
-<!--      <mat-icon>edit</mat-icon>-->
-<!--    </button>-->
   </mat-card-actions>
 </mat-card>
