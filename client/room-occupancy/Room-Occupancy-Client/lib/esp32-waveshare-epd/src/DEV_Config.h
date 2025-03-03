@@ -45,13 +45,33 @@
  * GPIO config
 **/
 // Config for Feather
-
+#ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
 #define EPD_SCK_PIN  5
 #define EPD_MOSI_PIN 19
 #define EPD_CS_PIN   15
 #define EPD_RST_PIN  27
 #define EPD_DC_PIN   33
 #define EPD_BUSY_PIN 32
+#define EPD_PWR_PIN  12
+
+#else
+// Config for PoE-Board
+#define EPD_SCK_PIN  33
+#define EPD_MOSI_PIN 5
+#define EPD_CS_PIN   32
+#define EPD_RST_PIN  15
+#define EPD_DC_PIN   16
+#define EPD_BUSY_PIN 14
+#define EPD_PWR_PIN  13
+#endif
+
+//#define EPD_SCK_PIN  33
+//#define EPD_MOSI_PIN 36
+//#define EPD_CS_PIN   32
+//#define EPD_RST_PIN  15
+//#define EPD_DC_PIN   16
+//#define EPD_BUSY_PIN 14
+//#define EPD_PWR_PIN  13
 
 // Config for DEV-Board
 // #define EPD_SCK_PIN  13

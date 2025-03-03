@@ -8,8 +8,8 @@ UWORD Imagesize = ((SCREEN_WIDTH % 8 == 0) ? (SCREEN_WIDTH / 8 ) : (SCREEN_WIDTH
 Screen::Screen(FooterState* footer_state) : footer_state(footer_state) {};
 
 void Screen::setup() {
-    pinMode(12, OUTPUT);
-    digitalWrite(12, HIGH);
+    pinMode(EPD_PWR_PIN, OUTPUT);
+    digitalWrite(EPD_PWR_PIN, HIGH);
     DEV_Module_Init();
     EPD_7IN5_V2_Init();
     DEV_Delay_ms(200);
@@ -51,5 +51,5 @@ void Screen::draw_footer() {
 
 void Screen::sleep() {
     EPD_7IN5_V2_Sleep();
-    digitalWrite(12, LOW);
+    digitalWrite(EPD_PWR_PIN, LOW);
 }
