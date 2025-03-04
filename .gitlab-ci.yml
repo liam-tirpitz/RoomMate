@@ -13,6 +13,7 @@ test:
   before_script:
     - cd server/room-manager
     - rm -rf node_modules/
+    - apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
     - npm ci -f
   script:
     - npm test
