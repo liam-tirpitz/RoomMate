@@ -14,7 +14,7 @@ test:
     - cd server/room-manager
     - rm -rf node_modules/
     - apt-get update
-    - apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+    - apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev -qq -y
     - npm ci -f
   script:
     - npm test
