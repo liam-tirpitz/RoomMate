@@ -18,6 +18,7 @@ COPY --chown=node:node room-manager ./room-manager
 COPY --chown=node:node datamodels ./datamodels
 COPY --chown=node:node room-manager/deployment_example/config ./room-manager/config
 RUN ls .
+RUN ls ./room-manager/src/image_processing
 RUN npm --prefix ./room-manager/ run build
 RUN ["chmod", "+x", "./room-manager/run.sh"]
 EXPOSE 3001
