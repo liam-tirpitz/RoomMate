@@ -47,11 +47,11 @@ export class ImageProcessor {
         this.ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
         this.ctx.fillStyle = "black";
         this.ctx.drawImage(await logo_img, 0, 0)
-        this.ctx.font = '21pt "HNB"'
-        this.ctx.fillText(room_name, 248, 62)
+        this.ctx.font = '36pt "HNB"'
+        this.ctx.fillText(room_number, 248, 62)
 
         this.ctx.font = '15pt "HNB"'
-        this.ctx.fillText(room_number, 248, 83)
+        this.ctx.fillText(room_name, 248, 83)
     }
 
 
