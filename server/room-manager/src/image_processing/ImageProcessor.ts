@@ -1,4 +1,5 @@
 import * as utils from '../utils'
+import path from "node:path";
 
 import {
     registerFont,
@@ -200,19 +201,19 @@ export class ImageProcessor {
 
     getIconFromVoltage(v: number) {
         let bat_img;
-        const path = './src/image_processing/assets/'
+        const paths = path.join(__dirname,'assets')
         if (v > 4150) {
-            bat_img = loadImage(path + "battery_5.png")
+            bat_img = loadImage(path.join(paths, "battery_5.png"))
         } else if (v > 4050) {
-            bat_img = loadImage(path + "battery_4.png")
+            bat_img = loadImage(path.join(paths, "battery_4.png"))
         } else if (v > 3950) {
-            bat_img = loadImage(path + "battery_3.png")
+            bat_img = loadImage(path.join(paths, "battery_3.png"))
         } else if (v > 3850) {
-            bat_img = loadImage(path + "battery_2.png")
+            bat_img = loadImage(path.join(paths, "battery_2.png"))
         } else if (v > 3800) {
-            bat_img = loadImage(path + "battery_1.png")
+            bat_img = loadImage(path.join(paths, "battery_1.png"))
         } else  {
-            bat_img = loadImage(path + "battery_0.png")
+            bat_img = loadImage(path.join(paths, "battery_0.png"))
         }
         return bat_img
     }
