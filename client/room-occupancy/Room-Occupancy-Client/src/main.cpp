@@ -12,7 +12,7 @@
 #include <SysConfig.h>
 #include <ETH.h>
 
-unsigned char b64_buff[1000] = {0};
+unsigned char b64_buff[800] = {0};
 unsigned char byte_buff[48000] = {0};
 
 bool eth_connection_established = false;
@@ -51,7 +51,8 @@ uint8_t getImageDataFromEndpoint() {
         if (httpResponseCode == HTTP_CODE_OK) {
             int len = http.getSize();
             WiFiClient *stream = http.getStreamPtr();
-            
+            delay(500);
+            //printf("len: %d\r\n", len);
             while (http.connected() && (len > 0 || len == -1)) {
               size_t size = stream->available();
               if (size) {
@@ -59,10 +60,11 @@ uint8_t getImageDataFromEndpoint() {
                 if (len > 0) {
                   len -= c;
                 }
-                size_t outlen;
+                size_t outlen = 0;
                 int size_left = 48000-buffer_offset;
                 if (size_left < 0) size_left = 0;
-                mbedtls_base64_decode(byte_buff+buffer_offset, size_left, &outlen, b64_buff, c);
+                int decode = mbedtls_base64_decode(byte_buff+buffer_offset, size_left, &outlen, b64_buff, c);
+              //  printf("Decode: %d Size b64:%d Offset: %d Left:%d Outlen: %d Read Bytes b64: %d \r\n", decode, size, buffer_offset, size_left, outlen, c);
                 buffer_offset = buffer_offset + outlen;
               }
               delay(1);
