@@ -159,8 +159,8 @@ export class RequestHandler {
 
         const now = ews.DateTime.Now
         let calendarData: IInfoPacket = {
-            current_time_string: now.MomentDate.toISOString(),
-            current_time_unix: now.MomentDate.unix(),
+            current_time_string: "",
+            current_time_unix: 0,
             hash: "",
             is_night: false,
             is_weekend: false,
@@ -202,8 +202,9 @@ export class RequestHandler {
                 calendarData.next_update_unix = updateTime.unix()
             }
         }
-
         const hash_string = JSON.stringify(calendarData)
+        calendarData.current_time_string = now.MomentDate.toISOString()
+        calendarData.current_time_unix = now.MomentDate.unix()
         calendarData.next_appointments = undefined
         calendarData.hash = crypto.createHash('md5').update(hash_string).digest('hex');
 

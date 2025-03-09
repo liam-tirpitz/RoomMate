@@ -202,8 +202,6 @@ export class ImageProcessor {
     getIconFromVoltage(v: number) {
         let bat_img;
         const paths = path.join(__dirname,'assets')
-        Logging.instance.logger.info("Dies das")
-        Logging.instance.logger.info(paths)
         if (v > 4150) {
             bat_img = loadImage(path.join(paths, "battery_5.png"))
         } else if (v > 4050) {
