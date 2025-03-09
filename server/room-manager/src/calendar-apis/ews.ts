@@ -136,7 +136,8 @@ export class EWSCalendarClient {
 
             for (let cEvent of response.CalendarEvents) {
                 const is_today = utils.isEventToday(cEvent.StartTime.MomentDate, cEvent.EndTime.MomentDate)
-                if (is_today) {
+                const has_passed = utils.hasEventPassed(cEvent.EndTime.MomentDate)
+                if (is_today && !has_passed) {
                     person_events.push(new PersonalInfo(cEvent.StartTime.MomentDate, cEvent.EndTime.MomentDate, cEvent.FreeBusyStatus))
                 }
             }

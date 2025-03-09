@@ -19,6 +19,11 @@ export function isEventNow(start: moment.Moment, end: moment.Moment): boolean {
     return (start.valueOf() <= now.valueOf() && end.valueOf() >= now.valueOf())
 }
 
+export function hasEventPassed(end: moment.Moment): boolean {
+    const now = ews.DateTime.Now
+    return (end.valueOf() <= now.valueOf())
+}
+
 export function getTimeStringFromDate(date: Date): string {
     return date.toLocaleTimeString(['de'], {hour: '2-digit', minute:'2-digit'})
 }
