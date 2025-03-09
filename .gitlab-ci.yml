@@ -67,7 +67,7 @@ nightly:
   tags:
     - did
   script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - echo "$CI_JOB_TOKEN" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - cd server
     - docker build -t $CI_REGISTRY/i5/infrastructure/room-mate/room-manager:nightly .
     - docker push $CI_REGISTRY/i5/infrastructure/room-mate/room-manager --all-tags
