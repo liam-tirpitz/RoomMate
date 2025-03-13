@@ -39,13 +39,9 @@ export class RequestHandler {
         } else if (calendarDetails.ical_info){
             return this.iCalClient.readUpcomingEventsToday(calendarDetails.ical_info)
         } else if (calendarDetails.persons) {
-            let appointments: PersonalInfo[];
-            let personal_appointments: PersonalInfo[][] = []
-            for (const person of calendarDetails.persons as IPerson[]) {
-                const ews_client = await this.getEWSClient(person.ews_info.tenant_id)
-                personal_appointments.push((await ews_client.readPersonsAvailabilityToday([person.ews_info.email]))[0])
-            }
-            appointments = personal_appointments.reduce((accumulator, value) => accumulator.concat(value), []); // TODO sorting so upcoming event is first
+            let appointments = await this.getPersonalStatus(calendarDetails.persons);
+            appointments = appointments.reduce((accumulator, value) => accumulator.concat(value), []); // TODO sorting so upcoming event is first
+            console.log(appointments)
             return appointments
         } else {
             return
@@ -61,6 +57,22 @@ export class RequestHandler {
         } else {
             return
         }
+    }
+
+    async getPersonalStatus(persons: IPerson[]) {
+        let ews_client: EWSCalendarClient
+        let freeBusyDetails: (CustomEvent|PersonalInfo)[] = []
+        for (const person of persons as IPerson[]) {
+            ews_client = await this.getEWSClient(person.ews_info.tenant_id)
+            const custom_message = this.getCurrentCustomMessage(ews_client, person)
+            if (await custom_message) {
+                freeBusyDetails.push(await custom_message)
+            } else {
+                const busy_status = this.getCurrentStatusFromPerson(ews_client, person)
+                freeBusyDetails.push(await busy_status)
+            }
+        }
+        return freeBusyDetails
     }
 
     getBusyFromPerson(infos : PersonalInfo[]): PersonalInfo {
@@ -113,18 +125,7 @@ export class RequestHandler {
         }
 
          if (calendarDetails.persons) {
-            let freeBusyDetails: (CustomEvent|PersonalInfo)[] = []
-            for (const person of calendarDetails.persons as IPerson[]) {
-                ews_client = await this.getEWSClient(person.ews_info.tenant_id)
-                const custom_message = this.getCurrentCustomMessage(ews_client, person)
-                if (await custom_message) {
-                    freeBusyDetails.push(await custom_message)
-                } else {
-                    const busy_status = this.getCurrentStatusFromPerson(ews_client, person)
-                    freeBusyDetails.push(await busy_status)
-                }
-
-            }
+            let freeBusyDetails: (CustomEvent|PersonalInfo)[] = await this.getPersonalStatus(calendarDetails.persons)
             image_processor = new OfficeImageProcesor()
             await image_processor.buildImage(calendarDetails, freeBusyDetails, voltage)
         } else {
