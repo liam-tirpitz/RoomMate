@@ -109,7 +109,7 @@ export class RequestHandler {
     }
 
 
-    async getImage(device_id: string, voltage: number): Promise<string> {
+    async getImage(device_id: string, voltage: number, png: boolean): Promise<any> {
         const calendarDetails = await this.dataRetrieval.getRoomForDevice(device_id)
         let image_processor
 
@@ -117,7 +117,7 @@ export class RequestHandler {
             image_processor = new SpecialStateImageProcessor()
             await image_processor.buildNewDeviceImage(device_id, voltage)
             Logging.instance.logger.warn('IDevice-ID not found.', {devid: device_id});
-            return image_processor.finalizeImage("new")
+            return image_processor.finalizeImage("new", png)
         }
         let ews_client: EWSCalendarClient
         if (calendarDetails.ews_info) {
@@ -139,7 +139,7 @@ export class RequestHandler {
                  await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments, voltage)
              }
         }
-        return await image_processor.finalizeImage(calendarDetails.id_string)
+        return await image_processor.finalizeImage(calendarDetails.id_string, png)
     }
 
 

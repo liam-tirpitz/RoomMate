@@ -56,8 +56,12 @@ export class ImageProcessor {
     }
 
 
-    async finalizeImage(room_id: string) {
-        this.rotate(90)
+    async finalizeImage(room_id: string, png: boolean = false) {
+
+        if(!png){
+            this.rotate(90)
+        }
+
         dithering(this.ctx, this.screenWidth, this.screenHeight, this.dithering_threshold, 0);
         let myImageData = this.ctx.getImageData(0, 0, this.screenHeight, this.screenWidth);
         const data_arr = this.horizontal1bit(Array.from(myImageData.data), this.screenHeight)
@@ -68,7 +72,12 @@ export class ImageProcessor {
         stream.pipe(out)
         out.on('finish', () =>Logging.instance.logger.info('PNG output generated.'))
 
-        return base64String
+        if (png) {
+            return stream
+        }else{
+            return base64String
+        }
+
     }
 
     bitswap(b) {

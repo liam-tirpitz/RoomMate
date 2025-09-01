@@ -15,15 +15,22 @@ export function imageEndpoint(fastify, _, done) {
 async function getImage(request: FastifyRequest, reply: FastifyReply)  {
     const devid = request.query['devid']
     const voltage = request.query['voltage']
+    const send_png =  request.query['png'] == "true"
+
     const test = { devid: devid, voltage: voltage};
     Logging.instance.logger.info('Image requested', test);
-    const result = await requestHandler.getImage(devid, voltage)
+    const result = await requestHandler.getImage(devid, voltage, send_png)
     if (result) {
         Logging.instance.logger.verbose('Image sent', test);
+
+        const content_type = send_png ? 'image/png' : 'text/plain'
+
         reply
             .code(200)
-            .header('Content-Type', 'text/plain')
+            .header('Content-Type', content_type)
             .send(result)
+        await reply
+
     } else {
         Logging.instance.logger.warn('Device-ID not found.', test);
 
