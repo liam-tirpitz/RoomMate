@@ -172,13 +172,18 @@ export class RequestHandler {
         };
 
         let next_update: moment.Moment = undefined
+
+
         if (appointments.length > 0) {
-            if (appointments[0].happeningNow(now)) {
-                next_update = appointments[0].end
-            } else {
-                next_update = appointments[0].start
+            if (appointments[0]) {
+                if (appointments[0].happeningNow(now)) {
+                    next_update = appointments[0].end
+                } else {
+                    next_update = appointments[0].start
+                }
             }
         }
+
         if (next_update) {
             calendarData.next_update_unix = next_update.unix()
         }
