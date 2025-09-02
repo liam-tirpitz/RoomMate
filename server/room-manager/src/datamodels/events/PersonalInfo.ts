@@ -1,6 +1,7 @@
 import {LegacyFreeBusyStatus} from "ews-javascript-api";
 import moment from "moment-timezone";
 import {SimpleEvent} from "./SimpleEvent";
+import * as utils from '../../utils'
 
 
 export class PersonalInfo extends SimpleEvent{
@@ -40,9 +41,9 @@ export class PersonalInfo extends SimpleEvent{
     private getByline(): string {
         switch (this.freeBusyStatus) {
             case LegacyFreeBusyStatus.OOF:
-                return "Until " + this.end.toDate().toLocaleDateString(undefined, {day: "2-digit", month: "2-digit", year: "numeric"})
+                return "Until " + utils.getDateStringFromDate(this.end.toDate())
             case LegacyFreeBusyStatus.Busy:
-                return "Until " + this.end.toDate().toLocaleTimeString(undefined, {hour: "2-digit", minute: "2-digit"})
+                return "Until " + utils.getDateStringFromDate(this.end.toDate())
             case LegacyFreeBusyStatus.WorkingElsewhere:
                 return ""
             default:
