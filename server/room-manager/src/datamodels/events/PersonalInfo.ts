@@ -43,7 +43,7 @@ export class PersonalInfo extends SimpleEvent{
             case LegacyFreeBusyStatus.OOF:
                 return "Until " + utils.getDateStringFromDate(this.end.toDate())
             case LegacyFreeBusyStatus.Busy:
-                return "Until " + utils.getDateStringFromDate(this.end.toDate())
+                return "Until " + utils.getTimeStringFromDate(this.end.toDate())
             case LegacyFreeBusyStatus.WorkingElsewhere:
                 return ""
             default:
