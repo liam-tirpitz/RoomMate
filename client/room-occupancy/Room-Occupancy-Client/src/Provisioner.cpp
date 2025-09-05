@@ -69,10 +69,11 @@ int setSleepInterval(int argc, char **argv)
     }
     Storage storage;
 
-    auto arg = int(argv[1]);
+    auto arg = atoi(argv[1]);
     storage.setRegularSleepTimeInS(arg);
 
     printf("Wakeup Interval saved\n");
+    printf("%d s \n", arg);
     
     return EXIT_SUCCESS;
 }
