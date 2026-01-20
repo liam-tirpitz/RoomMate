@@ -13,7 +13,7 @@
     "soon_threshold_in_min": 15,
     "night_start_hour": 19,
     "night_end_hour": 8,
-    "timezoe": "Europe/Berlin",
+    "timezone": "Europe/Berlin",
     "low_battery_voltage_cutoff_in_mv": 3100,
     "default_logo": "institute_logo.png"
 
