@@ -5,6 +5,7 @@ import * as ews from "ews-javascript-api";
 import {LegacyFreeBusyStatus} from "ews-javascript-api";
 import {DayOfWeek} from "ews-javascript-api/js/Enumerations/DayOfWeek";
 import crypto from "crypto";
+import moment from "moment-timezone";
 import {IInfoPacket} from "../../datamodels/IInfoPacket";
 import {SimpleEvent} from "./datamodels/events/SimpleEvent";
 import {IRoom, isRoom} from "../../datamodels/IRoom";
@@ -50,7 +51,7 @@ export class RequestHandler {
 
     getOoOFromPerson(infos : PersonalInfo[]): PersonalInfo {
         const result = infos.filter(value =>
-            value.freeBusyStatus == LegacyFreeBusyStatus.OOF && utils.isEventToday(value.start, value.end))
+            value.freeBusyStatus == LegacyFreeBusyStatus.OOF && utils.isEventNow(value.start, value.end))
         result.sort((a,b) => b.end.valueOf() - a.end.valueOf())
         if (result.length > 0) {
             return result[0]
@@ -60,52 +61,62 @@ export class RequestHandler {
     }
 
     async getPersonalStatus(persons: IPerson[]) {
+        return (await this.getPersonalStatusWithNextChange(persons)).statuses
+    }
+
+    // Returns the currently displayed status per person (undefined if there is none) and the earliest
+    // upcoming point in time at which one of the displayed statuses may change.
+    async getPersonalStatusWithNextChange(persons: IPerson[]): Promise<{statuses: (CustomEvent|PersonalInfo)[], nextChange: moment.Moment}> {
         let ews_client: EWSCalendarClient
         let freeBusyDetails: (CustomEvent|PersonalInfo)[] = []
+        let relevantEvents: SimpleEvent[] = []
         for (const person of persons as IPerson[]) {
             ews_client = await this.getEWSClient(person.ews_info.tenant_id)
-            const custom_message = this.getCurrentCustomMessage(ews_client, person)
-            if (await custom_message) {
-                freeBusyDetails.push(await custom_message)
+            const messagesToday = (await ews_client.readPersonsSpecificNotesToday(person.ews_info.email)) ?? []
+            relevantEvents.push(...messagesToday)
+            const custom_message = messagesToday.find((value) => value.happeningNow(ews.DateTime.Now))
+            if (custom_message) {
+                freeBusyDetails.push(custom_message)
             } else {
-                const busy_status = this.getCurrentStatusFromPerson(ews_client, person)
-                freeBusyDetails.push(await busy_status)
+                const availability = (await ews_client.readPersonsAvailabilityToday([person.ews_info.email]))[0] ?? []
+                relevantEvents.push(...availability.filter(value => this.isDisplayedFreeBusyStatus(value.freeBusyStatus)))
+                freeBusyDetails.push(this.getOoOFromPerson(availability) ?? this.getBusyFromPerson(availability))
             }
         }
-        return freeBusyDetails
+        return {statuses: freeBusyDetails, nextChange: this.getNextChange(relevantEvents)}
+    }
+
+    isDisplayedFreeBusyStatus(status: LegacyFreeBusyStatus): boolean {
+        return status == LegacyFreeBusyStatus.OOF
+            || status == LegacyFreeBusyStatus.Busy
+            || status == LegacyFreeBusyStatus.WorkingElsewhere
+    }
+
+    getNextChange(events: SimpleEvent[]): moment.Moment {
+        const now = ews.DateTime.Now.valueOf()
+        // Changes after today are picked up by the regular, night and weekend wakeups. Returning them here would
+        // let the device sleep through the weekend until e.g. the end of a multi-day out-of-office entry.
+        const end_of_today = moment().endOf('day').valueOf()
+        const boundaries = events
+            .reduce((accumulator, event) => accumulator.concat([event.start, event.end]), [] as moment.Moment[])
+            .filter(boundary => boundary.valueOf() > now && boundary.valueOf() <= end_of_today)
+        boundaries.sort((a, b) => a.valueOf() - b.valueOf())
+        return boundaries[0]
     }
 
     getBusyFromPerson(infos : PersonalInfo[]): PersonalInfo {
         const result = infos.filter(value =>
-            (value.freeBusyStatus == LegacyFreeBusyStatus.Busy || LegacyFreeBusyStatus.WorkingElsewhere)
+            (value.freeBusyStatus == LegacyFreeBusyStatus.Busy || value.freeBusyStatus == LegacyFreeBusyStatus.WorkingElsewhere)
             && utils.isEventNow(value.start, value.end))
-        result.sort((a,b) => b.end.valueOf() - a.end.valueOf())
+        // Prefer an actual meeting over working elsewhere, then the status that lasts the longest
+        result.sort((a,b) =>
+            Number(b.freeBusyStatus == LegacyFreeBusyStatus.Busy) - Number(a.freeBusyStatus == LegacyFreeBusyStatus.Busy)
+            || b.end.valueOf() - a.end.valueOf())
         if (result.length > 0) {
             return result[0]
         } else {
             return
         }
-    }
-
-    async getCurrentStatusFromPerson(ewsClient: EWSCalendarClient, person: IPerson) {
-        const result = await ewsClient.readPersonsAvailabilityToday([person.ews_info.email])
-        const ooOResult = this.getOoOFromPerson(result[0])
-        if (!ooOResult) {
-            return this.getBusyFromPerson(result[0])
-        } else {
-            return ooOResult
-        }
-    }
-
-    async getCurrentCustomMessage(ewsClient: EWSCalendarClient, person: IPerson) : Promise<CustomEvent> {
-        const messagesToday = await ewsClient.readPersonsSpecificNotesToday(person.ews_info.email)
-        if (messagesToday) {
-            const messagesNow = messagesToday.filter((value) => value.happeningNow(ews.DateTime.Now))
-            if (messagesNow.length > 0) {
-                return messagesNow[0]
-            }
-        }
-        return undefined
     }
 
 
@@ -119,11 +130,6 @@ export class RequestHandler {
             Logging.instance.logger.warn('IDevice-ID not found.', {devid: device_id});
             return image_processor.finalizeImage("new", png)
         }
-        let ews_client: EWSCalendarClient
-        if (calendarDetails.ews_info) {
-            ews_client = await this.getEWSClient(calendarDetails.ews_info.tenant_id)
-        }
-
          if (calendarDetails.persons) {
             let freeBusyDetails: (CustomEvent|PersonalInfo)[] = await this.getPersonalStatus(calendarDetails.persons)
             image_processor = new OfficeImageProcesor()
@@ -156,7 +162,15 @@ export class RequestHandler {
         }
 
         if (!calendarDetails) return
-        const appointments = await this.getAppointments(calendarDetails)
+        let appointments: SimpleEvent[]
+        let next_update: moment.Moment = undefined
+        if (calendarDetails.persons) {
+            const personalStatus = await this.getPersonalStatusWithNextChange(calendarDetails.persons)
+            appointments = personalStatus.statuses
+            next_update = personalStatus.nextChange
+        } else {
+            appointments = await this.getAppointments(calendarDetails)
+        }
 
         const now = ews.DateTime.Now
         let calendarData: IInfoPacket = {
@@ -171,10 +185,7 @@ export class RequestHandler {
             room_number: calendarDetails.id_string
         };
 
-        let next_update: moment.Moment = undefined
-
-
-        if (appointments.length > 0) {
+        if (!calendarDetails.persons && appointments.length > 0) {
             if (appointments[0]) {
                 if (appointments[0].happeningNow(now)) {
                     next_update = appointments[0].end
@@ -202,13 +213,16 @@ export class RequestHandler {
             updateTime.set("hour", organization.night_end_hour)
             calendarData.next_update_unix = updateTime.unix()
         } else if (calendarData.is_weekend) { // Its the weekend, but not the night
-            if (appointments.length == 0) {
+            // Nothing changes on the screen today, so sleep until the next morning. Devices are told to
+            // sleep until next_update_unix on weekends, so this must never stay at 0.
+            if (!next_update) {
                 let updateTime = now.AddDays(1).MomentDate.startOf("day")
                 updateTime.set("hour", organization.night_end_hour)
                 calendarData.next_update_unix = updateTime.unix()
             }
         }
-        const hash_string = JSON.stringify(calendarData)
+        // For offices, the next change is not visible on the screen and must not trigger a redraw on its own
+        const hash_string = JSON.stringify(calendarDetails.persons ? {...calendarData, next_update_unix: 0} : calendarData)
         calendarData.current_time_string = now.MomentDate.toISOString()
         calendarData.current_time_unix = now.MomentDate.unix()
         calendarData.next_appointments = undefined
