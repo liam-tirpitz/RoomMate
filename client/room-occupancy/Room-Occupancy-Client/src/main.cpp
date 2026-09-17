@@ -12,8 +12,11 @@
 #include <SysConfig.h>
 #include <ETH.h>
 
+#define IMAGE_BUFFER_SIZE 48000
+#define IMAGE_DOWNLOAD_TIMEOUT_MS 30000
+
 unsigned char b64_buff[800] = {0};
-unsigned char byte_buff[48000] = {0};
+unsigned char byte_buff[IMAGE_BUFFER_SIZE] = {0};
 
 bool eth_connection_established = false;
 
@@ -46,33 +49,55 @@ uint8_t getImageDataFromEndpoint() {
       http.begin(endpoint);
 
       int httpResponseCode = http.GET();
-      int buffer_offset = 0;
+      size_t buffer_offset = 0;
       if (httpResponseCode>0) {
         if (httpResponseCode == HTTP_CODE_OK) {
             int len = http.getSize();
             WiFiClient *stream = http.getStreamPtr();
-            delay(500);
-            //printf("len: %d\r\n", len);
+            // Base64 can only be decoded in complete 4-character groups, but the stream
+            // delivers arbitrary chunk sizes. Up to 3 leftover characters are carried
+            // over to the front of b64_buff and decoded together with the next chunk.
+            size_t carry = 0;
+            bool decode_failed = false;
+            unsigned long download_start = millis();
             while (http.connected() && (len > 0 || len == -1)) {
+              if (millis() - download_start > IMAGE_DOWNLOAD_TIMEOUT_MS) {
+                printf("Image download timed out\n");
+                decode_failed = true;
+                break;
+              }
               size_t size = stream->available();
               if (size) {
-                int c = stream->readBytes(b64_buff, ((size > sizeof(b64_buff)) ? sizeof(b64_buff) : size));
+                size_t space = sizeof(b64_buff) - carry;
+                int c = stream->readBytes(b64_buff + carry, (size > space) ? space : size);
                 if (len > 0) {
                   len -= c;
                 }
-                size_t outlen = 0;
-                int size_left = 48000-buffer_offset;
-                if (size_left < 0) size_left = 0;
-                int decode = mbedtls_base64_decode(byte_buff+buffer_offset, size_left, &outlen, b64_buff, c);
-              //  printf("Decode: %d Size b64:%d Offset: %d Left:%d Outlen: %d Read Bytes b64: %d \r\n", decode, size, buffer_offset, size_left, outlen, c);
-                buffer_offset = buffer_offset + outlen;
+                size_t available_chars = carry + c;
+                size_t decodable_chars = available_chars - (available_chars % 4);
+                if (decodable_chars > 0) {
+                  size_t outlen = 0;
+                  int decode = mbedtls_base64_decode(byte_buff + buffer_offset, IMAGE_BUFFER_SIZE - buffer_offset,
+                                                     &outlen, b64_buff, decodable_chars);
+                  if (decode != 0) {
+                    printf("Base64 decode failed: %d at offset %u\n", decode, (unsigned) buffer_offset);
+                    decode_failed = true;
+                    break;
+                  }
+                  buffer_offset += outlen;
+                }
+                carry = available_chars - decodable_chars;
+                memmove(b64_buff, b64_buff + decodable_chars, carry);
+              } else {
+                delay(1);
               }
-              delay(1);
             }
 
-          // Serial.println();
-          // Serial.print("[HTTP] connection closed or file end.\n");
           http.end();
+          if (decode_failed || carry != 0 || buffer_offset != IMAGE_BUFFER_SIZE) {
+            printf("Incomplete image: %u of %d bytes\n", (unsigned) buffer_offset, IMAGE_BUFFER_SIZE);
+            return 4;
+          }
           return 0;
         }
       }
@@ -136,8 +161,9 @@ void handleMetadata() {
         screen.setup();
         screen.drawImage(byte_buff);
         screen.sleep();
+        // Only remember the hash after a successful draw, so a failed download is retried on the next wakeup
+        storage.setHash(hash);
     }
-    storage.setHash(hash);
   } else {
       printf("Im Westen nichts neues.\n");
   }
