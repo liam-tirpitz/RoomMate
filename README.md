@@ -76,7 +76,8 @@ Secrets can be placed in an optional `.env` file next to the example folders.
 
 The server answers on port 3001:
 - `/data` and `/image` are the endpoints the RoomMates call.
-- `/api` is the management API, enabled by `API_TOKEN`.
+- `/api` is the management API, enabled by `API_TOKEN` and/or OIDC.
+- `/auth` handles the OIDC sign-in, if configured.
 - `/` is the web UI, only if `WEB_UI=true` (see below).
 
 By default the server reads its configuration from `calendars.json` and serves no web UI, as before.
@@ -104,7 +105,7 @@ Battery samples are kept at most every 10 minutes per device and deleted after `
 RoomMates send their voltage with every `/data` request since the firmware that added battery reporting; older firmware only reports it when the screen changes, so its history is sparser.
 
 ### Web UI
-`WEB_UI=true` serves the web UI at `/`; it is off by default. It needs `API_TOKEN` to sign in.
+`WEB_UI=true` serves the web UI at `/`; it is off by default. You sign in with OIDC or, without OIDC, with `API_TOKEN`.
 With `STORAGE=FILE` it is read-only.
 The Docker image contains the UI, so no build is needed there.
 
@@ -114,11 +115,37 @@ and rooms, offices, Exchange tenants, logos and the organization settings (timez
 Exchange passwords are never entered in the UI: a tenant names the environment variable that holds its password, and the UI shows whether it is set and can test the connection.
 
 ### Access
-`API_TOKEN` enables the management API and with it the web UI, which asks for the token when you sign in.
-API requests must send it as `Authorization: Bearer <token>`.
-Without it, the management API answers `403`.
+`API_TOKEN` enables the management API for scripts, which send it as `Authorization: Bearer <token>`.
+Without OIDC, the web UI asks for the same token when you sign in.
+With neither `API_TOKEN` nor OIDC, the management API answers `403`.
 The device endpoints `/data` and `/image` are always open, because devices can't authenticate.
-Even with a token, only expose port 3001 to the network your devices and administrators use.
+Only expose port 3001 to the network your devices and administrators use.
+
+### Sign-in with OIDC
+The web UI can sign in through an OpenID Connect provider such as Keycloak, configured like in our greenlight project.
+Everyone who signs in can change every sign, so only the users and groups you list are let in.
+`API_TOKEN` keeps working for scripts; the login page then only offers the OIDC sign-in.
+
+| Variable | Required | Description |
+|---|---|---|
+| `OIDC_CLIENT_ID` | Yes | Client ID; setting it enables OIDC |
+| `OIDC_CLIENT_SECRET` | Yes | Client secret (confidential client) |
+| `OIDC_AUTHORIZATION_ENDPOINT` | Yes | e.g. `https://your-keycloak/realms/your-realm/protocol/openid-connect/auth` |
+| `OIDC_TOKEN_ENDPOINT` | Yes | `.../protocol/openid-connect/token` |
+| `OIDC_USERINFO_ENDPOINT` | Yes | `.../protocol/openid-connect/userinfo` |
+| `OIDC_JWKS_ENDPOINT` | Yes | `.../protocol/openid-connect/certs` |
+| `PUBLIC_URL` | Yes | Where browsers reach RoomMate, e.g. `https://roommate.your-domain.example.com`. The provider must allow `<PUBLIC_URL>/auth/callback` as redirect URI. With `https`, cookies are marked Secure. |
+| `OIDC_ADMIN_GROUPS` | One of these three | Comma-separated groups (from the `groups` or `roles` claim) that may sign in. Keycloak's group paths like `/roommate-admins` match `roommate-admins`. |
+| `OIDC_ADMIN_SUBS` | | Comma-separated `sub` values that may sign in. greenlight's `INITIAL_ADMIN_SUB` is accepted too. |
+| `OIDC_ADMIN_EMAILS` | | Comma-separated verified email addresses that may sign in. greenlight's `INITIAL_ADMIN_EMAIL` is accepted too. |
+| `SESSION_SECRET` | Recommended | Long random string that protects the session cookie. Without it, a restart signs everybody out. |
+| `OIDC_ISSUER` | No | If set, the ID token's issuer must match, e.g. `https://your-keycloak/realms/your-realm` |
+| `OIDC_SIGN_ALGO` | No | ID token signature algorithm, default `RS256` |
+| `OIDC_SCOPES` | No | Default `openid profile email` |
+
+If `OIDC_CLIENT_ID` is set but a required variable is missing, the server refuses to start.
+For group-based access in Keycloak, add a "Group Membership" mapper with the claim name `groups` to the client, included in the userinfo response.
+A session lasts 8 hours; signing out ends the RoomMate session but not the one at the provider.
 For details, please check out the [Deployment Examples](server/room-manager/deployment_example).
 
 

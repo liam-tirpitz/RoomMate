@@ -5,3 +5,12 @@ export interface IServerStatus {
     version: string
     auth: 'token' | 'oidc'
 }
+
+// Returned by GET /api/auth/me
+export interface IAuthInfo {
+    authenticated: boolean
+    // How this request was authenticated: bearer API_TOKEN or the OIDC session cookie
+    method: 'token' | 'oidc'
+    // Only for OIDC sessions
+    user?: {name: string, email?: string}
+}

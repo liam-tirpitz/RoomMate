@@ -1,20 +1,29 @@
 import fastify from 'fastify'
+import cookie from "@fastify/cookie";
 import {dataEndpoint, imageEndpoint} from "./routes/state-endpoint";
 import {Logging} from "./logging";
 import {IDBClient} from "./db/IDBClient";
 import {ConfigManager} from "./ConfigManager";
 import {ManagementApi} from "./routes/management-api";
 import {registerWebUi} from "./routes/web-ui";
+import {initAuth} from "./auth/requireAuth";
+import {OidcRoutes} from "./auth/oidc-routes";
+
+// An incomplete OIDC configuration stops the server instead of leaving the API open or unusable
+try {
+    initAuth()
+} catch (err) {
+    Logging.instance.logger.error(err.message)
+    process.exit(1)
+}
 
 const server = fastify()
 
+server.register(cookie)
 server.register(dataEndpoint, { prefix: "/data" })
 server.register(imageEndpoint, { prefix: "/image" })
 server.register(ManagementApi, { prefix: "/api" })
-
-if (!process.env.API_TOKEN) {
-    Logging.instance.logger.warn("API_TOKEN is not set, the management API is disabled.")
-}
+server.register(OidcRoutes, { prefix: "/auth" })
 
 
 
