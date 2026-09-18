@@ -222,8 +222,13 @@ export class RequestHandler {
                 calendarData.next_update_unix = updateTime.unix()
             }
         }
-        // For offices, the next change is not visible on the screen and must not trigger a redraw on its own
-        const hash_string = JSON.stringify(calendarDetails.persons ? {...calendarData, next_update_unix: 0} : calendarData)
+        // For offices, the next change is not visible on the screen and must not trigger a redraw on its own.
+        // The footer shows the date, so it has to change the hash once per day.
+        const hash_string = JSON.stringify({
+            ...calendarData,
+            next_update_unix: calendarDetails.persons ? 0 : calendarData.next_update_unix,
+            footer_date: utils.getDateStringFromDate(now.MomentDate.toDate())
+        })
         calendarData.current_time_string = now.MomentDate.toISOString()
         calendarData.current_time_unix = now.MomentDate.unix()
         calendarData.next_appointments = undefined
