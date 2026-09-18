@@ -70,7 +70,7 @@ You can find an example on a possible docker-compose setup with that image in ou
 You can download the example and start the server with `docker compose up -d` after you changed the configuration for your needs.
 The image is published as `ghcr.io/liam-tirpitz/roommate/room-manager` (`latest` for releases, `nightly` for the development branch).
 The examples mount the whole [config](server/room-manager/deployment_example/config) directory, which contains `calendars.json` and the logos, to `/home/node/app/room-manager/config`, and the logs to `/home/node/app/room-manager/logs`.
-Secrets can be placed in an optional `.env` file next to the `file` and `mongo` folders.
+Secrets can be placed in an optional `.env` file next to the `file` folder.
 
 Alternatively, you can clone the repository, install node and start the server with
 
@@ -81,8 +81,8 @@ npm run start
 ```
 Make sure to pass a correct configuration and secrets.
 The following environment variables are recognized:
-```STORAGE``` can either be set to ```MONGO``` or ```FILE``` (default).
-This determines if a MongoDB instance is expected as the storage backend or if a JSON configuration file is used.
+```STORAGE``` is currently always ```FILE``` (default): the configuration comes from a JSON file.
+The MongoDB backend was removed; a writable SQLite backend is being added on the `feature-webapp` branch.
 Please note, that we currently do not support changing data via the API for the File-Backend. Write requests answer `501`.
 
 ```API_TOKEN``` enables the management API (`/rooms`, `/devices`, `/ewsusers`, `/organization`).

@@ -1,4 +1,3 @@
-import {MongoDBClient} from "../db/MongoDBClient";
 import {IRoom} from "../../../datamodels/IRoom";
 import {
     FastifyInstance,

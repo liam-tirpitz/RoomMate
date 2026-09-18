@@ -3,7 +3,6 @@ import {IEWSTenant} from "../../../datamodels/IEWSTenant";
 import {IDevice} from "../../../datamodels/IDevice";
 import {IOrganization} from "../../../datamodels/IOrganization";
 import {IRoom, isRoom} from "../../../datamodels/IRoom";
-import {WithId} from "mongodb";
 
 export class FileDBClient implements IDBClient {
     calendars: any
@@ -52,7 +51,7 @@ export class FileDBClient implements IDBClient {
     }
 
 
-    getDevice(device_id: string): Promise<WithId<IDevice> | null> {
+    getDevice(device_id: string): Promise<IDevice | null> {
         return Promise.resolve(undefined);
     }
 
@@ -66,7 +65,7 @@ export class FileDBClient implements IDBClient {
     }
 
 
-    getDevices(): Promise<WithId<IDevice>[]> {
+    getDevices(): Promise<IDevice[]> {
         return Promise.resolve([]);
     }
 
