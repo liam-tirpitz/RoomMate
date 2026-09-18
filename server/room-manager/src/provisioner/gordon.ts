@@ -1,109 +1,112 @@
-// or
-import {SerialPort, ReadlineParser, ReadyParser, DelimiterParser} from 'serialport'
-// Create a port
+// Gordon provisions RoomMates connected via USB with WiFi credentials and the server endpoint.
+// The PSK of each device is read from the environment variable PSK_<MAC without colons>.
+import {SerialPort, DelimiterParser} from 'serialport'
 
-const ssid = "RWTH-devices"
-const endpoint = 'http://your-server.example.com:3001/'
+const ssid = process.env.GORDON_SSID
+const endpoint = process.env.GORDON_ENDPOINT
 
+// USB-to-serial bridge of the Adafruit Feather ESP32 V2 (WCH CH9102F)
+const SUPPORTED_USB_IDS = [{vendorId: "1a86", productId: "55d4"}]
+const PROMPT = 'RoomMate>'
+const COMMAND_TIMEOUT_MS = 5000
+const POLL_INTERVAL_MS = 5000
+const MAC_PATTERN = /([0-9A-F]{2}:){5}[0-9A-F]{2}/i
 
-function getMAC(port, parser): Promise<string>{
-    return new Promise(function(resolve, reject) {
-        port.write('wifi.getMAC\n', function () {
-            parser.on('data', (data) => {
-                resolve(data)
-            })
-        })
-    });
-}
-
-function setCredentials(port, parser, ssid, psk): Promise<string>{
-    return new Promise(function(resolve, reject) {
-        port.write('wifi.setCredentials ' + ssid + ' ' + psk + '\n', function () {
-            parser.on('data', (data) => {
-                resolve(data)
-            })
-        })
-    });
-}
-
-function setEndpoint(port, parser, endpoint): Promise<string>{
-    return new Promise(function(resolve, reject) {
-        port.write('config.setEndpoint ' + endpoint + '\n', function () {
-            parser.on('data', (data) => {
-                resolve(data)
-            })
-        })
-    });
-}
-
-function restart(port, parser): Promise<string>{
-    return new Promise(function(resolve, reject) {
-        port.write('restart\n', function () {
-            parser.on('data', (data) => {
-                resolve(data)
-            })
-        })
-    });
-}
-
-
-
-
-async function start() {
-    const devices = await SerialPort.list()
-    if (devices.length == 0) {
-        console.log("No devices found!")
-        return
-    } else {
-        for (const device of devices) {
-            console.log(device)
-            const port = new SerialPort({
-                path: device.path,
-                baudRate: 115200,
-            }).setEncoding('utf8')
-            const parser = port.pipe(new DelimiterParser(
-                {delimiter: 'RoomMate>'})).setEncoding('utf8');
-
-            port.on('open', function () {
-                console.log('Port Open')
-                port.set({
-                    dtr: true,
-                    rts: true
-                });
-            })
-
-            const mac = ((await getMAC(port, parser)).split('\r\n')[1]).replace(/:/g, "")
-            console.log(mac)
-            const psk = process.env["PSK_" + mac]
-            if (psk == undefined) {
-                console.log("Please configure a PSK for this device first!")
-            } else {
-                console.log("Start provisioning")
-                let answer = await setCredentials(port, parser, ssid, psk)
-                console.log(answer)
-                answer = await setEndpoint(port, parser, endpoint)
-                console.log(answer)
-                answer = await restart(port, parser)
-            }
-            port.close()
+// Sends a command and resolves with the console output up to the next prompt
+function sendCommand(port: SerialPort, parser: DelimiterParser, command: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const onData = (data: string) => {
+            clearTimeout(timer)
+            resolve(data)
         }
+        const timer = setTimeout(() => {
+            parser.off('data', onData)
+            reject(new Error(`No answer to "${command.split(' ')[0]}" within ${COMMAND_TIMEOUT_MS} ms`))
+        }, COMMAND_TIMEOUT_MS)
+        parser.once('data', onData)
+        port.write(command + '\n')
+    })
+}
+
+function openPort(path: string): Promise<SerialPort> {
+    return new Promise((resolve, reject) => {
+        const port = new SerialPort({path: path, baudRate: 115200}, (err) => {
+            if (err) return reject(err)
+            port.set({dtr: true, rts: true}, () => resolve(port))
+        })
+    })
+}
+
+function closePort(port: SerialPort): Promise<void> {
+    return new Promise((resolve) => port.isOpen ? port.close(() => resolve()) : resolve())
+}
+
+function isSupportedDevice(port: {vendorId?: string, productId?: string}): boolean {
+    return SUPPORTED_USB_IDS.some(id =>
+        port.vendorId?.toLowerCase() == id.vendorId && port.productId?.toLowerCase() == id.productId)
+}
+
+// The first answer can still be the boot banner, so ask a few times
+async function readMAC(port: SerialPort, parser: DelimiterParser): Promise<string | undefined> {
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const answer = await sendCommand(port, parser, 'wifi.getMAC').catch(() => "")
+        const mac = answer.match(MAC_PATTERN)?.[0]
+        if (mac) return mac
+    }
+    return undefined
+}
+
+async function provision(path: string) {
+    const port = await openPort(path)
+    port.setEncoding('utf8')
+    const parser = port.pipe(new DelimiterParser({delimiter: PROMPT})).setEncoding('utf8')
+    try {
+        const mac = await readMAC(port, parser)
+        if (!mac) {
+            console.log(`${path}: not a RoomMate, skipping`)
+            return
+        }
+        const devid = mac.replace(/:/g, "")
+        const psk = process.env["PSK_" + devid] ?? process.env["PSK_" + devid.toLowerCase()]
+        if (psk == undefined) {
+            console.log(`${path}: please configure PSK_${devid.toLowerCase()} for ${mac} first!`)
+            return
+        }
+        console.log(`${path}: provisioning ${mac}`)
+        console.log(await sendCommand(port, parser, `wifi.setCredentials ${ssid} ${psk}`))
+        console.log(await sendCommand(port, parser, `config.setEndpoint ${endpoint}`))
+        // The device restarts before it prints a new prompt, so a missing answer is expected here
+        await sendCommand(port, parser, 'restart').catch(() => undefined)
+        console.log(`${path}: ${mac} provisioned`)
+    } finally {
+        await closePort(port)
     }
 }
 
-function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
-
 async function run() {
+    if (!ssid || !endpoint) {
+        console.log("Please set GORDON_SSID and GORDON_ENDPOINT, e.g. GORDON_ENDPOINT=http://your-server.example.com:3001/")
+        process.exit(1)
+    }
+    // Ports that were already handled. A port is provisioned again only after it was disconnected.
+    const handled = new Set<string>()
+    console.log("Waiting for RoomMates on USB...")
     while (true) {
-        try {
-            await start()
-        } catch (e) {
-            console.log(e)
+        const ports = (await SerialPort.list()).filter(isSupportedDevice)
+        const connected = new Set(ports.map(port => port.path))
+        for (const path of handled) {
+            if (!connected.has(path)) handled.delete(path)
         }
-        await sleep(5000)
+        for (const port of ports) {
+            if (handled.has(port.path)) continue
+            handled.add(port.path)
+            try {
+                await provision(port.path)
+            } catch (e) {
+                console.log(`${port.path}: ${e.message}`)
+            }
+        }
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS))
     }
 }
 
