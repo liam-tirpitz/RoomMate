@@ -6,7 +6,10 @@
   }
   <span class="title">RoomMate</span>
   <span class="spacer"></span>
-  <button mat-icon-button aria-label="Sign out" (click)="logout()">
+  @if (userName) {
+    <span class="user" [title]="auth.user?.email ?? ''">{{ userName }}</span>
+  }
+  <button mat-icon-button aria-label="Sign out" title="Sign out" (click)="logout()">
     <mat-icon>logout</mat-icon>
   </button>
 </mat-toolbar>

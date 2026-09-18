@@ -35,7 +35,7 @@ export class ShellComponent implements OnInit {
     {path: '/settings', label: 'Settings', icon: 'settings'},
   ];
 
-  constructor(private observer: BreakpointObserver, private auth: AuthService,
+  constructor(private observer: BreakpointObserver, readonly auth: AuthService,
               private statusService: StatusService, private router: Router) {}
 
   ngOnInit() {
@@ -57,8 +57,14 @@ export class ShellComponent implements OnInit {
     }
   }
 
+  get userName(): string | undefined {
+    return this.auth.user?.name;
+  }
+
   logout() {
-    this.auth.logout();
-    this.router.navigate(['/login']);
+    // An OIDC session is ended by the server, which then shows the login page
+    if (!this.auth.logout()) {
+      this.router.navigate(['/login']);
+    }
   }
 }

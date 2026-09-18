@@ -6,6 +6,7 @@ import {catchError} from 'rxjs/operators';
 import {AuthService} from '../api/auth.service';
 
 // Adds the bearer token to management API calls and sends the user back to the login page on 401.
+// OIDC sessions need nothing here: the browser sends the session cookie itself.
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -16,7 +17,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   return next(request).pipe(
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse && error.status === 401 && !request.url.startsWith('/api/auth/')) {
-        auth.logout();
+        auth.clear();
         router.navigate(['/login'], {queryParams: {returnUrl: router.url}});
       }
       return throwError(() => error);

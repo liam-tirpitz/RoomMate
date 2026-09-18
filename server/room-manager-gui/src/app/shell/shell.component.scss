@@ -56,3 +56,12 @@ mat-sidenav {
   padding: 1rem;
   max-width: 80rem;
 }
+
+.user {
+  margin-right: 0.5rem;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 40vw;
+}

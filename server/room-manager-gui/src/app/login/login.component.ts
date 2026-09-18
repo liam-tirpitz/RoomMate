@@ -27,6 +27,14 @@ export class LoginComponent implements OnInit {
 
   ngOnInit() {
     this.statusService.get().subscribe(status => this.status = status);
+    // Set by the server when an OIDC sign-in failed or the user is not allowed in
+    this.error = this.route.snapshot.queryParamMap.get('error') ?? '';
+  }
+
+  // The server's OIDC flow; it returns to returnTo afterwards
+  signIn() {
+    this.busy = true;
+    this.auth.redirect(`/auth/login?returnTo=${encodeURIComponent(this.returnUrl)}`);
   }
 
   get returnUrl(): string {

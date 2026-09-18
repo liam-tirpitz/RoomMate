@@ -6,8 +6,11 @@
     </mat-card-header>
     <mat-card-content>
       @if (status?.auth === 'oidc') {
-        <p>This server uses single sign-on.</p>
-        <a mat-flat-button color="primary" href="/auth/login">Sign in</a>
+        <p>Sign in with your organization account.</p>
+        @if (error) {
+          <p class="error">{{ error }}</p>
+        }
+        <button mat-flat-button color="primary" type="button" (click)="signIn()" [disabled]="busy">Sign in</button>
       } @else {
         <form (ngSubmit)="submit()">
           <mat-form-field appearance="outline" class="full-width">
