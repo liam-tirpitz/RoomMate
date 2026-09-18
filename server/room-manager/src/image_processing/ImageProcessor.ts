@@ -25,6 +25,8 @@ export class ImageProcessor {
     ctx: CanvasRenderingContext2D;
     canvas: Canvas;
     dithering_threshold: number = 128
+    // Index into the types of dithering(): 0 binary, 1 bayer, 2 floydsteinberg, 3 atkinson
+    dithering_type: number = 3
     remove_zero_commas: boolean = false
     _bitswap: boolean = false
     screenWidth = 480
@@ -60,18 +62,29 @@ export class ImageProcessor {
     }
 
 
-    // Dithers the screen and returns it twice: as a PNG the way it looks on the sign (for the web UI and
-    // /image?png=true) and rotated by 90° and packed to 1 bit per pixel for the display (base64).
-    // The dithering is a plain threshold, so taking the PNG before the rotation shows exactly the same pixels.
+    // Returns the screen twice: rotated by 90°, dithered and packed to 1 bit per pixel for the display (base64),
+    // and as a PNG of exactly those pixels turned back upright, for the web UI and /image?png=true.
+    // Dithering diffuses errors along the rows, so it runs on the rotated canvas the device draws.
     async finalizeImage(): Promise<IRenderedScreen> {
-        dithering(this.ctx, this.screenWidth, this.screenHeight, this.dithering_threshold, 0);
-        const png = this.canvas.toBuffer('image/png')
-
         this.rotate(90)
+
+        // The canvas is 800x480 after the rotation, so use its current size rather than the screen size
+        dithering(this.ctx, this.canvas.width, this.canvas.height, this.dithering_threshold, this.dithering_type);
         let myImageData = this.ctx.getImageData(0, 0, this.screenHeight, this.screenWidth);
         const data_arr = this.horizontal1bit(Array.from(myImageData.data), this.screenHeight)
         const packed = btoa(String.fromCharCode.apply(null, data_arr));
-        return {packed, png}
+        return {packed, png: this.uprightPng()}
+    }
+
+    // Undoes rotate(90): a pixel at (x, y) of the rotated canvas goes back to (y, screenHeight - x).
+    // A quarter turn moves whole pixels, so the black and white pixels stay exactly as dithered.
+    uprightPng(): Buffer {
+        const upright = createCanvas(this.screenWidth, this.screenHeight)
+        const ctx = upright.getContext('2d')
+        ctx.imageSmoothingEnabled = false
+        ctx.setTransform(0, -1, 1, 0, 0, this.screenHeight)
+        ctx.drawImage(this.canvas, 0, 0)
+        return upright.toBuffer('image/png')
     }
 
     bitswap(b) {
