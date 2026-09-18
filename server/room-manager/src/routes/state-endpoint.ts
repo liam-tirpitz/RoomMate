@@ -35,8 +35,8 @@ async function getImage(request: FastifyRequest, reply: FastifyReply)  {
         Logging.instance.logger.warn('Device-ID not found.', test);
 
         reply
-            .code(200)
-            .send("Device-ID not found.")
+            .code(404)
+            .send({error: "Device-ID not found."})
     }
 }
 
@@ -54,11 +54,10 @@ async function getData(request: FastifyRequest, reply: FastifyReply) {
             .code(200)
             .send(result)
     } else {
-        reply.statusCode = 404
         Logging.instance.logger.warn('Device-ID not found.', { devid: devid});
         reply
-            .code(200)
-            .send("Device-ID not found.")
+            .code(404)
+            .send({error: "Device-ID not found."})
     }
 }
 

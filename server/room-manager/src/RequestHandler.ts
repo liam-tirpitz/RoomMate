@@ -149,9 +149,10 @@ export class RequestHandler {
     }
 
 
-    async getData(device_id: string): Promise<string> {
+    async getData(device_id: string): Promise<string | null> {
         const organization = await this.dataRetrieval.getOrganization()
         const device = await this.dataRetrieval.getDeviceFromHardwareID(device_id)
+        if (!device) return null
         let calendarDetails;
         if (isRoom(device.room_id)) {
             calendarDetails  = device.room_id
@@ -161,7 +162,7 @@ export class RequestHandler {
 
         }
 
-        if (!calendarDetails) return
+        if (!calendarDetails) return null
         let appointments: SimpleEvent[]
         let next_update: moment.Moment = undefined
         if (calendarDetails.persons) {

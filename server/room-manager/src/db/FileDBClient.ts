@@ -62,7 +62,7 @@ export class FileDBClient implements IDBClient {
                 return Promise.resolve(device)
             }
         }
-        return undefined
+        return Promise.resolve(undefined)
     }
 
 
@@ -96,7 +96,7 @@ export class FileDBClient implements IDBClient {
                 }
             }
         }
-        return undefined
+        return Promise.resolve(undefined)
 
     }
 
