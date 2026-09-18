@@ -66,11 +66,18 @@ If the necessary permissions are not set, the display will function as a static 
 
 ## Server Deployment
 For an easy deployment of the server component, we recommend using our Docker image.
-You can find an example on a possible docker-compose setup with that image in our [Deployment Examples](server/room-manager/deployment_example).
-You can download the example and start the server with `docker compose up -d` after you changed the configuration for your needs.
+You can find examples for a docker-compose setup with that image in our [Deployment Examples](server/room-manager/deployment_example):
+[sqlite](server/room-manager/deployment_example/sqlite/docker-compose.yml) keeps the configuration in a database that you edit in the web UI,
+[file](server/room-manager/deployment_example/file/docker-compose.yml) reads it from `calendars.json`.
+You can download an example and start the server with `docker compose up -d` after you changed the configuration for your needs.
 The image is published as `ghcr.io/liam-tirpitz/roommate/room-manager` (`latest` for releases, `nightly` for the development branch).
-The examples mount the whole [config](server/room-manager/deployment_example/config) directory, which contains `calendars.json` and the logos, to `/home/node/app/room-manager/config`, and the logs to `/home/node/app/room-manager/logs`.
-Secrets can be placed in an optional `.env` file next to the `file` folder.
+The examples mount the whole [config](server/room-manager/deployment_example/config) directory, which contains `calendars.json`, the logos and the SQLite database, to `/home/node/app/room-manager/config`, and the logs to `/home/node/app/room-manager/logs`.
+Secrets can be placed in an optional `.env` file next to the example folders.
+
+The server answers on port 3001:
+- `/` is the web UI (see below).
+- `/api` is the management API used by the web UI.
+- `/data` and `/image` are the endpoints the RoomMates call.
 
 Alternatively, you can clone the repository, install node and start the server with
 
@@ -80,20 +87,37 @@ npm run build
 npm run start
 ```
 Make sure to pass a correct configuration and secrets.
-The following environment variables are recognized:
-```STORAGE``` is currently always ```FILE``` (default): the configuration comes from a JSON file.
-The MongoDB backend was removed; a writable SQLite backend is being added on the `feature-webapp` branch.
-Please note, that we currently do not support changing data via the API for the File-Backend. Write requests answer `501`.
+To serve the web UI in this setup, build it in `server/room-manager-gui` with `npm ci && npx ng build` and copy `dist/room-manager-gui/browser` to `server/room-manager/public`.
+Without it, the server runs the API and the device endpoints only.
 
-```API_TOKEN``` enables the management API (`/rooms`, `/devices`, `/ewsusers`, `/organization`).
-Requests must send it as `Authorization: Bearer <token>`.
+### Storage
+`STORAGE` selects where the configuration comes from:
+- `FILE` (default): the configuration is read once at startup from `config/calendars.json`. Changes need an edit of the file and a restart. The web UI works in read-only mode, and write requests to the API answer `501`.
+- `SQLITE`: the configuration lives in a SQLite database at `DB_PATH` (default `config/roommate.sqlite`, so it is part of the mounted config directory) and is edited in the web UI. On the first start with an empty database, the server imports `config/calendars.json` if it exists and logs what it imported. `npm run import-config [path]` does the same by hand for an empty database.
+
+The MongoDB backend was removed.
+
+Only the SQLite backend records what the devices report: the time of the last request, the battery voltage and the last screen sent to each device.
+Battery samples are kept at most every 10 minutes per device and deleted after `BATTERY_HISTORY_DAYS` (default 90).
+RoomMates send their voltage with every `/data` request since the firmware that added battery reporting; older firmware only reports it when the screen changes, so its history is sparser.
+
+### Web UI
+The web UI shows every device with its last screen, battery level and history, and whether it is offline, low on battery or not configured yet.
+With the SQLite backend, a RoomMate that contacts the server for the first time shows up as a new device and can be assigned to a room there,
+and rooms, offices, Exchange tenants, logos and the organization settings (timezone, night hours, thresholds) can be edited at runtime.
+Exchange passwords are never entered in the UI: a tenant names the environment variable that holds its password, and the UI shows whether it is set and can test the connection.
+
+### Access
+`API_TOKEN` enables the management API and with it the web UI, which asks for the token when you sign in.
+API requests must send it as `Authorization: Bearer <token>`.
 Without it, the management API answers `403`.
 The device endpoints `/data` and `/image` are always open, because devices can't authenticate.
-Even with a token, only expose port 3001 to the network your devices use.
+Even with a token, only expose port 3001 to the network your devices and administrators use.
 For details, please check out the [Deployment Examples](server/room-manager/deployment_example).
 
 
 ## Server Configuration
+With the SQLite backend, everything below is configured in the web UI; `calendars.json` is only read once to fill an empty database.
 If a file backend is chosen, the configuration of all the rooms, persons, devices and endpoints can be done with the [calendars.json](server/room-manager/deployment_example/config/calendars.json).
 For development purposes, this file should be placed inside a config directory in the root of the project.
 The configuration file is loaded once when the project is started. 
@@ -230,6 +254,7 @@ Calendars from RWTHOnline can be parsed, but more complex structures (especially
 ### Logos
 We can define different logos for each device.
 These logos should be placed alongside the configuration file in the config directory.
+With the SQLite backend, they can also be uploaded in the web UI (PNG or JPEG, at most 1 MB), which warns if a logo is larger than 240 × 100 pixels and would overlap the room number.
 These images should be in png format and ideally already black and white. 
 If they are colored, the image processing will make them black and white, but this may be less beautiful.
 For the correct resolution, please check the [example](server/room-manager/deployment_example/config/institute_logo.png).
