@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, OnChanges, OnDestroy, Output} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {DomSanitizer, SafeUrl} from '@angular/platform-browser';
 
 // A plain <img> cannot send the bearer token, so the image is fetched through HttpClient
@@ -34,8 +34,24 @@ export class AuthImageComponent implements OnChanges, OnDestroy {
         this.objectUrl = this.sanitizer.bypassSecurityTrustUrl(this.rawUrl);
         this.loaded.emit();
       },
-      error: error => this.failed.emit(error)
+      error: error => this.emitError(error)
     });
+  }
+
+  // Blob requests get their error body as a Blob too; parse it so the server's message can be shown
+  private async emitError(error: unknown) {
+    if (error instanceof HttpErrorResponse && error.error instanceof Blob) {
+      const text = await error.error.text().catch(() => '');
+      let body: unknown = text;
+      try {
+        body = JSON.parse(text);
+      } catch {
+        // not JSON, keep the text
+      }
+      error = new HttpErrorResponse({error: body, headers: error.headers, status: error.status,
+        statusText: error.statusText, url: error.url ?? undefined});
+    }
+    this.failed.emit(error);
   }
 
   ngOnDestroy() {

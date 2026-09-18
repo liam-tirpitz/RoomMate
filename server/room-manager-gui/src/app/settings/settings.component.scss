@@ -1,0 +1,71 @@
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+  gap: 1rem;
+  align-items: start;
+
+  @media (max-width: 1000px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  column-gap: 1rem;
+  row-gap: 0.5rem;
+  padding-top: 1rem;
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.actions {
+  grid-column: 1 / -1;
+}
+
+.logos {
+  list-style: none;
+  margin: 0;
+  padding: 1rem 0 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+
+    & + li {
+      border-top: 1px solid #eceff1;
+    }
+  }
+}
+
+::ng-deep app-settings .logo-image {
+  width: 120px;
+  height: 50px;
+  object-fit: contain;
+  object-position: left center;
+  background: white;
+}
+
+.logo-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.logo-name {
+  overflow-wrap: anywhere;
+}
+
+.warning {
+  color: #8a5a00;
+  font-size: 0.85rem;
+}
+
+.muted {
+  color: #607d8b;
+}

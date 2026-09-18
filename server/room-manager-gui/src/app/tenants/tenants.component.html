@@ -1,0 +1,111 @@
+<div class="title">
+  <h1>Tenants</h1>
+  <span class="spacer"></span>
+  <button mat-flat-button color="primary" (click)="create()" [disabled]="!writable || editing === ''"><mat-icon>add</mat-icon> New tenant</button>
+</div>
+<p class="muted intro">
+  Exchange accounts the server signs in with to read room calendars and people's status.
+  Passwords are never stored here: each tenant names an environment variable on the server that holds it.
+</p>
+<app-error-message [error]="error"></app-error-message>
+@if (loading) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+}
+
+@if (editing !== null) {
+  <mat-card appearance="outlined" class="editor">
+    <mat-card-header>
+      <mat-card-title>{{ editing ? 'Edit tenant' : 'New tenant' }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="save()" class="fields">
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="identifier" placeholder="e.g. main">
+          @if (form.controls.identifier.hasError('required')) { <mat-error>Required</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>EWS endpoint</mat-label>
+          <input matInput type="url" formControlName="endpoint" placeholder="https://mail.your-domain.example.com/EWS/Exchange.asmx">
+          @if (form.controls.endpoint.hasError('required')) { <mat-error>Required</mat-error> }
+          @if (form.controls.endpoint.hasError('pattern')) { <mat-error>Starts with http:// or https://</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>User</mat-label>
+          <input matInput formControlName="user" placeholder="signs@your-domain.example.com">
+          @if (form.controls.user.hasError('required')) { <mat-error>Required</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Password variable</mat-label>
+          <input matInput formControlName="secret" placeholder="EWS_PASSWORD" autocomplete="off" spellcheck="false">
+          <mat-hint>Name of the environment variable, not the password</mat-hint>
+          @if (form.controls.secret.hasError('required')) { <mat-error>Required</mat-error> }
+          @if (form.controls.secret.hasError('pattern')) { <mat-error>Letters, digits and _ only, not starting with a digit</mat-error> }
+        </mat-form-field>
+        <div class="actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">Save</button>
+          <button mat-button type="button" (click)="cancel()">Cancel</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+}
+
+<div class="table-wrapper">
+  <table mat-table [dataSource]="tenants" class="mat-elevation-z1">
+    <ng-container matColumnDef="identifier">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let tenant"><strong>{{ tenant.identifier }}</strong></td>
+    </ng-container>
+    <ng-container matColumnDef="account">
+      <th mat-header-cell *matHeaderCellDef>Account</th>
+      <td mat-cell *matCellDef="let tenant" class="account">
+        <span>{{ tenant.user }}</span>
+        <span class="muted">{{ tenant.endpoint }}</span>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="secret">
+      <th mat-header-cell *matHeaderCellDef>Password</th>
+      <td mat-cell *matCellDef="let tenant">
+        @if (tenant.secret_available) {
+          <span class="chip ok" [matTooltip]="'Read from ' + tenant.secret"><mat-icon inline>check_circle</mat-icon> Set</span>
+        } @else {
+          <span class="chip missing" [matTooltip]="'Set the environment variable ' + tenant.secret + ' on the server'">
+            <mat-icon inline>warning</mat-icon> Missing
+          </span>
+        }
+        <code class="variable">{{ tenant.secret }}</code>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="connection">
+      <th mat-header-cell *matHeaderCellDef>Connection</th>
+      <td mat-cell *matCellDef="let tenant" class="connection">
+        <button mat-stroked-button (click)="test(tenant)" [disabled]="tests[tenant.id]?.running">
+          @if (tests[tenant.id]?.running) { <mat-spinner diameter="18"></mat-spinner> } Test
+        </button>
+        @if (tests[tenant.id]; as state) {
+          @if (!state.running && state.result?.ok) {
+            <span class="result ok"><mat-icon inline>check</mat-icon> Connected</span>
+          } @else if (!state.running) {
+            <span class="result failed"><mat-icon inline>error</mat-icon> {{ state.result?.error }}</span>
+          }
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let tenant" class="row-actions">
+        <button mat-icon-button (click)="edit(tenant)" [disabled]="!writable" aria-label="Edit"><mat-icon>edit</mat-icon></button>
+        <button mat-icon-button (click)="delete(tenant)" [disabled]="!writable" aria-label="Delete"><mat-icon>delete</mat-icon></button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell empty" [attr.colspan]="displayedColumns.length">
+        @if (!loading) { No tenants yet. Exchange rooms and offices need one. }
+      </td>
+    </tr>
+  </table>
+</div>
