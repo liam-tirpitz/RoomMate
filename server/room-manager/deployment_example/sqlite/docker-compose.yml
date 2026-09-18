@@ -1,0 +1,28 @@
+services:
+  room-manager:
+    image: ghcr.io/liam-tirpitz/roommate/room-manager:latest
+    restart: always
+    ports:
+      # Devices use /data and /image, the web UI (WEB_UI=true) is at / and the management API at /api
+      - 3001:3001
+    # Put API_TOKEN (or the OIDC secrets) and the Exchange passwords into ../.env, see the README
+    env_file:
+      - path: "../.env"
+        required: false
+    environment:
+      - STORAGE=SQLITE
+      - WEB_UI=true                         # serve the web UI at /; sign in with API_TOKEN
+#      - DB_PATH=config/roommate.sqlite     # default, inside the mounted config directory
+#      - BATTERY_HISTORY_DAYS=90            # default
+      # Optional OIDC sign-in, see the README. Secrets (OIDC_CLIENT_SECRET, SESSION_SECRET) belong into ../.env
+#      - PUBLIC_URL=https://roommate.your-domain.example.com
+#      - OIDC_CLIENT_ID=roommate
+#      - OIDC_AUTHORIZATION_ENDPOINT=https://your-keycloak/realms/your-realm/protocol/openid-connect/auth
+#      - OIDC_TOKEN_ENDPOINT=https://your-keycloak/realms/your-realm/protocol/openid-connect/token
+#      - OIDC_USERINFO_ENDPOINT=https://your-keycloak/realms/your-realm/protocol/openid-connect/userinfo
+#      - OIDC_JWKS_ENDPOINT=https://your-keycloak/realms/your-realm/protocol/openid-connect/certs
+#      - OIDC_ADMIN_GROUPS=roommate-admins
+    volumes:
+      # Holds the database, the logos and, on the first start only, calendars.json to import
+      - ../config:/home/node/app/room-manager/config
+      - ./logs:/home/node/app/room-manager/logs

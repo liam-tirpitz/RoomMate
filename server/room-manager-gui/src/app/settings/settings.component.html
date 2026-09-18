@@ -1,0 +1,109 @@
+<h1>Settings</h1>
+<app-error-message [error]="error"></app-error-message>
+@if (loading) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+}
+
+<div class="columns">
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Organization</mat-card-title>
+      <mat-card-subtitle>Applies to every sign</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="save()" class="fields">
+        <mat-form-field appearance="outline" class="wide">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="wide">
+          <mat-label>Timezone</mat-label>
+          <mat-select formControlName="timezone">
+            @for (timezone of timezones; track timezone) {
+              <mat-option [value]="timezone">{{ timezone }}</mat-option>
+            }
+          </mat-select>
+          @if (localTime) { <mat-hint>It is {{ localTime }} there now</mat-hint> }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Night starts at</mat-label>
+          <mat-select formControlName="night_start_hour">
+            @for (hour of hours; track hour) { <mat-option [value]="hour">{{ hour }}:00</mat-option> }
+          </mat-select>
+          <mat-hint>Signs sleep through the night</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Night ends at</mat-label>
+          <mat-select formControlName="night_end_hour">
+            @for (hour of hours; track hour) { <mat-option [value]="hour">{{ hour }}:00</mat-option> }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>"Starts soon" threshold</mat-label>
+          <input matInput type="number" min="0" formControlName="soon_threshold_in_min">
+          <span matTextSuffix>min</span>
+          @if (form.controls.soon_threshold_in_min.invalid) { <mat-error>0 to 1440 minutes</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Offline after</mat-label>
+          <input matInput type="number" min="1" formControlName="device_offline_after_min">
+          <span matTextSuffix>min</span>
+          <mat-hint>Without contact, unless a later wake-up was announced</mat-hint>
+          @if (form.controls.device_offline_after_min.invalid) { <mat-error>At least 1 minute</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Low battery below</mat-label>
+          <input matInput type="number" min="0" formControlName="low_battery_voltage_cutoff_in_mv">
+          <span matTextSuffix>mV</span>
+          <mat-hint>Rooms show the low-battery screen</mat-hint>
+          @if (form.controls.low_battery_voltage_cutoff_in_mv.invalid) { <mat-error>0 to 5000 mV</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Default logo</mat-label>
+          <mat-select formControlName="default_logo">
+            @for (logo of logos; track logo.name) { <mat-option [value]="logo.name">{{ logo.name }}</mat-option> }
+          </mat-select>
+          <mat-hint>Shown on new devices</mat-hint>
+        </mat-form-field>
+
+        <div class="actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="!writable || saving || form.pristine">Save</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Logos</mat-card-title>
+      <mat-card-subtitle>PNG or JPEG, at most 240 × 100 px so they fit the header</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <ul class="logos">
+        @for (logo of logos; track logo.name) {
+          <li>
+            <app-auth-image imgClass="logo-image" [src]="logoUrl(logo)" [alt]="logo.name"></app-auth-image>
+            <div class="logo-info">
+              <span class="logo-name">{{ logo.name }}</span>
+              <span class="muted">{{ logo.width }} × {{ logo.height }} px</span>
+              @for (warning of logo.warnings; track warning) {
+                <span class="warning">{{ warning }}</span>
+              }
+            </div>
+            <button mat-icon-button (click)="deleteLogo(logo)" [disabled]="!writable" [attr.aria-label]="'Delete ' + logo.name">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </li>
+        } @empty {
+          <li class="muted">No logos yet.</li>
+        }
+      </ul>
+    </mat-card-content>
+    <mat-card-actions>
+      <app-logo-upload [disabled]="!writable" (uploaded)="onLogoUploaded($event)"></app-logo-upload>
+    </mat-card-actions>
+  </mat-card>
+</div>

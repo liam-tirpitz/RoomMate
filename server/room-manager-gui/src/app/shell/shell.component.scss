@@ -1,0 +1,67 @@
+mat-toolbar.header {
+  position: fixed;
+  top: 0;
+  z-index: 2;
+
+  .title {
+    font-weight: 500;
+  }
+
+  .spacer {
+    flex: 1;
+  }
+}
+
+mat-sidenav-container {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+}
+
+// Move the content down so that it won't be hidden by the toolbar
+mat-sidenav, mat-sidenav-content {
+  padding-top: 3.5rem;
+  @media screen and (min-width: 600px) {
+    padding-top: 4rem;
+  }
+}
+
+mat-sidenav {
+  min-width: 14rem;
+
+  .entry {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+  }
+
+  .active {
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 1rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: #fff4e5;
+  color: #663c00;
+}
+
+.page {
+  padding: 1rem;
+  max-width: 80rem;
+}
+
+.user {
+  margin-right: 0.5rem;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 40vw;
+}

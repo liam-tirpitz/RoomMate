@@ -1,0 +1,44 @@
+<div class="title">
+  <h1>Rooms</h1>
+  <span class="spacer"></span>
+  <a mat-flat-button color="primary" routerLink="/rooms/new" [disabled]="!writable"><mat-icon>add</mat-icon> New room</a>
+</div>
+<app-error-message [error]="error"></app-error-message>
+@if (loading) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+}
+
+<div class="table-wrapper">
+  <table mat-table [dataSource]="rooms" class="mat-elevation-z1">
+    <ng-container matColumnDef="room">
+      <th mat-header-cell *matHeaderCellDef>Room</th>
+      <td mat-cell *matCellDef="let room">
+        <a [routerLink]="['/rooms', room.id]"><strong>{{ room.id_string }}</strong> {{ room.name }}</a>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="type">
+      <th mat-header-cell *matHeaderCellDef>Type</th>
+      <td mat-cell *matCellDef="let room">
+        <span class="type"><mat-icon inline>{{ type(room).icon }}</mat-icon> {{ type(room).label }}</span>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="calendar">
+      <th mat-header-cell *matHeaderCellDef>Calendar</th>
+      <td mat-cell *matCellDef="let room" class="calendar">{{ calendar(room) }}</td>
+    </ng-container>
+    <ng-container matColumnDef="signs">
+      <th mat-header-cell *matHeaderCellDef>Signs</th>
+      <td mat-cell *matCellDef="let room">
+        @if (signs(room); as count) { {{ count }} } @else { <span class="muted">none</span> }
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell empty" [attr.colspan]="displayedColumns.length">
+        @if (!loading) { No rooms yet. }
+      </td>
+    </tr>
+  </table>
+</div>

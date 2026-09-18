@@ -61,3 +61,6 @@ profile-*
 profile*
 *clinic*
 *flamegraph*
+
+# Angular build, copied in by the Docker image or by hand for local testing
+public/

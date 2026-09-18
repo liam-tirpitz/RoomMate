@@ -1,0 +1,38 @@
+.title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+.type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.calendar {
+  overflow-wrap: anywhere;
+  color: #455a64;
+}
+
+.empty {
+  padding: 1rem;
+}
+
+.muted {
+  color: #607d8b;
+}

@@ -18,14 +18,55 @@ import {SpecialStateImageProcessor} from "./image_processing/SpecialStateImagePr
 import {CustomEvent} from "./datamodels/events/CustomEvent";
 import {IDBClient} from "./db/IDBClient";
 import {ConfigManager} from "./ConfigManager";
+import {IRenderedScreen} from "./image_processing/ImageProcessor";
+import {IOrganization} from "../../datamodels/IOrganization";
+
+// A device reporting its voltage more often than this adds no battery sample
+const BATTERY_SAMPLE_INTERVAL_MIN = 10
+const DEFAULT_OFFLINE_AFTER_MIN = 120
+// The firmware sends its MAC without colons, in the case the ESP32 reports it
+const DEVICE_ID_PATTERN = /^[0-9a-fA-F]{12}$/
+
+export interface IImageOptions {
+    // false renders without recording anything: no stored screen, redraw request kept (API previews)
+    persist?: boolean
+}
 
 export class RequestHandler {
-    dataRetrieval: IDBClient
     iCalClient: ICalClient
+    private _dataRetrieval: IDBClient
 
     constructor() {
-        this.dataRetrieval = ConfigManager.instance.getDBClient()
         this.iCalClient = new ICalClient()
+    }
+
+    // Follows ConfigManager unless replaced (tests)
+    get dataRetrieval(): IDBClient {
+        return this._dataRetrieval ?? ConfigManager.instance.getDBClient()
+    }
+
+    set dataRetrieval(client: IDBClient) {
+        this._dataRetrieval = client
+    }
+
+    // Called for every /data and /image request before anything else, so unknown devices show up in the UI.
+    // Telemetry must never keep a sign from getting its data, so failures are only logged.
+    async recordContact(device_id: string, voltage?: number): Promise<void> {
+        // Anything else is not a RoomMate and must not show up as an unconfigured device
+        if (!DEVICE_ID_PATTERN.test(device_id ?? "")) return
+        try {
+            const now = new Date()
+            await this.dataRetrieval.touchDevice(device_id, {last_contact: now.toISOString(), battery_mv: voltage || undefined})
+            if (voltage > 0) {
+                const since = new Date(now.getTime() - BATTERY_SAMPLE_INTERVAL_MIN * 60_000).toISOString()
+                const recent = await this.dataRetrieval.getBatteryHistory(device_id, since, now.toISOString())
+                if (!recent.length) {
+                    await this.dataRetrieval.addBatterySample(device_id, voltage, now.toISOString())
+                }
+            }
+        } catch (error) {
+            Logging.instance.logger.error("Could not record the device contact", {devid: device_id, error: error.message})
+        }
     }
 
     async getEWSClient(tenantID) {
@@ -120,16 +161,39 @@ export class RequestHandler {
     }
 
 
-    async getImage(device_id: string, voltage: number, png: boolean): Promise<any> {
+    // Returns the packed base64 string for the device, or the PNG buffer when png is set
+    async getImage(device_id: string, voltage: number, png: boolean, options: IImageOptions = {}): Promise<string | Buffer> {
+        const screen = await this.renderScreen(device_id, voltage)
+        if (options.persist ?? true) {
+            try {
+                await this.dataRetrieval.saveScreen(device_id, screen.png, null)
+                await this.dataRetrieval.setRedrawRequested(device_id, false)
+            } catch (error) {
+                Logging.instance.logger.error("Could not store the rendered screen", {devid: device_id, error: error.message})
+            }
+        }
+        return png ? screen.png : screen.packed
+    }
+
+    // Renders a room as a sign would show it, without a device (API previews). No battery icon.
+    async getRoomPreview(room: IRoom): Promise<Buffer> {
+        return (await this.renderRoom(room, undefined)).png
+    }
+
+    private async renderScreen(device_id: string, voltage: number): Promise<IRenderedScreen> {
         const calendarDetails = await this.dataRetrieval.getRoomForDevice(device_id)
-        let image_processor
 
         if (!calendarDetails) {
-            image_processor = new SpecialStateImageProcessor()
+            const image_processor = new SpecialStateImageProcessor()
             await image_processor.buildNewDeviceImage(device_id, voltage)
             Logging.instance.logger.warn('IDevice-ID not found.', {devid: device_id});
-            return image_processor.finalizeImage("new", png)
+            return image_processor.finalizeImage()
         }
+        return this.renderRoom(calendarDetails, voltage, device_id)
+    }
+
+    private async renderRoom(calendarDetails: IRoom, voltage: number, device_id?: string): Promise<IRenderedScreen> {
+        let image_processor
          if (calendarDetails.persons) {
             let freeBusyDetails: (CustomEvent|PersonalInfo)[] = await this.getPersonalStatus(calendarDetails.persons)
             image_processor = new OfficeImageProcesor()
@@ -145,7 +209,7 @@ export class RequestHandler {
                  await image_processor.buildImage(calendarDetails.name, calendarDetails.id_string, calendarDetails.id_string, calendarDetails.logo, await appointments, voltage)
              }
         }
-        return await image_processor.finalizeImage(calendarDetails.id_string, png)
+        return await image_processor.finalizeImage()
     }
 
 
@@ -153,14 +217,8 @@ export class RequestHandler {
         const organization = await this.dataRetrieval.getOrganization()
         const device = await this.dataRetrieval.getDeviceFromHardwareID(device_id)
         if (!device) return null
-        let calendarDetails;
-        if (isRoom(device.room_id)) {
-            calendarDetails  = device.room_id
-
-        } else {
-            calendarDetails = await this.dataRetrieval.getRoomForDevice(device.room_id.toString())
-
-        }
+        // The file backend embeds the room in the device, the SQLite backend only references it
+        const calendarDetails = isRoom(device.room_id) ? device.room_id : await this.dataRetrieval.getRoomForDevice(device_id)
 
         if (!calendarDetails) return null
         let appointments: SimpleEvent[]
@@ -224,18 +282,34 @@ export class RequestHandler {
         }
         // For offices, the next change is not visible on the screen and must not trigger a redraw on its own.
         // The footer shows the date, so it has to change the hash once per day.
+        // A redraw requested in the UI changes the hash until the device has fetched the new image
         const hash_string = JSON.stringify({
             ...calendarData,
             next_update_unix: calendarDetails.persons ? 0 : calendarData.next_update_unix,
-            footer_date: utils.getDateStringFromDate(now.MomentDate.toDate())
+            footer_date: utils.getDateStringFromDate(now.MomentDate.toDate()),
+            redraw_nonce: device.redraw_requested ? now.MomentDate.valueOf() : undefined,
         })
         calendarData.current_time_string = now.MomentDate.toISOString()
         calendarData.current_time_unix = now.MomentDate.unix()
         calendarData.next_appointments = undefined
         calendarData.hash = crypto.createHash('md5').update(hash_string).digest('hex');
 
+        await this.recordNextContact(device_id, calendarData.next_update_unix, organization)
         Logging.instance.logger.info("Data requested for: " + device_id)
         return JSON.stringify(calendarData)
     }
 
+    // The device sleeps until next_update_unix if it lies ahead, otherwise for its own interval,
+    // which the server does not know; then expect it within device_offline_after_min
+    private async recordNextContact(device_id: string, next_update_unix: number, organization: IOrganization) {
+        const now = Date.now()
+        const next = next_update_unix * 1000 > now
+            ? next_update_unix * 1000
+            : now + (organization.device_offline_after_min ?? DEFAULT_OFFLINE_AFTER_MIN) * 60_000
+        try {
+            await this.dataRetrieval.touchDevice(device_id, {last_contact: new Date(now).toISOString(), next_expected_contact: new Date(next).toISOString()})
+        } catch (error) {
+            Logging.instance.logger.error("Could not record the next expected contact", {devid: device_id, error: error.message})
+        }
+    }
 }

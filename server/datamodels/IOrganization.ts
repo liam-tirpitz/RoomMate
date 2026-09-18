@@ -6,5 +6,7 @@ export interface IOrganization {
     night_end_hour: number,
     timezone: string,
     low_battery_voltage_cutoff_in_mv: number,
-    default_logo: string
+    default_logo: string,
+    // Optional until every config sets it; the UI assumes 120
+    device_offline_after_min?: number
 }

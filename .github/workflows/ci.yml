@@ -35,6 +35,24 @@ jobs:
         run: npx tsc -p tsconfig.json --noEmit
       - run: npm test
 
+  gui:
+    name: Web UI build and tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server/room-manager-gui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/room-manager-gui/package-lock.json
+      - run: npm ci
+      - run: npx ng build
+      # The runner image ships Chrome; ChromeHeadlessCI (karma.conf.js) runs it without the sandbox
+      - run: npx ng test --watch=false --browsers=ChromeHeadlessCI
+
   firmware:
     name: Firmware build (${{ matrix.environment }})
     runs-on: ubuntu-latest

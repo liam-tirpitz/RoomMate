@@ -1,0 +1,262 @@
+<a mat-button routerLink="/rooms"><mat-icon>arrow_back</mat-icon> Rooms</a>
+<app-error-message [error]="error"></app-error-message>
+@if (loading) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+}
+
+<h1>{{ isNew ? 'New room' : (room?.name || 'Room') }}</h1>
+
+<div class="columns">
+  <form [formGroup]="form" (ngSubmit)="save()" class="stack">
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Type</mat-card-title>
+        <mat-card-subtitle>Where the sign gets its content from</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-button-toggle-group class="types" [value]="type" (change)="changeType($event.value)"
+                                 [disabled]="!writable" aria-label="Room type">
+          @for (option of types; track option.value) {
+            <mat-button-toggle [value]="option.value">
+              <mat-icon>{{ option.icon }}</mat-icon> {{ option.label }}
+            </mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+        @for (option of types; track option.value) {
+          @if (option.value === type) {
+            <p class="muted hint">{{ option.hint }}</p>
+          }
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Sign header</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="fields">
+        <mat-form-field appearance="outline">
+          <mat-label>Number on the sign</mat-label>
+          <input matInput formControlName="id_string" placeholder="e.g. 200a">
+          <mat-hint>Shown large in the header</mat-hint>
+          @if (form.controls.id_string.hasError('required')) {
+            <mat-error>Required</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" [placeholder]="type === 'office' ? 'e.g. Office' : 'e.g. Meeting room'">
+          @if (form.controls.name.hasError('required')) {
+            <mat-error>Required</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Room number (optional)</mat-label>
+          <input matInput type="number" formControlName="room_number">
+          <mat-hint>Numeric, not shown on the sign</mat-hint>
+          @if (form.controls.room_number.hasError('pattern')) {
+            <mat-error>Whole numbers only</mat-error>
+          }
+        </mat-form-field>
+        <div class="logo-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Logo</mat-label>
+            <mat-select formControlName="logo">
+              @for (logo of logos; track logo.name) {
+                <mat-option [value]="logo.name">{{ logo.name }} ({{ logo.width }} × {{ logo.height }})</mat-option>
+              }
+            </mat-select>
+            @if (logoWarning(form.controls.logo.value); as warning) {
+              <mat-hint class="warning">{{ warning }}</mat-hint>
+            }
+            @if (form.controls.logo.hasError('required')) {
+              <mat-error>Choose or upload a logo</mat-error>
+            }
+          </mat-form-field>
+          <app-logo-upload label="Upload" [disabled]="!writable" (uploaded)="onLogoUploaded($event)"></app-logo-upload>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    @switch (type) {
+      @case ('ews') {
+        <mat-card appearance="outlined" formGroupName="ews">
+          <mat-card-header>
+            <mat-card-title>Exchange calendar</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="fields">
+            <mat-form-field appearance="outline">
+              <mat-label>Room mailbox</mat-label>
+              <input matInput type="email" formControlName="email" placeholder="room@your-domain.example.com">
+              @if (form.controls.ews.controls.email.hasError('required')) {
+                <mat-error>Required</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Tenant</mat-label>
+              <mat-select formControlName="tenant_id">
+                @for (tenant of tenants; track tenant.id) {
+                  <mat-option [value]="tenant.id">{{ tenant.identifier }}</mat-option>
+                }
+              </mat-select>
+              @if (!tenants.length) {
+                <mat-hint>No tenants yet. <a routerLink="/tenants">Add one</a>.</mat-hint>
+              }
+              @if (form.controls.ews.controls.tenant_id.hasError('required')) {
+                <mat-error>Required</mat-error>
+              }
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
+      }
+      @case ('ical') {
+        <mat-card appearance="outlined" formGroupName="ical">
+          <mat-card-header>
+            <mat-card-title>iCal feed</mat-card-title>
+            <mat-card-subtitle>Recurring events are not supported yet</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content class="fields">
+            <mat-form-field appearance="outline">
+              <mat-label>Feed URL</mat-label>
+              <input matInput type="url" formControlName="endpoint" placeholder="https://calendar.example.com/room.ics">
+              @if (form.controls.ical.controls.endpoint.hasError('required')) {
+                <mat-error>Required</mat-error>
+              }
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
+      }
+      @case ('office') {
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>People</mat-card-title>
+            <mat-card-subtitle>Their status comes from a <code>SIGN</code> calendar or their free/busy time</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content formArrayName="persons" class="persons">
+            @for (person of form.controls.persons.controls; track person; let index = $index) {
+              <fieldset [formGroupName]="index" class="person">
+                <legend>Person {{ index + 1 }}</legend>
+                <div class="fields two">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Name</mat-label>
+                    <input matInput formControlName="name">
+                    @if (person.controls.name.hasError('required')) {
+                      <mat-error>Required</mat-error>
+                    }
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Job title</mat-label>
+                    <input matInput formControlName="job">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Group</mat-label>
+                    <input matInput formControlName="group">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Phone</mat-label>
+                    <input matInput type="tel" formControlName="phone">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Email shown on the sign</mat-label>
+                    <input matInput type="email" formControlName="email">
+                    @if (person.controls.email.hasError('email')) {
+                      <mat-error>Not an email address</mat-error>
+                    }
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Exchange mailbox</mat-label>
+                    <input matInput type="email" formControlName="ews_email">
+                    @if (person.controls.ews_email.hasError('required')) {
+                      <mat-error>Required</mat-error>
+                    }
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Tenant</mat-label>
+                    <mat-select formControlName="tenant_id">
+                      @for (tenant of tenants; track tenant.id) {
+                        <mat-option [value]="tenant.id">{{ tenant.identifier }}</mat-option>
+                      }
+                    </mat-select>
+                    @if (person.controls.tenant_id.hasError('required')) {
+                      <mat-error>Required</mat-error>
+                    }
+                  </mat-form-field>
+                </div>
+                <button mat-button type="button" color="warn" (click)="removePerson(index)"
+                        [disabled]="!writable || form.controls.persons.length <= 1">
+                  <mat-icon>person_remove</mat-icon> Remove
+                </button>
+              </fieldset>
+            }
+            <button mat-stroked-button type="button" (click)="addPerson()"
+                    [disabled]="!writable || form.controls.persons.length >= maxPersons">
+              <mat-icon>person_add</mat-icon> Add person
+            </button>
+            @if (form.controls.persons.length >= maxPersons) {
+              <span class="muted">A sign shows at most {{ maxPersons }} people.</span>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+    }
+
+    <div class="actions">
+      <button mat-flat-button color="primary" type="submit" [disabled]="!writable || saving || (!isNew && form.pristine)">
+        {{ isNew ? 'Create' : 'Save' }}
+      </button>
+      @if (!isNew) {
+        <button mat-button type="button" color="warn" (click)="delete()" [disabled]="!writable">Delete</button>
+      }
+    </div>
+  </form>
+
+  <div class="stack">
+    <mat-card appearance="outlined" class="preview-card">
+      <mat-card-header>
+        <mat-card-title>Preview</mat-card-title>
+        <mat-card-subtitle>Rendered with the current calendar</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (previewLoading) {
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        }
+        @if (previewUrl && !previewFailed) {
+          <app-auth-image imgClass="screen" [src]="previewUrl" alt="Preview of the sign"
+                          (loaded)="onPreviewLoaded()" (failed)="onPreviewFailed($event)"></app-auth-image>
+        } @else {
+          <p class="muted screen-placeholder">
+            {{ isNew ? 'Create the room to preview it.' : previewFailed ? 'The preview could not be rendered.' : 'Render a preview to see the sign.' }}
+          </p>
+        }
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button type="button" (click)="renderPreview()" [disabled]="isNew || previewLoading">
+          <mat-icon>visibility</mat-icon> Render preview
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    @if (!isNew) {
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Signs</mat-card-title>
+          <mat-card-subtitle>Devices showing this room</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (devices.length) {
+            <ul class="devices">
+              @for (device of devices; track device.device_id) {
+                <li>
+                  <a [routerLink]="['/devices', device.device_id]">{{ device.location || device.device_id }}</a>
+                  <app-status-chip [status]="device.status"></app-status-chip>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="muted">No sign shows this room yet. Assign it on a <a routerLink="/devices">device</a>.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+</div>

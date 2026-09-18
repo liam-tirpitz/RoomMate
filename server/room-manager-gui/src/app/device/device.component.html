@@ -1,0 +1,92 @@
+<a mat-button routerLink="/devices"><mat-icon>arrow_back</mat-icon> Devices</a>
+<app-error-message [error]="error"></app-error-message>
+@if (loading) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+}
+
+@if (device) {
+  <div class="header">
+    <h1>{{ device.location || 'New device' }}</h1>
+    <app-status-chip [status]="device.status"></app-status-chip>
+  </div>
+  <p class="facts">
+    <code>{{ formattedMac }}</code>
+    <span>·</span>
+    <app-battery [percent]="device.battery_percent" [millivolts]="device.battery_mv"></app-battery>
+    <span>·</span>
+    <span [title]="(device.last_contact | date:'medium') ?? ''">last contact {{ device.last_contact | relativeTime }}</span>
+    @if (device.next_expected_contact) {
+      <span>·</span>
+      <span [title]="(device.next_expected_contact | date:'medium') ?? ''">next expected {{ device.next_expected_contact | relativeTime }}</span>
+    }
+  </p>
+
+  <div class="columns">
+    <mat-card appearance="outlined" class="screen-card">
+      <mat-card-header>
+        <mat-card-title>Screen</mat-card-title>
+        <mat-card-subtitle>Last image the server rendered for this sign</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (previewLoading) {
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        }
+        @if (screenMissing) {
+          <p class="muted screen-placeholder">No screen has been rendered for this device yet.</p>
+        } @else {
+          <app-auth-image imgClass="screen" [src]="screenUrl" alt="Rendered sign" (loaded)="onScreenLoaded()" (failed)="onScreenError()"></app-auth-image>
+        }
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-stroked-button (click)="renderPreview()" [disabled]="previewLoading"><mat-icon>visibility</mat-icon> Render preview</button>
+        <button mat-stroked-button (click)="requestRedraw()" [disabled]="!writable"><mat-icon>refresh</mat-icon> Request redraw</button>
+      </mat-card-actions>
+    </mat-card>
+
+    <div class="stack">
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Configuration</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <form class="form" (ngSubmit)="save()">
+            <mat-form-field appearance="outline">
+              <mat-label>Location</mat-label>
+              <input matInput name="location" [(ngModel)]="location" [disabled]="!writable" placeholder="e.g. Left door, 2nd floor">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Room</mat-label>
+              <mat-select name="room" [(ngModel)]="roomId" [disabled]="!writable">
+                <mat-option [value]="null">No room (shows the new-device screen)</mat-option>
+                @for (room of rooms; track room.id) {
+                  <mat-option [value]="room.id">{{ roomLabel(room) }}</mat-option>
+                }
+              </mat-select>
+              @if (!rooms.length) {
+                <mat-hint>No rooms yet. <a routerLink="/rooms/new">Create one</a>.</mat-hint>
+              }
+            </mat-form-field>
+            <div class="actions">
+              <button mat-flat-button color="primary" type="submit" [disabled]="!writable || !dirty || saving">Save</button>
+              <button mat-button type="button" color="warn" (click)="delete()" [disabled]="!writable">Delete</button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Battery</mat-card-title>
+          <mat-button-toggle-group class="range" [(value)]="days" (change)="loadHistory()" aria-label="History range">
+            <mat-button-toggle [value]="7">7 d</mat-button-toggle>
+            <mat-button-toggle [value]="30">30 d</mat-button-toggle>
+            <mat-button-toggle [value]="90">90 d</mat-button-toggle>
+          </mat-button-toggle-group>
+        </mat-card-header>
+        <mat-card-content>
+          <app-battery-chart [samples]="samples" [cutoff]="cutoff"></app-battery-chart>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+}

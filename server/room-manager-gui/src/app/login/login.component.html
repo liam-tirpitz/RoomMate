@@ -1,0 +1,32 @@
+<div class="login-page">
+  <mat-card appearance="outlined" class="login-card">
+    <mat-card-header>
+      <mat-card-title>RoomMate</mat-card-title>
+      <mat-card-subtitle>Sign in to manage this server</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (status?.auth === 'oidc') {
+        <p>Sign in with your organization account.</p>
+        @if (error) {
+          <p class="error">{{ error }}</p>
+        }
+        <button mat-flat-button color="primary" type="button" (click)="signIn()" [disabled]="busy">Sign in</button>
+      } @else {
+        <form (ngSubmit)="submit()">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>API token</mat-label>
+            <input matInput type="password" name="token" [(ngModel)]="token" autocomplete="current-password" [disabled]="busy">
+            <mat-hint>The value of API_TOKEN on the server</mat-hint>
+          </mat-form-field>
+          @if (error) {
+            <p class="error">{{ error }}</p>
+          }
+          <button mat-flat-button color="primary" type="submit" [disabled]="busy || !token.trim()">Sign in</button>
+        </form>
+      }
+    </mat-card-content>
+    @if (busy) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+  </mat-card>
+</div>

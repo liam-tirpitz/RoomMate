@@ -136,7 +136,14 @@ bool getMetaDataFromEndpoint() {
   if(true) {
   #endif
     HTTPClient http;
-    http.begin(storage.getEndpoint() + "data?devid=" + devid);
+    String endpoint = storage.getEndpoint() + "data?devid=" + devid;
+    // Sent with every wake-up so the server can keep a battery history
+    #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
+    if (voltage > 0) {
+      endpoint += "&voltage=" + String(voltage);
+    }
+    #endif
+    http.begin(endpoint);
     printf("BEGIN\n");
     int httpResponseCode = http.GET();
     if (httpResponseCode>0) {

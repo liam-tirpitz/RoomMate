@@ -1,0 +1,127 @@
+h1 {
+  margin: 0.5rem 0 1rem;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+  gap: 1rem;
+  align-items: start;
+
+  @media (max-width: 1000px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  column-gap: 1rem;
+  row-gap: 0.75rem;
+  padding-top: 1rem;
+}
+
+.types {
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.hint {
+  margin: 0.5rem 0 0;
+}
+
+.logo-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+
+  mat-form-field {
+    flex: 1;
+  }
+
+  app-logo-upload {
+    padding-top: 0.6rem;
+  }
+}
+
+.warning {
+  color: #8a5a00;
+}
+
+.persons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.person {
+  align-self: stretch;
+  border: 1px solid #cfd8dc;
+  border-radius: 8px;
+  padding: 0.5rem 1rem 1rem;
+  margin: 0;
+
+  legend {
+    padding: 0 0.25rem;
+    color: #455a64;
+  }
+
+  .fields {
+    padding-top: 0.5rem;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.preview-card mat-card-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+::ng-deep app-room .screen {
+  display: block;
+  width: 100%;
+  aspect-ratio: 480 / 800;
+  border: 1px solid #cfd8dc;
+  background: white;
+}
+
+.screen-placeholder {
+  aspect-ratio: 480 / 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 1px dashed #cfd8dc;
+  margin: 0;
+  padding: 1rem;
+}
+
+.devices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+  }
+}
+
+.muted {
+  color: #607d8b;
+}

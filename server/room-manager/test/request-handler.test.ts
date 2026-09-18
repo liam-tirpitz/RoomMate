@@ -12,11 +12,11 @@ const ICAL_ROOM = {
     ical_info: {endpoint: "https://calendar.example.com/room.ics"},
 }
 
-function handlerWithRoom(): RequestHandler {
+function handlerWithRoom(redraw_requested = false): RequestHandler {
     const handler = new RequestHandler()
     const dataRetrieval = Object.create(handler.dataRetrieval)
     dataRetrieval.getDeviceFromHardwareID = async (id: string) =>
-        id == "aabbccddeeff" ? {device_id: id, location: "", room_id: ICAL_ROOM} : undefined
+        id == "aabbccddeeff" ? {device_id: id, location: "", room_id: ICAL_ROOM, redraw_requested} : undefined
     handler.dataRetrieval = dataRetrieval
     handler.iCalClient.getCalendar = async () => ({})
     return handler
@@ -46,6 +46,16 @@ describe("RequestHandler.getData", () => {
 
         assert.equal(noon, afternoon)
         assert.notEqual(noon, next_day)
+    })
+
+    it("changes the hash while a redraw is requested", async () => {
+        const noon = new Date(2026, 8, 16, 12, 0)
+        const normal = await hashAt(handlerWithRoom(), noon)
+        const redraw = await hashAt(handlerWithRoom(true), noon)
+        const later = await hashAt(handlerWithRoom(true), new Date(2026, 8, 16, 12, 5))
+
+        assert.notEqual(normal, redraw)
+        assert.notEqual(redraw, later)
     })
 })
 

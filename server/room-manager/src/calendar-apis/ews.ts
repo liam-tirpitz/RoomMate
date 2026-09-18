@@ -42,6 +42,11 @@ export class EWSCalendarClient {
         }
     }
 
+    // Binds the tenant user's own calendar: cheap, and fails on a wrong endpoint, user or password
+    async testConnection(): Promise<void> {
+        await ews.Folder.Bind(this.exch, WellKnownFolderName.Calendar, PropertySet.IdOnly)
+    }
+
     async getUpcomingAppointmentToday(folderId: FolderId) {
         let now = ews.DateTime.Now
         const now_moment = now.MomentDate
