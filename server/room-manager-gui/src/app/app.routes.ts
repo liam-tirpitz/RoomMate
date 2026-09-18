@@ -4,6 +4,7 @@ import {LoginComponent} from './login/login.component';
 import {DashboardComponent} from './dashboard/dashboard.component';
 import {DevicesComponent} from './devices/devices.component';
 import {RoomsComponent} from './rooms/rooms.component';
+import {DeviceComponent} from './device/device.component';
 import {authGuard} from './auth/auth.guard';
 
 export const routes: Routes = [
@@ -15,6 +16,7 @@ export const routes: Routes = [
     children: [
       {path: '', component: DashboardComponent},
       {path: 'devices', component: DevicesComponent},
+      {path: 'devices/:mac', component: DeviceComponent},
       {path: 'rooms', component: RoomsComponent},
     ]
   },

@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {RoomComponent} from '../room/room.component';
 import {IRoom} from '@interfaces/IRoom'
-import {RoomService} from '../room.service';
+import {RoomsService} from '@app/api/rooms.service';
 import {NgForOf} from '@angular/common';
 
 @Component({
@@ -17,14 +17,14 @@ import {NgForOf} from '@angular/common';
 export class RoomsComponent implements OnInit {
   rooms: IRoom[] = [];
 
-  constructor(private roomService: RoomService) { }
+  constructor(private roomsService: RoomsService) { }
 
   ngOnInit(): void {
     this.fetchRooms();
   }
 
   fetchRooms() {
-    this.roomService.fetchRooms()
+    this.roomsService.list()
       .subscribe(
         (response) => {
           this.rooms = response;
