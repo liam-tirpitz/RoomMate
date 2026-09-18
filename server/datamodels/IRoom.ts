@@ -3,7 +3,8 @@ import {IICalCalendarInfo} from "./IICalCalendarInfo";
 import {IPerson} from "./IPerson";
 export interface IRoom {
     id?: string
-    room_number: number
+    // Optional for offices
+    room_number: number | null
     id_string: string
     name: string
     logo: string
@@ -13,5 +14,6 @@ export interface IRoom {
 }
 
 export function isRoom(object: any): object is IRoom {
-    return 'room_number' in object;
+    // Offices have no room_number, but every room has an id_string
+    return typeof object == 'object' && object !== null && 'id_string' in object;
 }

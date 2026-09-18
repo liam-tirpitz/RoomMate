@@ -153,14 +153,8 @@ export class RequestHandler {
         const organization = await this.dataRetrieval.getOrganization()
         const device = await this.dataRetrieval.getDeviceFromHardwareID(device_id)
         if (!device) return null
-        let calendarDetails;
-        if (isRoom(device.room_id)) {
-            calendarDetails  = device.room_id
-
-        } else {
-            calendarDetails = await this.dataRetrieval.getRoomForDevice(device.room_id.toString())
-
-        }
+        // The file backend embeds the room in the device, the SQLite backend only references it
+        const calendarDetails = isRoom(device.room_id) ? device.room_id : await this.dataRetrieval.getRoomForDevice(device_id)
 
         if (!calendarDetails) return null
         let appointments: SimpleEvent[]
