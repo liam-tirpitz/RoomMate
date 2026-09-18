@@ -14,7 +14,8 @@ describe("web UI", () => {
     let server: FastifyInstance
     let root: string
 
-    async function start(withUi: boolean) {
+    // Tests enable the UI explicitly unless they check the WEB_UI variable ({} leaves enabled unset)
+    async function start(withUi: boolean, options: {enabled?: boolean} = {enabled: true}) {
         root = fs.mkdtempSync(path.join(os.tmpdir(), "roommate-ui-"))
         if (withUi) {
             fs.writeFileSync(path.join(root, "index.html"), "<!doctype html><title>RoomMate</title>")
@@ -24,7 +25,7 @@ describe("web UI", () => {
         server.register(dataEndpoint, {prefix: "/data"})
         server.register(imageEndpoint, {prefix: "/image"})
         server.register(ManagementApi, {prefix: "/api"})
-        await registerWebUi(server, root)
+        await registerWebUi(server, {...options, root})
     }
 
     beforeEach(() => {
@@ -80,6 +81,33 @@ describe("web UI", () => {
         const status = await server.inject({method: "GET", url: "/api/status", headers: HTML})
         assert.equal(status.statusCode, 200)
         assert.equal(status.json().auth, "token")
+    })
+
+    for (const value of [undefined, "", "false", "yes"]) {
+        it(`is disabled with WEB_UI=${value === undefined ? "(unset)" : `"${value}"`}`, async () => {
+            if (value === undefined) delete process.env.WEB_UI
+            else process.env.WEB_UI = value
+            try {
+                await start(true, {})
+                const response = await server.inject({method: "GET", url: "/", headers: HTML})
+                assert.equal(response.statusCode, 404)
+                assert.deepEqual(response.json(), {error: "Not Found"})
+                // The management API does not depend on the web UI
+                assert.equal((await server.inject({method: "GET", url: "/api/status"})).statusCode, 200)
+            } finally {
+                delete process.env.WEB_UI
+            }
+        })
+    }
+
+    it("is enabled with WEB_UI=true in any case", async () => {
+        process.env.WEB_UI = "TRUE"
+        try {
+            await start(true, {})
+            assert.equal((await server.inject({method: "GET", url: "/", headers: HTML})).statusCode, 200)
+        } finally {
+            delete process.env.WEB_UI
+        }
     })
 
     it("runs without a built UI", async () => {

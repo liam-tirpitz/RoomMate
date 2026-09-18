@@ -10,7 +10,8 @@ services:
         required: false
     environment:
 #      - SECRET=password
-#      - API_TOKEN=a-long-random-string   # enables the web UI (read-only here) and the management API, better placed in ../.env
+#      - API_TOKEN=a-long-random-string   # enables the management API, better placed in ../.env
+#      - WEB_UI=true                      # serves a read-only web UI at /, needs API_TOKEN to sign in
       - STORAGE=FILE
 
     volumes:

@@ -75,9 +75,12 @@ The examples mount the whole [config](server/room-manager/deployment_example/con
 Secrets can be placed in an optional `.env` file next to the example folders.
 
 The server answers on port 3001:
-- `/` is the web UI (see below).
-- `/api` is the management API used by the web UI.
 - `/data` and `/image` are the endpoints the RoomMates call.
+- `/api` is the management API, enabled by `API_TOKEN`.
+- `/` is the web UI, only if `WEB_UI=true` (see below).
+
+By default the server reads its configuration from `calendars.json` and serves no web UI, as before.
+The SQLite backend and the web UI each have to be enabled explicitly.
 
 Alternatively, you can clone the repository, install node and start the server with
 
@@ -87,8 +90,7 @@ npm run build
 npm run start
 ```
 Make sure to pass a correct configuration and secrets.
-To serve the web UI in this setup, build it in `server/room-manager-gui` with `npm ci && npx ng build` and copy `dist/room-manager-gui/browser` to `server/room-manager/public`.
-Without it, the server runs the API and the device endpoints only.
+To serve the web UI in this setup, build it in `server/room-manager-gui` with `npm ci && npx ng build`, copy `dist/room-manager-gui/browser` to `server/room-manager/public` (or point `PUBLIC_DIR` at it) and set `WEB_UI=true`.
 
 ### Storage
 `STORAGE` selects where the configuration comes from:
@@ -102,6 +104,10 @@ Battery samples are kept at most every 10 minutes per device and deleted after `
 RoomMates send their voltage with every `/data` request since the firmware that added battery reporting; older firmware only reports it when the screen changes, so its history is sparser.
 
 ### Web UI
+`WEB_UI=true` serves the web UI at `/`; it is off by default. It needs `API_TOKEN` to sign in.
+With `STORAGE=FILE` it is read-only.
+The Docker image contains the UI, so no build is needed there.
+
 The web UI shows every device with its last screen, battery level and history, and whether it is offline, low on battery or not configured yet.
 With the SQLite backend, a RoomMate that contacts the server for the first time shows up as a new device and can be assigned to a room there,
 and rooms, offices, Exchange tenants, logos and the organization settings (timezone, night hours, thresholds) can be edited at runtime.

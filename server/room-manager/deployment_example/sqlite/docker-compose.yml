@@ -3,7 +3,7 @@ services:
     image: ghcr.io/liam-tirpitz/roommate/room-manager:latest
     restart: always
     ports:
-      # Devices use /data and /image, the web UI is at / and the management API at /api
+      # Devices use /data and /image, the web UI (WEB_UI=true) is at / and the management API at /api
       - 3001:3001
     # Put API_TOKEN (required for the web UI) and the Exchange passwords into ../.env, see the README
     env_file:
@@ -11,6 +11,7 @@ services:
         required: false
     environment:
       - STORAGE=SQLITE
+      - WEB_UI=true                         # serve the web UI at /; sign in with API_TOKEN
 #      - DB_PATH=config/roommate.sqlite     # default, inside the mounted config directory
 #      - BATTERY_HISTORY_DAYS=90            # default
     volumes:
