@@ -48,6 +48,19 @@ server.addHook('onError', async (request, reply, error) => {
 
 })
 
+// Battery samples older than this are deleted once a day
+const BATTERY_HISTORY_DAYS = Number(process.env.BATTERY_HISTORY_DAYS ?? 90)
+
+async function pruneBatteryHistory() {
+    const olderThan = new Date(Date.now() - BATTERY_HISTORY_DAYS * 24 * 60 * 60_000).toISOString()
+    try {
+        const removed = await ConfigManager.instance.getDBClient().pruneBatterySamples(olderThan)
+        if (removed) Logging.instance.logger.info(`Removed ${removed} battery samples older than ${BATTERY_HISTORY_DAYS} days`)
+    } catch (err) {
+        Logging.instance.logger.error("Could not prune the battery history", {error: err.message})
+    }
+}
+
 async function start() {
     // Open the database (runs migrations and the first-start import) before accepting requests
     await ConfigManager.instance.init()
@@ -56,6 +69,8 @@ async function start() {
     if (org) {
         process.env.TZ = org.timezone;
     }
+    await pruneBatteryHistory()
+    setInterval(pruneBatteryHistory, 24 * 60 * 60_000).unref()
     const address = await server.listen({ port: Number(process.env.PORT ?? 3001), host:'0.0.0.0' })
     Logging.instance.logger.info(`Server listening at ${address}`)
 }

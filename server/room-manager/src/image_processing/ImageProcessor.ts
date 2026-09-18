@@ -10,12 +10,16 @@ import {
     Image,
     NodeCanvasRenderingContext2DSettings, createImageData
 } from 'canvas'
-import * as fs from 'fs';
 import {dithering} from "./image2cpp/dithering";
-import {Logging} from "../logging";
 import {IDBClient} from "../db/IDBClient";
 import {ConfigManager} from "../ConfigManager";
 
+
+export interface IRenderedScreen {
+    // base64 of the rotated 1-bit image the device draws
+    packed: string
+    png: Buffer
+}
 
 export class ImageProcessor {
     ctx: CanvasRenderingContext2D;
@@ -56,28 +60,18 @@ export class ImageProcessor {
     }
 
 
-    async finalizeImage(room_id: string, png: boolean = false) {
-
-        if(!png){
-            this.rotate(90)
-        }
-
+    // Dithers the screen and returns it twice: as a PNG the way it looks on the sign (for the web UI and
+    // /image?png=true) and rotated by 90° and packed to 1 bit per pixel for the display (base64).
+    // The dithering is a plain threshold, so taking the PNG before the rotation shows exactly the same pixels.
+    async finalizeImage(): Promise<IRenderedScreen> {
         dithering(this.ctx, this.screenWidth, this.screenHeight, this.dithering_threshold, 0);
+        const png = this.canvas.toBuffer('image/png')
+
+        this.rotate(90)
         let myImageData = this.ctx.getImageData(0, 0, this.screenHeight, this.screenWidth);
         const data_arr = this.horizontal1bit(Array.from(myImageData.data), this.screenHeight)
-        const base64String = btoa(String.fromCharCode.apply(null, data_arr));
-        fs.mkdirSync('tmp', { recursive: true });
-        const out = fs.createWriteStream("tmp/" + room_id.replace(/\./g, "_") + '.png')
-        const stream = this.canvas.createPNGStream()
-        stream.pipe(out)
-        out.on('finish', () =>Logging.instance.logger.info('PNG output generated.'))
-
-        if (png) {
-            return stream
-        }else{
-            return base64String
-        }
-
+        const packed = btoa(String.fromCharCode.apply(null, data_arr));
+        return {packed, png}
     }
 
     bitswap(b) {
