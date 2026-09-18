@@ -94,15 +94,7 @@ export class FileDBClient implements IDBClient {
     }
 
     getRoomForDevice(device_id: string): Promise<IRoom | null> {
-        for (const device of this.calendars.devices as IDevice[]) {
-            if (device.device_id == device_id) {
-                if (isRoom(device.room_id)) {
-                    return Promise.resolve(device.room_id)
-                }
-            }
-        }
-        return Promise.resolve(undefined)
-
+        return Promise.resolve(this.embeddedRoom(device_id) ?? undefined)
     }
 
     getRooms(): Promise<IRoom[]> {

@@ -138,7 +138,7 @@ describe("SqliteDBClient", () => {
         await client.addDevice({device_id: "aaaaaaaaaaaa", location: "", room_id: room.id, last_contact: null, battery_mv: null})
         await client.touchDevice("bbbbbbbbbbbb", {last_contact: "2026-09-18T10:00:00.000Z"})
         const devices = await client.getDevicesWithRooms()
-        assert.deepEqual(devices.map(device => [device.device_id, device.room]), [["aaaaaaaaaaaa", room], ["bbbbbbbbbbbb", null]])
+        assert.deepEqual(devices.map(device => [device.device_id, device.room_id, device.room]), [["aaaaaaaaaaaa", room.id, room], ["bbbbbbbbbbbb", null, null]])
     })
 
     it("stores, queries and prunes battery samples", async () => {

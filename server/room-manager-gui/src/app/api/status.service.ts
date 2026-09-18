@@ -2,13 +2,9 @@ import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable, of, shareReplay} from 'rxjs';
 import {catchError} from 'rxjs/operators';
+import {IServerStatus} from '@interfaces/IServerStatus';
 
-export interface IServerStatus {
-  storage: 'FILE' | 'SQLITE';
-  writable: boolean;
-  version: string;
-  auth: 'token' | 'oidc';
-}
+export type {IServerStatus};
 
 // What the UI assumes when the server has no /api/status yet or the request fails
 const FALLBACK: IServerStatus = {storage: 'FILE', writable: false, version: 'unknown', auth: 'token'};

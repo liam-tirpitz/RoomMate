@@ -8,15 +8,19 @@ import fp from 'fastify-plugin';
 import {IDevice} from "../../../datamodels/IDevice";
 import {AppError} from "../datamodels/AppError";
 import {ConfigManager} from "../ConfigManager";
+import {toDeviceStatus} from "../deviceStatus";
 
 interface deviceParams {
     deviceId: string;
 }
 
 const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options: FastifyPluginOptions) => {
+    // Devices are addressed by their MAC without colons; unconfigured devices are included
     server.get('/devices', {}, async (request, reply) => {
-        const rooms = ConfigManager.instance.getDBClient().getDevices()
-        return JSON.stringify(await rooms)
+        const client = ConfigManager.instance.getDBClient()
+        const [devices, organization] = await Promise.all([client.getDevicesWithRooms(), client.getOrganization()])
+        const now = new Date()
+        return devices.map(({room, ...device}) => toDeviceStatus(device, room, organization, now))
     });
 
     server.post<{ Body: IDevice }>('/devices', {}, async (request, reply) => {
@@ -37,11 +41,13 @@ const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options:
 
     server.get<{ Params: deviceParams }>('/devices/:deviceId', {}, async (request, reply) => {
         const ID = request.params.deviceId;
-        const room = await ConfigManager.instance.getDBClient().getDevice(ID)
-        if (!room) {
+        const client = ConfigManager.instance.getDBClient()
+        const device = await client.getDevice(ID)
+        if (!device) {
             throw new AppError("Not Found",404);
         }
-        return JSON.stringify(await room)
+        const [room, organization] = await Promise.all([client.getRoomForDevice(ID), client.getOrganization()])
+        return toDeviceStatus(device, room, organization)
     });
 
     server.delete<{ Params: deviceParams }>('/devices/:deviceId', {}, async (request, reply) => {

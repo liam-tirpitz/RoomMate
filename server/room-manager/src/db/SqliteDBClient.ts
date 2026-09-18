@@ -41,9 +41,9 @@ interface TenantRow {
     secret_env: string
 }
 
-// Room and device columns prefixed for the joined queries
+// Room columns in the joined query, prefixed so they cannot collide with device columns (r.id vs. d.room_id)
 const ROOM_COLUMNS = ["id", "room_number", "id_string", "name", "logo", "ews_email", "ews_tenant_id", "ical_endpoint", "persons_json"]
-const JOINED_ROOM_COLUMNS = ROOM_COLUMNS.map(column => `r.${column} AS room_${column}`).join(", ")
+const JOINED_ROOM_COLUMNS = ROOM_COLUMNS.map(column => `r.${column} AS joined_room_${column}`).join(", ")
 
 export class SqliteDBClient implements IDBClient {
     readonly db: Database.Database
@@ -201,8 +201,8 @@ export class SqliteDBClient implements IDBClient {
         return rows.map(row => {
             const room: any = {}
             for (const column of ROOM_COLUMNS) {
-                room[column] = row[`room_${column}`]
-                delete row[`room_${column}`]
+                room[column] = row[`joined_room_${column}`]
+                delete row[`joined_room_${column}`]
             }
             return {...toDevice(row), room: room.id == null ? null : toRoom(room)}
         })

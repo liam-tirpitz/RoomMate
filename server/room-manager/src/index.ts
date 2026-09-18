@@ -9,7 +9,7 @@ const server = fastify()
 
 server.register(dataEndpoint, { prefix: "/data" })
 server.register(imageEndpoint, { prefix: "/image" })
-server.register(ManagementApi)
+server.register(ManagementApi, { prefix: "/api" })
 
 if (!process.env.API_TOKEN) {
     Logging.instance.logger.warn("API_TOKEN is not set, the management API is disabled.")
@@ -56,7 +56,7 @@ async function start() {
     if (org) {
         process.env.TZ = org.timezone;
     }
-    const address = await server.listen({ port: 3001, host:'0.0.0.0' })
+    const address = await server.listen({ port: Number(process.env.PORT ?? 3001), host:'0.0.0.0' })
     Logging.instance.logger.info(`Server listening at ${address}`)
 }
 
