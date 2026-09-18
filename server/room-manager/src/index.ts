@@ -4,6 +4,7 @@ import {Logging} from "./logging";
 import {IDBClient} from "./db/IDBClient";
 import {ConfigManager} from "./ConfigManager";
 import {ManagementApi} from "./routes/management-api";
+import {registerWebUi} from "./routes/web-ui";
 
 const server = fastify()
 
@@ -16,10 +17,6 @@ if (!process.env.API_TOKEN) {
 }
 
 
-
-server.addHook('preHandler', async (request, reply) => {
-    reply.header('Content-Type', 'application/json')
-})
 
 // Every error answers {error: message}, which the web UI shows. Validation errors from the schemas carry 400.
 server.setErrorHandler(async (error, request, reply) => {
@@ -57,6 +54,8 @@ async function start() {
     if (org) {
         process.env.TZ = org.timezone;
     }
+    // After the device endpoints and the API, so the UI's fallback to index.html cannot shadow them
+    await registerWebUi(server)
     await pruneBatteryHistory()
     setInterval(pruneBatteryHistory, 24 * 60 * 60_000).unref()
     const address = await server.listen({ port: Number(process.env.PORT ?? 3001), host:'0.0.0.0' })

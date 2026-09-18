@@ -5,3 +5,11 @@
 room-manager/src/.gitignore
 **/.git/
 **/.env
+**/dist
+**/.angular
+**/*.sqlite*
+# Local runtime data; the image ships the example configuration instead
+room-manager/config
+room-manager/logs
+room-manager/tmp
+room-manager/public

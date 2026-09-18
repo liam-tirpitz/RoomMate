@@ -58,8 +58,10 @@ async function getData(request: FastifyRequest, reply: FastifyReply) {
     await requestHandler.recordContact(devid, parseVoltage(request))
     const result = await requestHandler.getData(devid)
     if (result) {
+        // Already serialized, so tell the device it is JSON
         reply
             .code(200)
+            .type('application/json')
             .send(result)
     } else {
         Logging.instance.logger.warn('Device-ID not found.', { devid: devid});
