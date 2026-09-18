@@ -7,6 +7,7 @@
 
 #define VBATPIN A13
 #define uS_TO_S_FACTOR 1000000ull  /* Conversion factor for micro seconds to seconds */
+#define WIFI_CONNECT_TIMEOUT_MS 20000
 
 class SysConfig {
     public:

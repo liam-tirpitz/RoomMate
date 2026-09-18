@@ -52,6 +52,10 @@ int setEndpoint(int argc, char **argv)
     Storage storage;
 
     auto endpoint = String(argv[1]);
+    // The firmware appends "data?devid=..." directly, so the endpoint has to end with a slash
+    if (!endpoint.endsWith("/")) {
+        endpoint += "/";
+    }
     storage.setEndpoint(endpoint);
 
     printf("Endpoint saved\n");
@@ -70,6 +74,11 @@ int setSleepInterval(int argc, char **argv)
     Storage storage;
 
     auto arg = atoi(argv[1]);
+    // A zero or negative interval would make the device wake up continuously and drain the battery
+    if (arg < MIN_SLEEP_TIME_IN_S || arg > MAX_SLEEP_TIME_IN_S) {
+        printf("The interval has to be between %d and %d seconds\n", MIN_SLEEP_TIME_IN_S, MAX_SLEEP_TIME_IN_S);
+        return EXIT_FAILURE;
+    }
     storage.setRegularSleepTimeInS(arg);
 
     printf("Wakeup Interval saved\n");
