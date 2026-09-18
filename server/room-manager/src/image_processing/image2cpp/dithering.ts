@@ -32,7 +32,7 @@ export function dithering(ctx, width, height, threshold, typeIndex) {
     const imageDataLength = imageData.data.length;
 
     // Greyscale luminance (sets r pixels to luminance of rgb)
-    for (let i = 0; i <= imageDataLength; i += 4) {
+    for (let i = 0; i < imageDataLength; i += 4) {
         imageData.data[i] =
             Math.floor(lumR[imageData.data[i]] + lumG[imageData.data[i + 1]] + lumB[imageData.data[i + 2]]);
     }
@@ -41,7 +41,7 @@ export function dithering(ctx, width, height, threshold, typeIndex) {
     let newPixel; let
         err;
 
-    for (let currentPixel = 0; currentPixel <= imageDataLength; currentPixel += 4) {
+    for (let currentPixel = 0; currentPixel < imageDataLength; currentPixel += 4) {
         if (type === 'binary') {
             // No dithering
             imageData.data[currentPixel] = imageData.data[currentPixel] < threshold ? 0 : 255;
@@ -54,8 +54,9 @@ export function dithering(ctx, width, height, threshold, typeIndex) {
             imageData.data[currentPixel] = (map < threshold) ? 0 : 255;
         } else if (type === 'floydsteinberg') {
             // Floydaâ‚¬"Steinberg dithering algorithm
-            newPixel = imageData.data[currentPixel] < 129 ? 0 : 255;
-            err = Math.floor((imageData.data[currentPixel] - newPixel) / 16);
+            newPixel = imageData.data[currentPixel] < threshold ? 0 : 255;
+            // Round towards zero. Flooring turns tiny negative errors into -1 that never decays and draws streaks.
+            err = Math.trunc((imageData.data[currentPixel] - newPixel) / 16);
             imageData.data[currentPixel] = newPixel;
 
             imageData.data[currentPixel + 4] += err * 7;
@@ -65,7 +66,7 @@ export function dithering(ctx, width, height, threshold, typeIndex) {
         } else if (type === 'atkinson') {
             // Bill Atkinson's dithering algorithm
             newPixel = imageData.data[currentPixel] < threshold ? 0 : 255;
-            err = Math.floor((imageData.data[currentPixel] - newPixel) / 8);
+            err = Math.trunc((imageData.data[currentPixel] - newPixel) / 8);
             imageData.data[currentPixel] = newPixel;
 
             imageData.data[currentPixel + 4] += err;
@@ -184,7 +185,7 @@ function ditheringCanvasByPalette(canvas, palette, type) {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const w = imageData.width;
 
-    for (let currentPixel = 0; currentPixel <= imageData.data.length; currentPixel += 4) {
+    for (let currentPixel = 0; currentPixel < imageData.data.length; currentPixel += 4) {
         const newColor = getNearColorV2(imageData.data.slice(currentPixel, currentPixel + 4), palette);
 
         if (type === 'bwr_floydsteinberg') {

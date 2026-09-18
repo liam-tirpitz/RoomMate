@@ -21,6 +21,8 @@ export class ImageProcessor {
     ctx: CanvasRenderingContext2D;
     canvas: Canvas;
     dithering_threshold: number = 128
+    // Index into the types of dithering(): 0 binary, 1 bayer, 2 floydsteinberg, 3 atkinson
+    dithering_type: number = 3
     remove_zero_commas: boolean = false
     _bitswap: boolean = false
     screenWidth = 480
@@ -62,7 +64,8 @@ export class ImageProcessor {
             this.rotate(90)
         }
 
-        dithering(this.ctx, this.screenWidth, this.screenHeight, this.dithering_threshold, 0);
+        // The canvas is 800x480 after the rotation, so use its current size rather than the screen size
+        dithering(this.ctx, this.canvas.width, this.canvas.height, this.dithering_threshold, this.dithering_type);
         let myImageData = this.ctx.getImageData(0, 0, this.screenHeight, this.screenWidth);
         const data_arr = this.horizontal1bit(Array.from(myImageData.data), this.screenHeight)
         const base64String = btoa(String.fromCharCode.apply(null, data_arr));
