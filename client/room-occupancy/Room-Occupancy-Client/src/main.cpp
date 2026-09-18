@@ -3,7 +3,7 @@
  *
  */
 #include <Arduino.h>
-#include <HttpClient.h>
+#include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <Screen.h>
 #include "mbedtls/base64.h"
@@ -14,11 +14,21 @@
 
 #define IMAGE_BUFFER_SIZE 48000
 #define IMAGE_DOWNLOAD_TIMEOUT_MS 30000
+// Never sleep longer than this, so a bogus wakeup time from the server cannot park the device for weeks
+#define MAX_SLEEP_TIME_IN_S 43200
+// Below this voltage the radio is kept off, above the second one normal operation resumes
+#define LOW_BATTERY_CUTOFF_IN_MV 3400
+#define LOW_BATTERY_RECOVERY_IN_MV 3600
+#define LOW_BATTERY_SLEEP_IN_S 3600
+// Time the device stays awake for serial provisioning before it goes to sleep
+#define PROVISIONING_TIMEOUT_MS 600000
+#define UNPROVISIONED_SLEEP_IN_S 3600
 
 unsigned char b64_buff[800] = {0};
 unsigned char byte_buff[IMAGE_BUFFER_SIZE] = {0};
 
 bool eth_connection_established = false;
+bool unprovisioned = false;
 
 String devid = "";
 int voltage = 0;
@@ -147,13 +157,32 @@ void getMetaDataFromEndpoint() {
   }
 }
 
+void configureSleep(long sleep_time_in_s) {
+    int regular_wakeup_interval_in_s = storage.getRegularSleepTimeInS();
+    // A wakeup time in the past would wrap around to an unpredictable, potentially very long sleep
+    if (sleep_time_in_s <= 0) {
+      printf("Invalid sleep time %ld s, falling back to the regular interval.\n", sleep_time_in_s);
+      sleep_time_in_s = regular_wakeup_interval_in_s;
+    }
+    if (sleep_time_in_s > MAX_SLEEP_TIME_IN_S) {
+      sleep_time_in_s = MAX_SLEEP_TIME_IN_S;
+    }
+    esp_sleep_enable_timer_wakeup((uint64_t) sleep_time_in_s * uS_TO_S_FACTOR);
+    printf("Sleep configured for %ld s.\n", sleep_time_in_s);
+}
+
 void handleMetadata() {
   long next_update_unix = doc["next_update_unix"]; // 1728220858
   const char* hash = doc["hash"]; // "d41d8cd98f00b204e9800998ecf8427e"
-  long current_time_unix = doc["current_time_unix"]; // 1728220858  
+  long current_time_unix = doc["current_time_unix"]; // 1728220858
   bool is_night = doc["is_night"]; // false
   bool is_weekend = doc["is_weekend"]; // false
-  bool needs_update = storage.checkHash(hash);
+  // Without valid metadata there is nothing to draw and nothing to schedule. Sleeping regularly here
+  // avoids a reboot loop that would drain the battery while the server is unreachable.
+  bool needs_update = hash != nullptr && storage.checkHash(hash);
+  if (hash == nullptr) {
+    printf("No metadata available.\n");
+  }
   // Redraw screen if metadata changed
   if (needs_update) {
     printf("Update required.\n");
@@ -176,19 +205,17 @@ void handleMetadata() {
     long sleep_time_in_s = 0;
     int regular_wakeup_interval_in_s = storage.getRegularSleepTimeInS();
     if (
-        next_update_unix > 0 
-        && diff > 0 
+        next_update_unix > 0
+        && diff > 0
         // Skip next regular update if next event is less than 10 minutes in the future
-        && ((diff < regular_wakeup_interval_in_s) || (diff - regular_wakeup_interval_in_s) < 600)) { 
+        && ((diff < regular_wakeup_interval_in_s) || (diff - regular_wakeup_interval_in_s) < 600)) {
       sleep_time_in_s = diff + 30;
-    } else if (is_night || is_weekend) {
+    } else if ((is_night || is_weekend) && next_update_unix > 0 && diff > 0) {
       sleep_time_in_s = diff + 30;
     } else {
       sleep_time_in_s = regular_wakeup_interval_in_s;
     }
-    uint64_t sleep_time_in_us = sleep_time_in_s * uS_TO_S_FACTOR;
-    esp_sleep_enable_timer_wakeup(sleep_time_in_us);
-    printf("Sleep configured.\n");
+    configureSleep(sleep_time_in_s);
   #endif
   //printf("Wait for ");
   // Serial.print(sleep_time_in_s);
@@ -265,8 +292,28 @@ void setup() {
       devid = WiFi.macAddress();
       sysconfig.configDefaultSleep();
       if(storage.getEndpoint() != "" && storage.getSSID() != "" && storage.getPSK() != "")  {
-          devid.replace(":","");  
+          devid.replace(":","");
           voltage = sysconfig.readBatteryVoltage();
+          printf("Battery: %d mV\n", voltage);
+          if (voltage > 0 && voltage < LOW_BATTERY_CUTOFF_IN_MV) {
+              // Fetch the low battery screen once, then keep the radio off until the device is charged again.
+              // Waking up regularly on an empty battery drains it further and risks brownout reboots.
+              if (!storage.getLowBatteryShown()) {
+                  sysconfig.setup_wifi_connection();
+                  updateState();
+                  storage.setLowBatteryShown(true);
+                  // The screen now shows the low battery warning, so the next regular update has to redraw
+                  storage.invalidateHash();
+              } else {
+                  printf("Battery still low, skipping update.\n");
+              }
+              configureSleep(LOW_BATTERY_SLEEP_IN_S);
+              sysconfig.sleep();
+          }
+          if (storage.getLowBatteryShown() && voltage >= LOW_BATTERY_RECOVERY_IN_MV) {
+              printf("Battery charged, resuming normal operation.\n");
+              storage.setLowBatteryShown(false);
+          }
           // Serial.println(devid);
           sysconfig.setup_wifi_connection();
           updateState();
@@ -275,7 +322,8 @@ void setup() {
         screen.setup();
         screen.drawNewDeviceImage(devid.c_str());
         screen.sleep();
-        // Stay awake for configuration if config is incomplete
+        // Stay awake for configuration if config is incomplete, see loop()
+        unprovisioned = true;
       }
 
     #else
@@ -288,10 +336,17 @@ void setup() {
 
 
 void loop() {
-  #ifndef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
+  #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
+      // Do not stay awake forever waiting for a serial configuration that may never come
+      if(unprovisioned && millis() > PROVISIONING_TIMEOUT_MS) {
+        printf("No configuration received, going to sleep.\n");
+        configureSleep(UNPROVISIONED_SLEEP_IN_S);
+        sysconfig.sleep();
+      }
+  #else
       if(eth_connection_established) {
         updateState();
         delay(60000);
       }
-  #endif 
+  #endif
 }

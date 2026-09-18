@@ -8,6 +8,7 @@
 #define KEY_PSK "PSK"
 #define KEY_ENDPOINT "ENDPOINT"
 #define KEY_SLEEPTIME "SLEEPTIME"
+#define KEY_LOWBAT "LOWBAT"
 
 
 
@@ -26,6 +27,10 @@ class Storage {
 
         void setHash(const char* hash);
         bool checkHash(const char* hash);
+        void invalidateHash();
+
+        void setLowBatteryShown(bool shown);
+        bool getLowBatteryShown();
 
         void setRegularSleepTimeInS(int sleepTime);
         int getRegularSleepTimeInS();
