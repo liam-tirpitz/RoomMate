@@ -23,6 +23,8 @@
 // Time the device stays awake for serial provisioning before it goes to sleep
 #define PROVISIONING_TIMEOUT_MS 600000
 #define UNPROVISIONED_SLEEP_IN_S 3600
+// Stored instead of a server hash while the server answers 404 for this device
+#define UNKNOWN_DEVICE_HASH "unknown-device"
 
 unsigned char b64_buff[800] = {0};
 unsigned char byte_buff[IMAGE_BUFFER_SIZE] = {0};
@@ -150,6 +152,14 @@ bool getMetaDataFromEndpoint() {
           printf("Retrieved Metadata\n");
           success = true;
        }
+      } else if (httpResponseCode == HTTP_CODE_NOT_FOUND
+                 && !deserializeJson(doc, http.getString()) && doc["error"].is<const char*>()) {
+        // The server does not know this device. Its image endpoint still serves the "new device" screen
+        // with the MAC, so draw that once under a fixed hash and check again at the regular interval.
+        printf("Device not registered on the server.\n");
+        doc.clear();
+        doc["hash"] = UNKNOWN_DEVICE_HASH;
+        success = true;
       } else {
         printf("Connection failed: %d\n", httpResponseCode);
       }
