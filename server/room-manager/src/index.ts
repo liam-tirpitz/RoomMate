@@ -7,16 +7,6 @@ import {ManagementApi} from "./routes/management-api";
 
 const server = fastify()
 
-const dbClient: IDBClient = ConfigManager.instance.getDBClient()
-
-dbClient.getOrganization().then(org => {
-    if (org) {
-        process.env.TZ = org.timezone;
-    }
-})
-
-
-
 server.register(dataEndpoint, { prefix: "/data" })
 server.register(imageEndpoint, { prefix: "/image" })
 server.register(ManagementApi)
@@ -58,10 +48,19 @@ server.addHook('onError', async (request, reply, error) => {
 
 })
 
-server.listen({ port: 3001, host:'0.0.0.0' }, (err, address) => {
-    if (err) {
-        Logging.instance.logger.error(err)
-        process.exit(1)
+async function start() {
+    // Open the database (runs migrations and the first-start import) before accepting requests
+    await ConfigManager.instance.init()
+    const dbClient: IDBClient = ConfigManager.instance.getDBClient()
+    const org = await dbClient.getOrganization()
+    if (org) {
+        process.env.TZ = org.timezone;
     }
+    const address = await server.listen({ port: 3001, host:'0.0.0.0' })
     Logging.instance.logger.info(`Server listening at ${address}`)
+}
+
+start().catch(err => {
+    Logging.instance.logger.error(err)
+    process.exit(1)
 })
