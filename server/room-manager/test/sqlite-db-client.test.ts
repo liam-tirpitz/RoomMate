@@ -186,7 +186,7 @@ describe("importCalendarsJson", () => {
         const ewsRoom = await client.getRoomForDevice("aaaaaaaaaaaa")
         assert.equal(ewsRoom.ews_info.tenant_id, tenant.id)
         const office = await client.getRoomForDevice("cccccccccccc")
-        assert.equal(office.room_number, null)
+        assert.equal(office.room_number, calendars.devices[2].room_id.room_number)
         assert.equal(office.persons[0].ews_info.tenant_id, tenant.id)
         assert.equal((await client.getOrganization()).default_logo, "institute_logo.png")
     })
