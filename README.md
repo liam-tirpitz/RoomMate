@@ -83,7 +83,13 @@ Make sure to pass a correct configuration and secrets.
 The following environment variables are recognized:
 ```STORAGE``` can either be set to ```MONGO``` or ```FILE``` (default).
 This determines if a MongoDB instance is expected as the storage backend or if a JSON configuration file is used.
-Please note, that we currently do not support changing data via the API for the File-Backend.
+Please note, that we currently do not support changing data via the API for the File-Backend. Write requests answer `501`.
+
+```API_TOKEN``` enables the management API (`/rooms`, `/devices`, `/ewsusers`, `/organization`).
+Requests must send it as `Authorization: Bearer <token>`.
+Without it, the management API answers `403`.
+The device endpoints `/data` and `/image` are always open, because devices can't authenticate.
+Even with a token, only expose port 3001 to the network your devices use.
 For details, please check out the [Deployment Examples](server/room-manager/deployment_example).
 
 
