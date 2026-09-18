@@ -68,6 +68,9 @@ If the necessary permissions are not set, the display will function as a static 
 For an easy deployment of the server component, we recommend using our Docker image.
 You can find an example on a possible docker-compose setup with that image in our [Deployment Examples](server/room-manager/deployment_example).
 You can download the example and start the server with `docker compose up -d` after you changed the configuration for your needs.
+The image is published as `ghcr.io/liam-tirpitz/roommate/room-manager` (`latest` for releases, `nightly` for the development branch).
+The examples mount the whole [config](server/room-manager/deployment_example/config) directory, which contains `calendars.json` and the logos, to `/home/node/app/room-manager/config`, and the logs to `/home/node/app/room-manager/logs`.
+Secrets can be placed in an optional `.env` file next to the `file` and `mongo` folders.
 
 Alternatively, you can clone the repository, install node and start the server with
 
@@ -189,7 +192,7 @@ The configuration key `exchange.tenants.secret` defines the _name_ of the enviro
 
 There are 3 supported ways  to inject the secrets.
 First, if a Docker deployment is used is used, 
-the secrets can be passed directly to the container, via the [docker-compose.yml](server/room-manager/deployment_example/docker-compose.yml).
+the secrets can be passed directly to the container, via the [docker-compose.yml](server/room-manager/deployment_example/file/docker-compose.yml).
 For development purposes, the variables can be defined in a .env file placed in [server/](server).
 
 Lastly, the secrets can be synchronized via [Bitwarden Secrets Manager](https://bitwarden.com/products/secrets-manager/).

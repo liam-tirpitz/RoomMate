@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  # main and development run this workflow through release.yml and nightly.yml
+  push:
+    branches-ignore: [main, development]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    name: Server tests and type check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server/room-manager
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/room-manager/package-lock.json
+      - name: Install native libraries for node-canvas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+      - run: npm ci -f
+      - name: Use the example configuration
+        run: cp -r deployment_example/config ./config
+      - name: Type check
+        run: npx tsc -p tsconfig.json --noEmit
+      - run: npm test
+
+  firmware:
+    name: Firmware build (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [feather, poe]
+    defaults:
+      run:
+        working-directory: client/room-occupancy/Room-Occupancy-Client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+            ~/.platformio/packages
+            ~/.platformio/platforms
+          key: platformio-${{ runner.os }}-${{ hashFiles('client/room-occupancy/Room-Occupancy-Client/platformio.ini') }}
+      - run: pip install --upgrade platformio
+      - run: pio run -e ${{ matrix.environment }}

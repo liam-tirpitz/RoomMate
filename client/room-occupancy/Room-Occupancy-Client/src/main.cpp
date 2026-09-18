@@ -3,7 +3,7 @@
  *
  */
 #include <Arduino.h>
-#include <HttpClient.h>
+#include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <Screen.h>
 #include "mbedtls/base64.h"
