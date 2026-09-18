@@ -149,9 +149,10 @@ export class RequestHandler {
     }
 
 
-    async getData(device_id: string): Promise<string> {
+    async getData(device_id: string): Promise<string | null> {
         const organization = await this.dataRetrieval.getOrganization()
         const device = await this.dataRetrieval.getDeviceFromHardwareID(device_id)
+        if (!device) return null
         let calendarDetails;
         if (isRoom(device.room_id)) {
             calendarDetails  = device.room_id
@@ -161,7 +162,7 @@ export class RequestHandler {
 
         }
 
-        if (!calendarDetails) return
+        if (!calendarDetails) return null
         let appointments: SimpleEvent[]
         let next_update: moment.Moment = undefined
         if (calendarDetails.persons) {
@@ -221,8 +222,13 @@ export class RequestHandler {
                 calendarData.next_update_unix = updateTime.unix()
             }
         }
-        // For offices, the next change is not visible on the screen and must not trigger a redraw on its own
-        const hash_string = JSON.stringify(calendarDetails.persons ? {...calendarData, next_update_unix: 0} : calendarData)
+        // For offices, the next change is not visible on the screen and must not trigger a redraw on its own.
+        // The footer shows the date, so it has to change the hash once per day.
+        const hash_string = JSON.stringify({
+            ...calendarData,
+            next_update_unix: calendarDetails.persons ? 0 : calendarData.next_update_unix,
+            footer_date: utils.getDateStringFromDate(now.MomentDate.toDate())
+        })
         calendarData.current_time_string = now.MomentDate.toISOString()
         calendarData.current_time_unix = now.MomentDate.unix()
         calendarData.next_appointments = undefined
