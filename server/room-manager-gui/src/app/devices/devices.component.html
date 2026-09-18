@@ -1,34 +1,83 @@
-<table mat-table [dataSource]="devices" class="mat-elevation-z8">
+<h1>Devices</h1>
+<app-error-message [error]="error"></app-error-message>
+@if (loading) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+}
 
+@if (unconfigured.length) {
+  <mat-card appearance="outlined" class="unconfigured">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>new_releases</mat-icon>
+      <mat-card-title>New devices</mat-card-title>
+      <mat-card-subtitle>These signs contacted the server but are not assigned to a room</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <ul class="new-devices">
+        @for (device of unconfigured; track device.device_id) {
+          <li>
+            <code>{{ formatMac(device.device_id) }}</code>
+            <span class="muted" [title]="device.last_contact ?? ''">seen {{ device.last_contact | relativeTime }}</span>
+            <app-battery [percent]="device.battery_percent" [millivolts]="device.battery_mv"></app-battery>
+            <a mat-flat-button color="primary" [routerLink]="['/devices', device.device_id]">Assign room</a>
+          </li>
+        }
+      </ul>
+    </mat-card-content>
+  </mat-card>
+}
 
-  <!-- Name Column -->
-  <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef> Name </th>
-    <td mat-cell *matCellDef="let element"> {{element.location}} </td>
-  </ng-container>
+<div class="toolbar">
+  <mat-button-toggle-group [(value)]="filter" aria-label="Filter by status">
+    <mat-button-toggle value="all">All ({{ devices.length - unconfigured.length }})</mat-button-toggle>
+    <mat-button-toggle value="ok">OK ({{ count('ok') }})</mat-button-toggle>
+    <mat-button-toggle value="low_battery">Low battery ({{ count('low_battery') }})</mat-button-toggle>
+    <mat-button-toggle value="offline">Offline ({{ count('offline') }})</mat-button-toggle>
+  </mat-button-toggle-group>
+  <span class="spacer"></span>
+  <button mat-stroked-button (click)="load()" [disabled]="loading"><mat-icon>refresh</mat-icon> Refresh</button>
+</div>
 
-  <!-- Weight Column -->
-  <ng-container matColumnDef="mac">
-    <th mat-header-cell *matHeaderCellDef> MAC </th>
-    <td mat-cell *matCellDef="let element"> {{element.device_id}} </td>
-  </ng-container>
+<div class="table-wrapper">
+  <table mat-table [dataSource]="configured" class="mat-elevation-z1">
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let device"><app-status-chip [status]="device.status"></app-status-chip></td>
+    </ng-container>
+    <ng-container matColumnDef="location">
+      <th mat-header-cell *matHeaderCellDef>Location</th>
+      <td mat-cell *matCellDef="let device">
+        <a [routerLink]="['/devices', device.device_id]">{{ device.location || '(no location)' }}</a>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="mac">
+      <th mat-header-cell *matHeaderCellDef>MAC</th>
+      <td mat-cell *matCellDef="let device"><code>{{ formatMac(device.device_id) }}</code></td>
+    </ng-container>
+    <ng-container matColumnDef="room">
+      <th mat-header-cell *matHeaderCellDef>Room</th>
+      <td mat-cell *matCellDef="let device">
+        @if (device.room) {
+          <a [routerLink]="['/rooms', device.room.id]">{{ device.room.id_string }} {{ device.room.name }}</a>
+        } @else {
+          <span class="muted">none</span>
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="battery">
+      <th mat-header-cell *matHeaderCellDef>Battery</th>
+      <td mat-cell *matCellDef="let device"><app-battery [percent]="device.battery_percent" [millivolts]="device.battery_mv"></app-battery></td>
+    </ng-container>
+    <ng-container matColumnDef="last_contact">
+      <th mat-header-cell *matHeaderCellDef>Last contact</th>
+      <td mat-cell *matCellDef="let device" [title]="(device.last_contact | date:'medium') ?? ''">{{ device.last_contact | relativeTime }}</td>
+    </ng-container>
 
-  <!-- Symbol Column -->
-  <ng-container matColumnDef="battery">
-    <th mat-header-cell *matHeaderCellDef> Battery </th>
-    <td mat-cell *matCellDef="let element"> {{element.battery_mv}} </td>
-  </ng-container>
-
-  <ng-container matColumnDef="last_connection">
-    <th mat-header-cell *matHeaderCellDef> Last Connection </th>
-    <td mat-cell *matCellDef="let element"> {{element.last_contact}} </td>
-  </ng-container>
-
-  <ng-container matColumnDef="room">
-    <th mat-header-cell *matHeaderCellDef> Room </th>
-    <td mat-cell *matCellDef="let element"> {{element.room?.name}} </td>
-  </ng-container>
-
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-</table>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell empty" [attr.colspan]="displayedColumns.length">
+        @if (!loading) { No devices match this filter. }
+      </td>
+    </tr>
+  </table>
+</div>

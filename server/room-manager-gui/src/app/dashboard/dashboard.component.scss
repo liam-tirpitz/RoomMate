@@ -1,0 +1,32 @@
+.counters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.counter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 1rem;
+  cursor: pointer;
+
+  .value {
+    font-size: 2rem;
+    font-weight: 500;
+  }
+
+  .label {
+    color: #607d8b;
+  }
+
+  &.unconfigured mat-icon { color: #8a5a00; }
+  &.low_battery mat-icon { color: #a12622; }
+  &.offline mat-icon { color: #455a64; }
+}
+
+.muted {
+  color: #607d8b;
+}

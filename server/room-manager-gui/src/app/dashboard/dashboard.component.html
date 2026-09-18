@@ -1,1 +1,35 @@
-<p>dashboard works!</p>
+<h1>Dashboard</h1>
+<app-error-message [error]="error"></app-error-message>
+@if (loading) {
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+}
+
+<div class="counters">
+  @for (counter of counters; track counter.label) {
+    <mat-card appearance="outlined" class="counter" [class]="'counter ' + counter.status" [routerLink]="['/devices']">
+      <mat-icon>{{ counter.icon }}</mat-icon>
+      <span class="value">{{ counter.value }}</span>
+      <span class="label">{{ counter.label }}</span>
+    </mat-card>
+  }
+</div>
+
+<mat-card appearance="outlined">
+  <mat-card-header>
+    <mat-card-title>Needs attention</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (!loading && !attention.length) {
+      <p class="muted">All signs are configured, charged and reporting.</p>
+    }
+    <mat-nav-list>
+      @for (device of attention; track device.device_id) {
+        <a mat-list-item [routerLink]="['/devices', device.device_id]">
+          <app-status-chip matListItemIcon [status]="device.status"></app-status-chip>
+          <span matListItemTitle>{{ describe(device) }}</span>
+          <span matListItemLine>last contact {{ device.last_contact | relativeTime }}</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-card-content>
+</mat-card>
