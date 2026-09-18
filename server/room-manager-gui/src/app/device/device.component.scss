@@ -35,7 +35,13 @@
   gap: 1rem;
 }
 
-.screen {
+.screen-card mat-card-actions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+::ng-deep .screen {
   display: block;
   width: 100%;
   max-width: 480px;

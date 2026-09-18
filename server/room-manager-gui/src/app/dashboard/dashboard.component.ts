@@ -2,7 +2,6 @@ import {Component, OnInit} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {MatCardModule} from '@angular/material/card';
 import {MatIconModule} from '@angular/material/icon';
-import {MatListModule} from '@angular/material/list';
 import {MatProgressBarModule} from '@angular/material/progress-bar';
 import {DevicesService} from '@app/api/devices.service';
 import {DeviceState, IDeviceStatus} from '@interfaces/IDeviceStatus';
@@ -20,7 +19,7 @@ interface Counter {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, MatCardModule, MatIconModule, MatListModule, MatProgressBarModule, StatusChipComponent, RelativeTimePipe, ErrorMessageComponent],
+  imports: [RouterLink, MatCardModule, MatIconModule, MatProgressBarModule, StatusChipComponent, RelativeTimePipe, ErrorMessageComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })

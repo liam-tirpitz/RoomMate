@@ -22,14 +22,16 @@
     @if (!loading && !attention.length) {
       <p class="muted">All signs are configured, charged and reporting.</p>
     }
-    <mat-nav-list>
+    <ul class="attention">
       @for (device of attention; track device.device_id) {
-        <a mat-list-item [routerLink]="['/devices', device.device_id]">
-          <app-status-chip matListItemIcon [status]="device.status"></app-status-chip>
-          <span matListItemTitle>{{ describe(device) }}</span>
-          <span matListItemLine>last contact {{ device.last_contact | relativeTime }}</span>
-        </a>
+        <li>
+          <a [routerLink]="['/devices', device.device_id]">
+            <app-status-chip [status]="device.status"></app-status-chip>
+            <span class="name">{{ describe(device) }}</span>
+            <span class="muted">last contact {{ device.last_contact | relativeTime }}</span>
+          </a>
+        </li>
       }
-    </mat-nav-list>
+    </ul>
   </mat-card-content>
 </mat-card>

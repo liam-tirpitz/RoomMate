@@ -34,7 +34,7 @@
         @if (screenMissing) {
           <p class="muted screen-placeholder">No screen has been rendered for this device yet.</p>
         } @else {
-          <img class="screen" [src]="screenUrl" alt="Rendered sign" (load)="onScreenLoaded()" (error)="onScreenError()">
+          <app-auth-image imgClass="screen" [src]="screenUrl" alt="Rendered sign" (loaded)="onScreenLoaded()" (failed)="onScreenError()"></app-auth-image>
         }
       </mat-card-content>
       <mat-card-actions>

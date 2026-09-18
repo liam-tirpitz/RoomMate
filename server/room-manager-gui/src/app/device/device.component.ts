@@ -24,13 +24,14 @@ import {BatteryComponent} from '@app/shared/battery.component';
 import {BatteryChartComponent} from '@app/shared/battery-chart.component';
 import {RelativeTimePipe} from '@app/shared/relative-time.pipe';
 import {ErrorMessageComponent, describeError} from '@app/shared/error-message.component';
+import {AuthImageComponent} from '@app/shared/auth-image.component';
 
 @Component({
   selector: 'app-device',
   standalone: true,
   imports: [RouterLink, DatePipe, FormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressBarModule, MatSnackBarModule,
-    StatusChipComponent, BatteryComponent, BatteryChartComponent, RelativeTimePipe, ErrorMessageComponent],
+    StatusChipComponent, BatteryComponent, BatteryChartComponent, RelativeTimePipe, ErrorMessageComponent, AuthImageComponent],
   templateUrl: './device.component.html',
   styleUrl: './device.component.scss'
 })
