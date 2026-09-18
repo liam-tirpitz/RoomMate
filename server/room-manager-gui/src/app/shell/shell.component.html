@@ -1,0 +1,39 @@
+<mat-toolbar color="primary" class="header">
+  @if (isMobile) {
+    <button mat-icon-button aria-label="Menu" (click)="toggleMenu()">
+      <mat-icon>menu</mat-icon>
+    </button>
+  }
+  <span class="title">RoomMate</span>
+  <span class="spacer"></span>
+  <button mat-icon-button aria-label="Sign out" (click)="logout()">
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>
+
+<mat-sidenav-container>
+  <mat-sidenav [mode]="isMobile ? 'over' : 'side'" [opened]="!isMobile">
+    <mat-nav-list>
+      @for (entry of entries; track entry.path) {
+        <a mat-list-item [routerLink]="entry.path" routerLinkActive="active"
+           [routerLinkActiveOptions]="{exact: entry.path === '/'}" (click)="onNavigate()">
+          <span class="entry">
+            <mat-icon>{{ entry.icon }}</mat-icon>
+            <span>{{ entry.label }}</span>
+          </span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    @if (status && !status.writable) {
+      <div class="banner" role="status">
+        <mat-icon>lock</mat-icon>
+        <span>This server uses the read-only file backend. Edit <code>config/calendars.json</code> to change the configuration.</span>
+      </div>
+    }
+    <div class="page">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
