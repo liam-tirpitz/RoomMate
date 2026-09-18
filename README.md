@@ -99,8 +99,18 @@ For development purposes, this file should be placed inside a config directory i
 The configuration file is loaded once when the project is started. 
 If the configuration is changed, the server needs to be restarted.
 
+### Global Configuration
+`global_config` holds the settings that apply to all signs:
+- `soon_threshold_in_min`: how long before a meeting a room sign shows "Next Meeting – Starts soon".
+- `night_start_hour` and `night_end_hour`: signs don't update at night and wake up again at `night_end_hour`.
+- `timezone`: the timezone used for all times on the signs, e.g. `Europe/Berlin`.
+- `low_battery_voltage_cutoff_in_mv`: below this battery voltage, room signs show the low battery screen.
+  Below 3100 mV the firmware fetches the screen one last time and then stops updating until it is charged.
+  Keep this value at or above 3100 mV. Otherwise that last screen is a normal one, and the sign keeps showing outdated content without a warning.
+- `default_logo`: the logo from the config directory shown on signs that are not associated with a room yet.
+
 ### Room and Device Configuration
-Each room is configured with a `tenants` and an `id_string`, which are displayed on the screen.
+Each room is configured with a `name` and an `id_string`, which are displayed on the screen.
 In addition the affiliation of the room can be shown by using a custom logo from the config directory, indicated via `logo`.
 The type of calendar is defined by either defining `ews_info` OR `ical_info` (see below).
 Each device consists of a `device_id` (MAC-Address) and a descriptive `location` string.
@@ -161,7 +171,7 @@ Multiple credentials can be stored for users across domains or exchange infrastr
 "exchange": {
     "tenants": [
       {
-        "id": 1,
+        "identifier": 1,
         "endpoint": "https://ENDPOINT/EWS/Exchange.asmx",
         "user": "USER@DOMAIN",
         "secret": "SECRET"
@@ -172,7 +182,7 @@ Multiple credentials can be stored for users across domains or exchange infrastr
 
 The users can then be mapped to each calendar.
 Each exchange tenant requires an `endpoint`, a `user` and a password.
-Through the `id`, exchange credentials can be mapped to a specific room or person.
+Through the `identifier`, exchange credentials can be mapped to a specific room or person (`tenant_id`).
 The username of each calendar retrieved through exchange is configured as part of the individual calendar configuration as `email`.
 ```json
 "calendars": [
@@ -296,7 +306,10 @@ The following commands are needed to provision the device.
 
 ```bash
 wifi.getMAC
-wiFi.setCredentials SSID PSK
+wifi.setCredentials SSID PSK
 config.setEndpoint http://SERVER:PORT/
 restart
 ```
+
+`config.setEndpoint` adds a missing trailing slash.
+`config.setSleepInterval SECONDS` optionally changes the regular wakeup interval; it accepts values from 60 to 86400 seconds.
