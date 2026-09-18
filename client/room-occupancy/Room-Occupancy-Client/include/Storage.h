@@ -10,6 +10,11 @@
 #define KEY_SLEEPTIME "SLEEPTIME"
 #define KEY_LOWBAT "LOWBAT"
 
+// Bounds for every configured or calculated sleep time. The minimum keeps a bogus interval from
+// turning into a permanent wakeup loop, the maximum covers a full night without parking the device.
+#define MIN_SLEEP_TIME_IN_S 60
+#define MAX_SLEEP_TIME_IN_S 86400
+
 
 
 

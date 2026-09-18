@@ -53,7 +53,10 @@ String Storage::getEndpoint() {
 
 bool Storage::checkHash(const char* hash) {
       bool needs_update = false;
-      preferences.begin(NAMESPACE, true); 
+      if (hash == nullptr || strnlen(hash, 5) < 5) {
+            return false;
+      }
+      preferences.begin(NAMESPACE, true);
       for (uint8_t i = 0; i < 5; i++) {
             char last_hash = preferences.getChar(this->keys[i], 0);
             if(last_hash != hash[i]) {

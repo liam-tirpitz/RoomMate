@@ -14,11 +14,11 @@
 
 #define IMAGE_BUFFER_SIZE 48000
 #define IMAGE_DOWNLOAD_TIMEOUT_MS 30000
-// Never sleep longer than this, so a bogus wakeup time from the server cannot park the device for weeks
-#define MAX_SLEEP_TIME_IN_S 43200
-// Below this voltage the radio is kept off, above the second one normal operation resumes
-#define LOW_BATTERY_CUTOFF_IN_MV 3400
-#define LOW_BATTERY_RECOVERY_IN_MV 3600
+// Below this voltage the radio is kept off, above the second one normal operation resumes.
+// The cutoff must not be higher than low_battery_voltage_cutoff_in_mv on the server, otherwise the
+// server still renders a normal screen while the device already stops updating.
+#define LOW_BATTERY_CUTOFF_IN_MV 3100
+#define LOW_BATTERY_RECOVERY_IN_MV 3300
 #define LOW_BATTERY_SLEEP_IN_S 3600
 // Time the device stays awake for serial provisioning before it goes to sleep
 #define PROVISIONING_TIMEOUT_MS 600000
@@ -126,7 +126,8 @@ uint8_t getImageDataFromEndpoint() {
     return 3;
 }
 
-void getMetaDataFromEndpoint() {
+bool getMetaDataFromEndpoint() {
+  bool success = false;
   #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
   if(WiFi.status() == WL_CONNECTED){
   #else
@@ -147,6 +148,7 @@ void getMetaDataFromEndpoint() {
 
        } else {
           printf("Retrieved Metadata\n");
+          success = true;
        }
       } else {
         printf("Connection failed: %d\n", httpResponseCode);
@@ -155,14 +157,18 @@ void getMetaDataFromEndpoint() {
     printf("Close connection\n");
     http.end();
   }
+  return success;
 }
 
 void configureSleep(long sleep_time_in_s) {
-    int regular_wakeup_interval_in_s = storage.getRegularSleepTimeInS();
     // A wakeup time in the past would wrap around to an unpredictable, potentially very long sleep
     if (sleep_time_in_s <= 0) {
       printf("Invalid sleep time %ld s, falling back to the regular interval.\n", sleep_time_in_s);
-      sleep_time_in_s = regular_wakeup_interval_in_s;
+      sleep_time_in_s = storage.getRegularSleepTimeInS();
+    }
+    // The stored interval is not validated either, so clamp here as well
+    if (sleep_time_in_s < MIN_SLEEP_TIME_IN_S) {
+      sleep_time_in_s = MIN_SLEEP_TIME_IN_S;
     }
     if (sleep_time_in_s > MAX_SLEEP_TIME_IN_S) {
       sleep_time_in_s = MAX_SLEEP_TIME_IN_S;
@@ -171,7 +177,8 @@ void configureSleep(long sleep_time_in_s) {
     printf("Sleep configured for %ld s.\n", sleep_time_in_s);
 }
 
-void handleMetadata() {
+// Returns whether the screen is known to show the current content
+bool handleMetadata() {
   long next_update_unix = doc["next_update_unix"]; // 1728220858
   const char* hash = doc["hash"]; // "d41d8cd98f00b204e9800998ecf8427e"
   long current_time_unix = doc["current_time_unix"]; // 1728220858
@@ -183,15 +190,18 @@ void handleMetadata() {
   if (hash == nullptr) {
     printf("No metadata available.\n");
   }
+  bool up_to_date = hash != nullptr;
   // Redraw screen if metadata changed
   if (needs_update) {
     printf("Update required.\n");
+    up_to_date = false;
     if(!getImageDataFromEndpoint()) {
         screen.setup();
         screen.drawImage(byte_buff);
         screen.sleep();
         // Only remember the hash after a successful draw, so a failed download is retried on the next wakeup
         storage.setHash(hash);
+        up_to_date = true;
     }
   } else {
       printf("Im Westen nichts neues.\n");
@@ -217,6 +227,7 @@ void handleMetadata() {
     }
     configureSleep(sleep_time_in_s);
   #endif
+  return up_to_date;
   //printf("Wait for ");
   // Serial.print(sleep_time_in_s);
   // Serial.println();
@@ -224,9 +235,9 @@ void handleMetadata() {
 }
 
 
-void updateState() {
+bool updateState() {
     getMetaDataFromEndpoint();
-    handleMetadata();
+    return handleMetadata();
 }
 
 
@@ -295,24 +306,36 @@ void setup() {
           devid.replace(":","");
           voltage = sysconfig.readBatteryVoltage();
           printf("Battery: %d mV\n", voltage);
-          if (voltage > 0 && voltage < LOW_BATTERY_CUTOFF_IN_MV) {
+          // Stay in low battery mode until the battery is charged well above the cutoff, otherwise a
+          // voltage hovering around it would alternate between the warning and normal updates.
+          if (voltage > 0 && (voltage < LOW_BATTERY_CUTOFF_IN_MV
+                              || (storage.getLowBatteryShown() && voltage < LOW_BATTERY_RECOVERY_IN_MV))) {
+              // Arm the low battery interval before the radio is powered, because a failed WiFi
+              // connection sleeps immediately and would otherwise use the regular interval
+              configureSleep(LOW_BATTERY_SLEEP_IN_S);
               // Fetch the low battery screen once, then keep the radio off until the device is charged again.
               // Waking up regularly on an empty battery drains it further and risks brownout reboots.
               if (!storage.getLowBatteryShown()) {
-                  sysconfig.setup_wifi_connection();
-                  updateState();
-                  storage.setLowBatteryShown(true);
-                  // The screen now shows the low battery warning, so the next regular update has to redraw
+                  // The warning replaces the current content, so it has to be drawn even though the
+                  // calendar data itself did not change
                   storage.invalidateHash();
+                  sysconfig.setup_wifi_connection();
+                  // Only stop updating once the warning is actually on the screen
+                  if (updateState()) {
+                      storage.setLowBatteryShown(true);
+                  }
               } else {
                   printf("Battery still low, skipping update.\n");
               }
+              // updateState() configures the sleep time from the metadata, so set it again
               configureSleep(LOW_BATTERY_SLEEP_IN_S);
               sysconfig.sleep();
           }
-          if (storage.getLowBatteryShown() && voltage >= LOW_BATTERY_RECOVERY_IN_MV) {
+          if (storage.getLowBatteryShown()) {
               printf("Battery charged, resuming normal operation.\n");
               storage.setLowBatteryShown(false);
+              // The screen still shows the warning and has to be replaced
+              storage.invalidateHash();
           }
           // Serial.println(devid);
           sysconfig.setup_wifi_connection();
@@ -337,11 +360,19 @@ void setup() {
 
 void loop() {
   #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
-      // Do not stay awake forever waiting for a serial configuration that may never come
-      if(unprovisioned && millis() > PROVISIONING_TIMEOUT_MS) {
-        printf("No configuration received, going to sleep.\n");
-        configureSleep(UNPROVISIONED_SLEEP_IN_S);
-        sysconfig.sleep();
+      if(unprovisioned) {
+        // The console runs in its own task, so pick up a configuration as soon as it is complete
+        if(storage.getEndpoint() != "" && storage.getSSID() != "" && storage.getPSK() != "") {
+          printf("Configuration received, restarting.\n");
+          ESP.restart();
+        }
+        // Do not stay awake forever waiting for a serial configuration that may never come
+        if(millis() > PROVISIONING_TIMEOUT_MS) {
+          printf("No configuration received, going to sleep.\n");
+          configureSleep(UNPROVISIONED_SLEEP_IN_S);
+          sysconfig.sleep();
+        }
+        delay(500);
       }
   #else
       if(eth_connection_established) {
