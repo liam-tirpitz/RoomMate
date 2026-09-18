@@ -10,12 +10,19 @@ import {AppError} from "../datamodels/AppError";
 import {ConfigManager} from "../ConfigManager";
 import {toDeviceStatus} from "../deviceStatus";
 import {RequestHandler} from "../RequestHandler";
+import {deviceCreateBody, deviceUpdateBody, isUniqueViolation} from "./schemas";
 
 const requestHandler = new RequestHandler()
 const DAY_MS = 24 * 60 * 60_000
 
 interface deviceParams {
     deviceId: string;
+}
+
+async function checkRoomExists(room_id: IDevice['room_id']) {
+    if (room_id != null && !await ConfigManager.instance.getDBClient().getRoom(String(room_id))) {
+        throw new AppError(`Unknown room "${room_id}".`, 400)
+    }
 }
 
 const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options: FastifyPluginOptions) => {
@@ -27,19 +34,32 @@ const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options:
         return devices.map(({room, ...device}) => toDeviceStatus(device, room, organization, now))
     });
 
-    server.post<{ Body: IDevice }>('/devices', {}, async (request, reply) => {
-            const result = await ConfigManager.instance.getDBClient().addDevice((await request).body)
+    // Devices usually add themselves on their first request; this registers one ahead of time
+    server.post<{ Body: IDevice }>('/devices', {schema: {body: deviceCreateBody}}, async (request, reply) => {
+        await checkRoomExists(request.body.room_id)
+        try {
+            const result = await ConfigManager.instance.getDBClient().addDevice(request.body)
             reply
                 .code(201)
                 .send(result)
+        } catch (error) {
+            if (isUniqueViolation(error)) {
+                throw new AppError(`Device ${request.body.device_id} already exists.`, 409)
+            }
+            throw error
+        }
     });
 
-    server.put<{ Params: deviceParams, Body: IDevice }>('/devices/:deviceId', {}, async (request, reply) => {
+    // Only location and room can be changed
+    server.put<{ Params: deviceParams, Body: Pick<IDevice, 'location' | 'room_id'> }>('/devices/:deviceId', {schema: {body: deviceUpdateBody}}, async (request, reply) => {
         const ID = request.params.deviceId;
-        const result = await ConfigManager.instance.getDBClient().updateDevice(ID, (await request).body)
-        reply
-            .code(201)
-            .send(result)
+        await checkRoomExists(request.body.room_id)
+        const client = ConfigManager.instance.getDBClient()
+        const result = await client.updateDevice(ID, {device_id: ID, ...request.body} as IDevice)
+        if (!result) {
+            throw new AppError("Not Found",404);
+        }
+        return toDeviceStatus(result, await client.getRoomForDevice(ID), await client.getOrganization())
     });
 
 
@@ -108,7 +128,9 @@ const DeviceRoute: FastifyPluginAsync = async (server: FastifyInstance, options:
 
     server.delete<{ Params: deviceParams }>('/devices/:deviceId', {}, async (request, reply) => {
         const ID = request.params.deviceId;
-        await ConfigManager.instance.getDBClient().deleteDevice(ID)
+        if (!await ConfigManager.instance.getDBClient().deleteDevice(ID)) {
+            throw new AppError("Not Found",404);
+        }
         reply
             .code(204)
             .send()

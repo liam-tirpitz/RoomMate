@@ -23,13 +23,13 @@ export interface IDeviceTelemetry {
 export interface IDBClient {
     updateRoom(id: string, room: IRoom): Promise<IRoom>
     addRoom(room: IRoom): Promise<IRoom>
-    deleteRoom(id: string)
+    deleteRoom(id: string): Promise<boolean>
     getRooms(): Promise<Array<IRoom>>
     getRoom(id: string): Promise<IRoom>
 
     updateDevice(device_id: string, device: IDevice): Promise<IDevice>
     addDevice(device: IDevice): Promise<IDevice>
-    deleteDevice(device_id: string)
+    deleteDevice(device_id: string): Promise<boolean>
     getDevices(): Promise<Array<IDevice>>
     getDevice(device_id: string): Promise<IDevice>
     getDeviceFromHardwareID(id: string): Promise<IDevice>
@@ -49,7 +49,7 @@ export interface IDBClient {
 
     updateEwsUser(id: string, user: IEWSTenant): Promise<IEWSTenant>
     addEwsUser(user: IEWSTenant): Promise<IEWSTenant>
-    deleteEwsUser(id: string)
+    deleteEwsUser(id: string): Promise<boolean>
     getEwsUsers(): Promise<Array<IEWSTenant>>
     getEwsUser(id: string): Promise<IEWSTenant>
 

@@ -40,15 +40,16 @@ export class FileDBClient implements IDBClient {
     }
 
 
-    deleteDevice(device_id: string): Promise<void> {
-        return Promise.resolve(undefined);
+    deleteDevice(device_id: string): Promise<boolean> {
+        return Promise.resolve(false);
     }
 
-    deleteRoom(id: string): Promise<void> {
-        return Promise.resolve(undefined);
+    deleteRoom(id: string): Promise<boolean> {
+        return Promise.resolve(false);
     }
 
-    deleteEwsUser(id: string) {
+    deleteEwsUser(id: string): Promise<boolean> {
+        return Promise.resolve(false);
     }
 
 

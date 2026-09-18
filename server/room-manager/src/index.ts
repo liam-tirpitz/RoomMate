@@ -21,7 +21,8 @@ server.addHook('preHandler', async (request, reply) => {
     reply.header('Content-Type', 'application/json')
 })
 
-server.addHook('onError', async (request, reply, error) => {
+// Every error answers {error: message}, which the web UI shows. Validation errors from the schemas carry 400.
+server.setErrorHandler(async (error, request, reply) => {
     Logging.instance.logger.error({
         message: error.message,
         stack: error.stack,
@@ -29,23 +30,10 @@ server.addHook('onError', async (request, reply, error) => {
         userAgent: request.headers['user-agent'],
     });
 
-    if (error.name === 'ValidationError') {
-        reply
-            .code(400)
-            .send({error: error.message})
-    } else if (error.statusCode) {
-        reply
-            .code(error.statusCode)
-            .send({ error: error.message });
-    } else {
-        reply
-            .code(500)
-            .send({ error: error.message });
-
-    }
-
-
-
+    const statusCode = error.name === 'ValidationError' ? 400 : (error.statusCode ?? 500)
+    reply
+        .code(statusCode)
+        .send({ error: error.message })
 })
 
 // Battery samples older than this are deleted once a day

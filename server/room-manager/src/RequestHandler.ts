@@ -175,16 +175,25 @@ export class RequestHandler {
         return png ? screen.png : screen.packed
     }
 
+    // Renders a room as a sign would show it, without a device (API previews). No battery icon.
+    async getRoomPreview(room: IRoom): Promise<Buffer> {
+        return (await this.renderRoom(room, undefined)).png
+    }
+
     private async renderScreen(device_id: string, voltage: number): Promise<IRenderedScreen> {
         const calendarDetails = await this.dataRetrieval.getRoomForDevice(device_id)
-        let image_processor
 
         if (!calendarDetails) {
-            image_processor = new SpecialStateImageProcessor()
+            const image_processor = new SpecialStateImageProcessor()
             await image_processor.buildNewDeviceImage(device_id, voltage)
             Logging.instance.logger.warn('IDevice-ID not found.', {devid: device_id});
             return image_processor.finalizeImage()
         }
+        return this.renderRoom(calendarDetails, voltage, device_id)
+    }
+
+    private async renderRoom(calendarDetails: IRoom, voltage: number, device_id?: string): Promise<IRenderedScreen> {
+        let image_processor
          if (calendarDetails.persons) {
             let freeBusyDetails: (CustomEvent|PersonalInfo)[] = await this.getPersonalStatus(calendarDetails.persons)
             image_processor = new OfficeImageProcesor()

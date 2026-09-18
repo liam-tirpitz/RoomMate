@@ -6,6 +6,13 @@ import {FileDBClient} from "../db/FileDBClient";
 
 export type AuthMethod = "token" | "oidc"
 
+declare module "fastify" {
+    interface FastifyContextConfig {
+        // The route changes nothing despite its method, so it also works on the read-only file backend
+        allowOnFileBackend?: boolean
+    }
+}
+
 // Devices can't authenticate, so only the management API is protected. Without API_TOKEN it stays locked.
 // The OIDC session check will be added here; routes only ever reference requireAuth.
 export async function requireAuth(request: FastifyRequest, reply: FastifyReply) {
@@ -29,9 +36,10 @@ export function isWritable(): boolean {
     return !(ConfigManager.instance.getDBClient() instanceof FileDBClient)
 }
 
-// The file backend ignores writes, so tell the caller instead of answering with a success code
+// The file backend ignores writes, so tell the caller instead of answering with a success code.
+// Routes that change nothing despite their method opt out with config: {allowOnFileBackend: true}.
 export async function rejectWritesOnFileBackend(request: FastifyRequest, reply: FastifyReply) {
-    if (request.method != "GET" && !isWritable()) {
+    if (request.method != "GET" && !request.routeOptions.config?.allowOnFileBackend && !isWritable()) {
         throw new AppError("Writes are not supported with the file backend. Edit config/calendars.json instead.", 501)
     }
 }

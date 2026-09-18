@@ -24,7 +24,7 @@ describe("management API", () => {
     })
 
     it("is disabled when no API_TOKEN is configured", async () => {
-        const response = await server.inject({method: "GET", url: "/api/ewsusers", headers: {authorization: "Bearer "}})
+        const response = await server.inject({method: "GET", url: "/api/tenants", headers: {authorization: "Bearer "}})
         assert.equal(response.statusCode, 403)
     })
 
@@ -32,7 +32,7 @@ describe("management API", () => {
         process.env.API_TOKEN = TOKEN
         for (const authorization of [undefined, "Bearer wrong", TOKEN]) {
             const headers = authorization ? {authorization} : {}
-            const response = await server.inject({method: "GET", url: "/api/ewsusers", headers})
+            const response = await server.inject({method: "GET", url: "/api/tenants", headers})
             assert.equal(response.statusCode, 401, `authorization: ${authorization}`)
             assert.equal(response.headers["www-authenticate"], "Bearer")
         }
@@ -47,9 +47,27 @@ describe("management API", () => {
 
     it("answers 501 to writes on the file backend", async () => {
         process.env.API_TOKEN = TOKEN
-        for (const [method, url] of [["POST", "/api/rooms"], ["PUT", "/api/devices/1"], ["DELETE", "/api/ewsusers/1"], ["POST", "/api/organization"]] as const) {
+        for (const [method, url] of [["POST", "/api/rooms"], ["PUT", "/api/devices/1"], ["DELETE", "/api/tenants/1"], ["PUT", "/api/organization"], ["POST", "/api/tenants"], ["DELETE", "/api/logos/institute_logo.png"]] as const) {
             const response = await server.inject({method, url, headers: {authorization: `Bearer ${TOKEN}`}, payload: {}})
             assert.equal(response.statusCode, 501, `${method} ${url}`)
+        }
+    })
+
+    it("tests a tenant's connection on the file backend", async () => {
+        process.env.API_TOKEN = TOKEN
+        const headers = {authorization: `Bearer ${TOKEN}`}
+        const tenants = (await server.inject({method: "GET", url: "/api/tenants", headers})).json()
+        assert.ok(tenants.length > 0)
+        assert.equal(typeof tenants[0].secret_available, "boolean")
+        // Without the password the test fails before any request, so it never contacts a real Exchange server
+        const secret = process.env[tenants[0].secret]
+        delete process.env[tenants[0].secret]
+        try {
+            const response = await server.inject({method: "POST", url: `/api/tenants/${tenants[0].id}/test`, headers, payload: {}})
+            assert.equal(response.statusCode, 200)
+            assert.deepEqual(response.json(), {ok: false, error: "Missing Exchange Credentials!"})
+        } finally {
+            if (secret !== undefined) process.env[tenants[0].secret] = secret
         }
     })
 

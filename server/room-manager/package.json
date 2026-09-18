@@ -32,6 +32,7 @@
   "license": "ISC",
   "dependencies": {
     "@fastify/autoload": "^6.0.0",
+    "@fastify/multipart": "^10.1.1",
     "@fastify/sensible": "^6.0.0",
     "@types/jsdom": "^21.1.7",
     "better-sqlite3": "^13.0.3",
