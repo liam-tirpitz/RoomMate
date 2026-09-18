@@ -283,7 +283,10 @@ The firmware of devices can be flashed via USB.
 ### Provisioning
 To communicate with the server, each RoomMate must be provisioned with WiFi credentials and the server endpoint.
 With the Provisioner [Gordon tool](server/room-manager/src/provisioner/gordon.ts) devices can be automatically provisioned, using credentials stored in the Bitwarden Secrets Manager.
-For a device with the MAC address "aa:aa:aa:aa:aa:aa", place a secret of the form `PSK_aaaaaaaaaaaa` in the store, connect the RoomMate via USB and execute Gordon.
+For a device with the MAC address "aa:aa:aa:aa:aa:aa", place a secret of the form `PSK_aaaaaaaaaaaa` in the store.
+Set `GORDON_SSID` and `GORDON_ENDPOINT` (for example `http://your-server.example.com:3001/`), run `npm run dev_gordon` and connect the RoomMates via USB.
+Gordon only talks to Feather ESP32 V2 boards (USB ID `1a86:55d4`) that answer `wifi.getMAC` with a MAC address.
+It provisions each connected device once and provisions it again only after it was unplugged.
 
 Alternatively, you can manually use the the CLI via serial at a baud rate of 115200.
 The following commands are needed to provision the device.
