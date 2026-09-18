@@ -16,17 +16,17 @@
   <!-- Symbol Column -->
   <ng-container matColumnDef="battery">
     <th mat-header-cell *matHeaderCellDef> Battery </th>
-    <td mat-cell *matCellDef="let element"> {{element.battery}} </td>
+    <td mat-cell *matCellDef="let element"> {{element.battery_mv}} </td>
   </ng-container>
 
   <ng-container matColumnDef="last_connection">
     <th mat-header-cell *matHeaderCellDef> Last Connection </th>
-    <td mat-cell *matCellDef="let element"> {{element.last_connection}} </td>
+    <td mat-cell *matCellDef="let element"> {{element.last_contact}} </td>
   </ng-container>
 
   <ng-container matColumnDef="room">
     <th mat-header-cell *matHeaderCellDef> Room </th>
-    <td mat-cell *matCellDef="let element"> {{element.room_id}} </td>
+    <td mat-cell *matCellDef="let element"> {{element.room?.name}} </td>
   </ng-container>
 
   <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

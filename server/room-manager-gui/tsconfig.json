@@ -6,7 +6,7 @@
     "baseUrl": "src",
     "paths": {
       "@app/*": ["app/*"],
-      "@interfaces/*": ["datamodels/*"],
+      "@interfaces/*": ["../../datamodels/*"]
     },
     "outDir": "./dist/out-tsc",
     "strict": true,

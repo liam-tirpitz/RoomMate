@@ -1,16 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {MatTableModule} from '@angular/material/table';
-import {RoomService} from '../room.service';
-import {DeviceService} from '@app/device.service';
+import {DevicesService} from '@app/api/devices.service';
 import {IDevice} from '@interfaces/IDevice';
-
-export interface PeriodicElement {
-  name: string;
-  mac: string;
-  battery: string;
-  last_connection: Date;
-}
-
 
 @Component({
   selector: 'app-devices',
@@ -23,12 +14,12 @@ export class DevicesComponent implements OnInit{
   displayedColumns: string[] = ['name', 'mac', 'battery', 'last_connection', 'room'];
   devices: IDevice[] = [];
 
-  constructor(private deviceService: DeviceService) {
+  constructor(private devicesService: DevicesService) {
 
   }
 
   ngOnInit() {
-    this.deviceService.fetchDevices().subscribe((data: any[])=> {
+    this.devicesService.list().subscribe((data) => {
       this.devices = data;
     })
   }
