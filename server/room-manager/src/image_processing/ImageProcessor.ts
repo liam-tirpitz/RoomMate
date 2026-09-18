@@ -25,8 +25,9 @@ export class ImageProcessor {
     ctx: CanvasRenderingContext2D;
     canvas: Canvas;
     dithering_threshold: number = 128
-    // Index into the types of dithering(): 0 binary, 1 bayer, 2 floydsteinberg, 3 atkinson
-    dithering_type: number = 3
+    // Index into the types of dithering(): 0 binary, 1 bayer, 2 floydsteinberg, 3 atkinson.
+    // Binary is a plain threshold: grey turns black or white instead of being shaded with dots.
+    dithering_type: number = 0
     remove_zero_commas: boolean = false
     _bitswap: boolean = false
     screenWidth = 480
@@ -62,9 +63,9 @@ export class ImageProcessor {
     }
 
 
-    // Returns the screen twice: rotated by 90°, dithered and packed to 1 bit per pixel for the display (base64),
-    // and as a PNG of exactly those pixels turned back upright, for the web UI and /image?png=true.
-    // Dithering diffuses errors along the rows, so it runs on the rotated canvas the device draws.
+    // Returns the screen twice: rotated by 90°, reduced to black and white and packed to 1 bit per pixel for the
+    // display (base64), and as a PNG of exactly those pixels turned back upright, for the web UI and /image?png=true.
+    // The reduction runs on the rotated canvas the device draws, so a diffusing dithering_type would work too.
     async finalizeImage(): Promise<IRenderedScreen> {
         this.rotate(90)
 
