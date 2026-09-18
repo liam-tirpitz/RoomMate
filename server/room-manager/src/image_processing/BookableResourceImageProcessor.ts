@@ -100,7 +100,7 @@ export class BookableResourceImageProcessor extends ImageProcessor {
         this.ctx.fillText(event.timeline, 46, 375 + 2 * line_spacing + yoffset*105)
     }
 
-    drawCurrentEvent(event: SimpleEvent) {
+    drawCurrentEvent(event: SimpleEvent, soon_threshold_in_min: number) {
         const now: DateTime = DateTime.Now;
         if (event.happeningNow(now)) {
             if (event.summary) {
@@ -112,7 +112,7 @@ export class BookableResourceImageProcessor extends ImageProcessor {
             } else {
                 this.drawOccupiedUnknown(utils.getTimeStringFromDate(event.end.toDate()))
             }
-        } else if (event.happeningSoon(now)) {
+        } else if (event.happeningSoon(now, soon_threshold_in_min)) {
             this.drawOpccupiedSoon(utils.getTimeStringFromDate(event.start.toDate()))
         } else if (now.MomentDate < event.start) {
             this.drawFreeUntil(utils.getTimeStringFromDate(event.start.toDate()))
@@ -124,7 +124,8 @@ export class BookableResourceImageProcessor extends ImageProcessor {
     async buildImage(room_name: string, room_number: string, room_id: string, logo: string, data: SimpleEvent[], voltage) {
         const header = await this.drawHeader(room_name, room_number, logo)
         if (data.length) {
-            this.drawCurrentEvent(data[0])
+            const organization = await this.dataRetrieval.getOrganization()
+            this.drawCurrentEvent(data[0], organization.soon_threshold_in_min)
             const now = DateTime.Now
             if (data[0].happeningNow(now)) {
                 data.shift()
