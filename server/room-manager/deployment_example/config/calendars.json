@@ -51,7 +51,7 @@
       "device_id": "cccccccccccc",
       "location": "Right",
       "room_id": {
-        "id": 202,
+        "room_number": 202,
         "id_string": "202",
         "name": "Büro",
         "logo": "institute_logo.png",
