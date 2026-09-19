@@ -34,17 +34,17 @@ void SysConfig::setup_wifi_connection() {
   // Serial.println();
   // Serial.println();
   printf("Waiting for WiFi... ");
-  uint8_t count = 0;
-  while (WiFi.status() != WL_CONNECTED && count < 5) {
+  unsigned long connect_start = millis();
+  while (WiFi.status() != WL_CONNECTED && (millis() - connect_start) < WIFI_CONNECT_TIMEOUT_MS) {
     printf(".");
-    count = count + 1;
-    delay(10000);
+    delay(250);
   }
 
-  if (count == 5) {
+  // Do not stay awake with the radio on if the network is unavailable
+  if (WiFi.status() != WL_CONNECTED) {
       printf("Could not connect to WiFi... ");
       sleep();
-  } 
+  }
 
   // Serial.println("");
   printf("WiFi connected");

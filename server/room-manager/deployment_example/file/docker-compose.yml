@@ -10,6 +10,7 @@ services:
         required: false
     environment:
 #      - SECRET=password
+#      - API_TOKEN=a-long-random-string   # enables the management API, better placed in ../.env
       - STORAGE=FILE
 
     volumes:

@@ -1,12 +1,9 @@
 import fastify from 'fastify'
 import {dataEndpoint, imageEndpoint} from "./routes/state-endpoint";
-import RoomRoute from "./routes/room-endpoint";
-import DeviceRoute from "./routes/device-endpoint";
-import EWSUserRoute from "./routes/ewsuser-endpoint";
 import {Logging} from "./logging";
 import {IDBClient} from "./db/IDBClient";
 import {ConfigManager} from "./ConfigManager";
-import OrganizationRoute from "./routes/organization-endpoint";
+import {ManagementApi} from "./routes/management-api";
 
 const server = fastify()
 
@@ -22,10 +19,11 @@ dbClient.getOrganization().then(org => {
 
 server.register(dataEndpoint, { prefix: "/data" })
 server.register(imageEndpoint, { prefix: "/image" })
-server.register(RoomRoute)
-server.register(DeviceRoute)
-server.register(EWSUserRoute)
-server.register(OrganizationRoute)
+server.register(ManagementApi)
+
+if (!process.env.API_TOKEN) {
+    Logging.instance.logger.warn("API_TOKEN is not set, the management API is disabled.")
+}
 
 
 

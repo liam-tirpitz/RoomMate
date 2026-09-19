@@ -24,7 +24,8 @@ export class ICalClient {
             if (event.type === "VEVENT") {
 
                 const simpleEvent = new SimpleEvent(moment(event.start), moment(event.end), this.cleanSummaryString(event.summary), event.description, false, false)
-                if (utils.isEventToday(simpleEvent.start, simpleEvent.end)) {
+                // Unlike the EWS query, the feed contains the whole day. Ended events must not become the current event.
+                if (utils.isEventToday(simpleEvent.start, simpleEvent.end) && !utils.hasEventPassed(simpleEvent.end)) {
                     results.push(simpleEvent)
                 }
             }

@@ -53,7 +53,10 @@ String Storage::getEndpoint() {
 
 bool Storage::checkHash(const char* hash) {
       bool needs_update = false;
-      preferences.begin(NAMESPACE, true); 
+      if (hash == nullptr || strnlen(hash, 5) < 5) {
+            return false;
+      }
+      preferences.begin(NAMESPACE, true);
       for (uint8_t i = 0; i < 5; i++) {
             char last_hash = preferences.getChar(this->keys[i], 0);
             if(last_hash != hash[i]) {
@@ -66,11 +69,33 @@ bool Storage::checkHash(const char* hash) {
 }
 
 void Storage::setHash(const char* hash) {
-      preferences.begin(NAMESPACE, false); 
+      preferences.begin(NAMESPACE, false);
       for (uint8_t i = 0; i < 5; i++) {
             preferences.putChar(this->keys[i], hash[i]);
       }
       preferences.end();
+}
+
+// Forces a redraw on the next successful update, e.g. after the low battery screen was shown
+void Storage::invalidateHash() {
+      preferences.begin(NAMESPACE, false);
+      for (uint8_t i = 0; i < 5; i++) {
+            preferences.putChar(this->keys[i], 0);
+      }
+      preferences.end();
+}
+
+void Storage::setLowBatteryShown(bool shown) {
+      preferences.begin(NAMESPACE, false);
+      preferences.putBool(KEY_LOWBAT, shown);
+      preferences.end();
+}
+
+bool Storage::getLowBatteryShown() {
+      preferences.begin(NAMESPACE, true);
+      bool result = preferences.getBool(KEY_LOWBAT, false);
+      preferences.end();
+      return result;
 }
 
 void Storage::setRegularSleepTimeInS(int sleepTime) {

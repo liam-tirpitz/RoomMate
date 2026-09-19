@@ -12,10 +12,25 @@
 #include <SysConfig.h>
 #include <ETH.h>
 
+#define IMAGE_BUFFER_SIZE 48000
+#define IMAGE_DOWNLOAD_TIMEOUT_MS 30000
+// Below this voltage the radio is kept off, above the second one normal operation resumes.
+// The cutoff must not be higher than low_battery_voltage_cutoff_in_mv on the server, otherwise the
+// server still renders a normal screen while the device already stops updating.
+#define LOW_BATTERY_CUTOFF_IN_MV 3100
+#define LOW_BATTERY_RECOVERY_IN_MV 3300
+#define LOW_BATTERY_SLEEP_IN_S 3600
+// Time the device stays awake for serial provisioning before it goes to sleep
+#define PROVISIONING_TIMEOUT_MS 600000
+#define UNPROVISIONED_SLEEP_IN_S 3600
+// Stored instead of a server hash while the server answers 404 for this device
+#define UNKNOWN_DEVICE_HASH "unknown-device"
+
 unsigned char b64_buff[800] = {0};
-unsigned char byte_buff[48000] = {0};
+unsigned char byte_buff[IMAGE_BUFFER_SIZE] = {0};
 
 bool eth_connection_established = false;
+bool unprovisioned = false;
 
 String devid = "";
 int voltage = 0;
@@ -46,33 +61,55 @@ uint8_t getImageDataFromEndpoint() {
       http.begin(endpoint);
 
       int httpResponseCode = http.GET();
-      int buffer_offset = 0;
+      size_t buffer_offset = 0;
       if (httpResponseCode>0) {
         if (httpResponseCode == HTTP_CODE_OK) {
             int len = http.getSize();
             WiFiClient *stream = http.getStreamPtr();
-            delay(500);
-            //printf("len: %d\r\n", len);
+            // Base64 can only be decoded in complete 4-character groups, but the stream
+            // delivers arbitrary chunk sizes. Up to 3 leftover characters are carried
+            // over to the front of b64_buff and decoded together with the next chunk.
+            size_t carry = 0;
+            bool decode_failed = false;
+            unsigned long download_start = millis();
             while (http.connected() && (len > 0 || len == -1)) {
+              if (millis() - download_start > IMAGE_DOWNLOAD_TIMEOUT_MS) {
+                printf("Image download timed out\n");
+                decode_failed = true;
+                break;
+              }
               size_t size = stream->available();
               if (size) {
-                int c = stream->readBytes(b64_buff, ((size > sizeof(b64_buff)) ? sizeof(b64_buff) : size));
+                size_t space = sizeof(b64_buff) - carry;
+                int c = stream->readBytes(b64_buff + carry, (size > space) ? space : size);
                 if (len > 0) {
                   len -= c;
                 }
-                size_t outlen = 0;
-                int size_left = 48000-buffer_offset;
-                if (size_left < 0) size_left = 0;
-                int decode = mbedtls_base64_decode(byte_buff+buffer_offset, size_left, &outlen, b64_buff, c);
-              //  printf("Decode: %d Size b64:%d Offset: %d Left:%d Outlen: %d Read Bytes b64: %d \r\n", decode, size, buffer_offset, size_left, outlen, c);
-                buffer_offset = buffer_offset + outlen;
+                size_t available_chars = carry + c;
+                size_t decodable_chars = available_chars - (available_chars % 4);
+                if (decodable_chars > 0) {
+                  size_t outlen = 0;
+                  int decode = mbedtls_base64_decode(byte_buff + buffer_offset, IMAGE_BUFFER_SIZE - buffer_offset,
+                                                     &outlen, b64_buff, decodable_chars);
+                  if (decode != 0) {
+                    printf("Base64 decode failed: %d at offset %u\n", decode, (unsigned) buffer_offset);
+                    decode_failed = true;
+                    break;
+                  }
+                  buffer_offset += outlen;
+                }
+                carry = available_chars - decodable_chars;
+                memmove(b64_buff, b64_buff + decodable_chars, carry);
+              } else {
+                delay(1);
               }
-              delay(1);
             }
 
-          // Serial.println();
-          // Serial.print("[HTTP] connection closed or file end.\n");
           http.end();
+          if (decode_failed || carry != 0 || buffer_offset != IMAGE_BUFFER_SIZE) {
+            printf("Incomplete image: %u of %d bytes\n", (unsigned) buffer_offset, IMAGE_BUFFER_SIZE);
+            return 4;
+          }
           return 0;
         }
       }
@@ -91,7 +128,8 @@ uint8_t getImageDataFromEndpoint() {
     return 3;
 }
 
-void getMetaDataFromEndpoint() {
+bool getMetaDataFromEndpoint() {
+  bool success = false;
   #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
   if(WiFi.status() == WL_CONNECTED){
   #else
@@ -112,7 +150,16 @@ void getMetaDataFromEndpoint() {
 
        } else {
           printf("Retrieved Metadata\n");
+          success = true;
        }
+      } else if (httpResponseCode == HTTP_CODE_NOT_FOUND
+                 && !deserializeJson(doc, http.getString()) && doc["error"].is<const char*>()) {
+        // The server does not know this device. Its image endpoint still serves the "new device" screen
+        // with the MAC, so draw that once under a fixed hash and check again at the regular interval.
+        printf("Device not registered on the server.\n");
+        doc.clear();
+        doc["hash"] = UNKNOWN_DEVICE_HASH;
+        success = true;
       } else {
         printf("Connection failed: %d\n", httpResponseCode);
       }
@@ -120,24 +167,52 @@ void getMetaDataFromEndpoint() {
     printf("Close connection\n");
     http.end();
   }
+  return success;
 }
 
-void handleMetadata() {
+void configureSleep(long sleep_time_in_s) {
+    // A wakeup time in the past would wrap around to an unpredictable, potentially very long sleep
+    if (sleep_time_in_s <= 0) {
+      printf("Invalid sleep time %ld s, falling back to the regular interval.\n", sleep_time_in_s);
+      sleep_time_in_s = storage.getRegularSleepTimeInS();
+    }
+    // The stored interval is not validated either, so clamp here as well
+    if (sleep_time_in_s < MIN_SLEEP_TIME_IN_S) {
+      sleep_time_in_s = MIN_SLEEP_TIME_IN_S;
+    }
+    if (sleep_time_in_s > MAX_SLEEP_TIME_IN_S) {
+      sleep_time_in_s = MAX_SLEEP_TIME_IN_S;
+    }
+    esp_sleep_enable_timer_wakeup((uint64_t) sleep_time_in_s * uS_TO_S_FACTOR);
+    printf("Sleep configured for %ld s.\n", sleep_time_in_s);
+}
+
+// Returns whether the screen is known to show the current content
+bool handleMetadata() {
   long next_update_unix = doc["next_update_unix"]; // 1728220858
   const char* hash = doc["hash"]; // "d41d8cd98f00b204e9800998ecf8427e"
-  long current_time_unix = doc["current_time_unix"]; // 1728220858  
+  long current_time_unix = doc["current_time_unix"]; // 1728220858
   bool is_night = doc["is_night"]; // false
   bool is_weekend = doc["is_weekend"]; // false
-  bool needs_update = storage.checkHash(hash);
+  // Without valid metadata there is nothing to draw and nothing to schedule. Sleeping regularly here
+  // avoids a reboot loop that would drain the battery while the server is unreachable.
+  bool needs_update = hash != nullptr && storage.checkHash(hash);
+  if (hash == nullptr) {
+    printf("No metadata available.\n");
+  }
+  bool up_to_date = hash != nullptr;
   // Redraw screen if metadata changed
   if (needs_update) {
     printf("Update required.\n");
+    up_to_date = false;
     if(!getImageDataFromEndpoint()) {
         screen.setup();
         screen.drawImage(byte_buff);
         screen.sleep();
+        // Only remember the hash after a successful draw, so a failed download is retried on the next wakeup
+        storage.setHash(hash);
+        up_to_date = true;
     }
-    storage.setHash(hash);
   } else {
       printf("Im Westen nichts neues.\n");
   }
@@ -150,20 +225,19 @@ void handleMetadata() {
     long sleep_time_in_s = 0;
     int regular_wakeup_interval_in_s = storage.getRegularSleepTimeInS();
     if (
-        next_update_unix > 0 
-        && diff > 0 
+        next_update_unix > 0
+        && diff > 0
         // Skip next regular update if next event is less than 10 minutes in the future
-        && ((diff < regular_wakeup_interval_in_s) || (diff - regular_wakeup_interval_in_s) < 600)) { 
+        && ((diff < regular_wakeup_interval_in_s) || (diff - regular_wakeup_interval_in_s) < 600)) {
       sleep_time_in_s = diff + 30;
-    } else if (is_night || is_weekend) {
+    } else if ((is_night || is_weekend) && next_update_unix > 0 && diff > 0) {
       sleep_time_in_s = diff + 30;
     } else {
       sleep_time_in_s = regular_wakeup_interval_in_s;
     }
-    uint64_t sleep_time_in_us = sleep_time_in_s * uS_TO_S_FACTOR;
-    esp_sleep_enable_timer_wakeup(sleep_time_in_us);
-    printf("Sleep configured.\n");
+    configureSleep(sleep_time_in_s);
   #endif
+  return up_to_date;
   //printf("Wait for ");
   // Serial.print(sleep_time_in_s);
   // Serial.println();
@@ -171,9 +245,9 @@ void handleMetadata() {
 }
 
 
-void updateState() {
+bool updateState() {
     getMetaDataFromEndpoint();
-    handleMetadata();
+    return handleMetadata();
 }
 
 
@@ -239,8 +313,40 @@ void setup() {
       devid = WiFi.macAddress();
       sysconfig.configDefaultSleep();
       if(storage.getEndpoint() != "" && storage.getSSID() != "" && storage.getPSK() != "")  {
-          devid.replace(":","");  
+          devid.replace(":","");
           voltage = sysconfig.readBatteryVoltage();
+          printf("Battery: %d mV\n", voltage);
+          // Stay in low battery mode until the battery is charged well above the cutoff, otherwise a
+          // voltage hovering around it would alternate between the warning and normal updates.
+          if (voltage > 0 && (voltage < LOW_BATTERY_CUTOFF_IN_MV
+                              || (storage.getLowBatteryShown() && voltage < LOW_BATTERY_RECOVERY_IN_MV))) {
+              // Arm the low battery interval before the radio is powered, because a failed WiFi
+              // connection sleeps immediately and would otherwise use the regular interval
+              configureSleep(LOW_BATTERY_SLEEP_IN_S);
+              // Fetch the low battery screen once, then keep the radio off until the device is charged again.
+              // Waking up regularly on an empty battery drains it further and risks brownout reboots.
+              if (!storage.getLowBatteryShown()) {
+                  // The warning replaces the current content, so it has to be drawn even though the
+                  // calendar data itself did not change
+                  storage.invalidateHash();
+                  sysconfig.setup_wifi_connection();
+                  // Only stop updating once the warning is actually on the screen
+                  if (updateState()) {
+                      storage.setLowBatteryShown(true);
+                  }
+              } else {
+                  printf("Battery still low, skipping update.\n");
+              }
+              // updateState() configures the sleep time from the metadata, so set it again
+              configureSleep(LOW_BATTERY_SLEEP_IN_S);
+              sysconfig.sleep();
+          }
+          if (storage.getLowBatteryShown()) {
+              printf("Battery charged, resuming normal operation.\n");
+              storage.setLowBatteryShown(false);
+              // The screen still shows the warning and has to be replaced
+              storage.invalidateHash();
+          }
           // Serial.println(devid);
           sysconfig.setup_wifi_connection();
           updateState();
@@ -249,7 +355,8 @@ void setup() {
         screen.setup();
         screen.drawNewDeviceImage(devid.c_str());
         screen.sleep();
-        // Stay awake for configuration if config is incomplete
+        // Stay awake for configuration if config is incomplete, see loop()
+        unprovisioned = true;
       }
 
     #else
@@ -262,10 +369,25 @@ void setup() {
 
 
 void loop() {
-  #ifndef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
+  #ifdef ARDUINO_ADAFRUIT_FEATHER_ESP32_V2
+      if(unprovisioned) {
+        // The console runs in its own task, so pick up a configuration as soon as it is complete
+        if(storage.getEndpoint() != "" && storage.getSSID() != "" && storage.getPSK() != "") {
+          printf("Configuration received, restarting.\n");
+          ESP.restart();
+        }
+        // Do not stay awake forever waiting for a serial configuration that may never come
+        if(millis() > PROVISIONING_TIMEOUT_MS) {
+          printf("No configuration received, going to sleep.\n");
+          configureSleep(UNPROVISIONED_SLEEP_IN_S);
+          sysconfig.sleep();
+        }
+        delay(500);
+      }
+  #else
       if(eth_connection_established) {
         updateState();
         delay(60000);
       }
-  #endif 
+  #endif
 }
